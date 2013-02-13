@@ -287,7 +287,7 @@ class Mumoro:
             md5_config_checksum = md5_of_file( file( config_file ) )
             self.g.save( md5_config_checksum + '.dump' )
             i = self.config_table.insert()
-            i.execute({'config_file': config_file, 'md5': md5_config_checksum, 'binary_file': md5_config_checksum + '.dump'})
+            i.execute({'config_file': config_file, 'md5': md5_config_checksum, 'binary_file': md5_config_checksum + '.dump'})   
 
     @cherrypy.expose
     def path(self, slon, slat, dlon, dlat, time):
@@ -448,6 +448,7 @@ class Mumoro:
             return tmpl.generate(fromHash='false',lonMap=a['avg_lon'],latMap=a['avg_lat'],zoom=14,lonStart=b['min_lon'],latStart=b['min_lat'],lonDest=b['max_lon'],latDest=b['max_lat'],addressStart='',addressDest='',hashUrl=self.web_url,layers=t, date=datetime.datetime.today().strftime("%d/%m/%Y %H:%M")).render('html', doctype='html')
         else:
             return tmpl.generate(fromHash='true',lonMap=hashData[2],latMap=hashData[3],zoom=hashData[1],lonStart=hashData[4],latStart=hashData[5],lonDest=hashData[6],latDest=hashData[7],addressStart=hashData[8].decode('utf-8'),addressDest=hashData[9].decode('utf-8'),hashUrl=self.web_url,layers=t,date=hashData[10]).render('html', doctype='html')
+    index.exposed = True
 
     @cherrypy.expose
     def info(self):
@@ -577,7 +578,8 @@ class Mumoro:
         return route
 
     def analyse_date(self,date):
-        now_chrone = datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
+        #now_chrone = datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
+        now_chrone = datetime.datetime.strptime(date, "%d/%m/%Y %H:%M")
         start_chrone = datetime.datetime.strptime(start_date, "%Y%m%d")
         past_seconds = now_chrone.hour * 60 * 60 + now_chrone.minute * 60 + now_chrone.second
         delta = now_chrone - start_chrone
@@ -599,13 +601,14 @@ cherrypy.config.update({
     'server.socket_port': listening_port,
     'server.socket_host': '0.0.0.0'
 })
-cherrypy.tree.mount(Mumoro(db_type + ":///" + db_params,sys.argv[1],admin_email,web_url), '/', config={
+
+
+cherrypy.quickstart(Mumoro(db_type + ":///" + db_params,sys.argv[1],admin_email,web_url), '/', config={
     '/': {
             'tools.staticdir.on': True,
             'tools.staticdir.dir': 'static'
        },
 })
-cherrypy.quickstart()
 
 def main():
     print "Goodbye!"

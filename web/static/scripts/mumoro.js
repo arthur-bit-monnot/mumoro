@@ -1,8 +1,10 @@
-function disp_path(id) {    
+function disp_path(id) {
     routeLayer.destroyFeatures();
     features = geojson_reader.read(paths[id]);
-    if(features)
+    if(features) {
         routeLayer.addFeatures(features);
+        routeLayer.display()
+    }
 }
 
 function compute() {
@@ -82,7 +84,7 @@ function setMark(lonlat, mark)
 } // End of function setMark(lonlat, mark)
 
 function areBothMarked() {
-        return nodes['start'].lon && nodes['dest'].lat && nodes['dest'].lon && nodes['dest'].lat; 
+        return nodes['start'] && nodes['dest'] && nodes['start'].lon && nodes['dest'].lat && nodes['dest'].lon && nodes['dest'].lat; 
 }
 
 function addToHash() {
@@ -168,8 +170,8 @@ function init() {
     map.addLayer(cloudmade);
      layerTilesCycle = new OpenLayers.Layer.OSM.CycleMap("CycleMap");
     map.addLayer(layerTilesCycle);
-    layerTilesAtHome = new OpenLayers.Layer.OSM.Osmarender("Osmarender");
-    map.addLayer(layerTilesAtHome);
+//     layerTilesAtHome = new OpenLayers.Layer.OSM.Osmarender("Osmarender");
+//     map.addLayer(layerTilesAtHome);
     var styleMap = new OpenLayers.StyleMap({strokeWidth: 3});
     layers[ "connection" ] = {strokeColor: '#830531', strokeDashstyle: 'dashdot', strokeWidth: 2}
     styleMap.addUniqueValueRules("default", "layer", layers);
@@ -336,10 +338,12 @@ function geocoding(str,mark) {
                 }
                 else {              
                     var cord = new OpenLayers.LonLat(data.lon, data.lat);
+                    /* Don't alter the names
                     if( mark == "start" )
                         document.getElementById('startAdr').value = data.display_name;
                     else if( mark == "dest" )
                         document.getElementById('endAdr').value = data.display_name;
+                    */
                     if( hasChanged(mark) ) {    
                         nodes['fmouse_'+mark] = false;      
                         nodes[mark] = {

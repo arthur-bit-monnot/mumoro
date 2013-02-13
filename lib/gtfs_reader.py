@@ -96,7 +96,11 @@ def convert(filename, session, start_date, end_date):
         for stop in trip.GetStopTimes():
             if not map[trip.route_id].has_key(stop.stop_id):
                 map[trip.route_id][stop.stop_id] = count
-                session.add(PT_Node(stop.stop_id, stop.stop.stop_lon, stop.stop.stop_lat, trip.route_id, stop_areas_map[stop.stop_id]))
+                physStop = s.GetStop(stop.stop_id)
+                if physStop.parent_station == '':
+                    session.add(PT_Node(stop.stop_id, stop.stop.stop_lon, stop.stop.stop_lat, trip.route_id, stop_areas_map[stop.stop_id]))
+                else:
+                    session.add(PT_Node(stop.stop_id, stop.stop.stop_lon, stop.stop.stop_lat, trip.route_id, stop_areas_map[physStop.parent_station]))
                 count +=1
             current_stop = map[trip.route_id][stop.stop_id]
             current_node = session.query(PT_Node).filter_by(original_id = stop.stop_id).first()
