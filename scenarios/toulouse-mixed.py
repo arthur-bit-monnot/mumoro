@@ -9,7 +9,7 @@ db_type = 'sqlite'
 #For user oriented databases : 'username:password@host:port/database'
 #Port can be excluded (default one depending on db_type will be used) : 'username:password@host/database'
 #For SQLiTE : 'file_name.db' for relative path or absolute : '/data/guidage/file_name.db'
-db_params = data_dir + 'DB/toulouse-centre.db'
+db_params = data_dir + 'DB/toulouse-mixed.db'
 
 #Load street data from (compressed or not) osm file(s)
 #-----------------------------------------------------
@@ -29,7 +29,6 @@ start_date = '20120701'
 end_date = '20131229'
 
 tisseo_data = import_gtfs_data( data_dir + 'GTFS/tisseo-metro-gtfs.zip', 'Tisseo' )
-#tisseo_data = data_dir + 'GTFS/tisseo-metro-gtfs.zip'
 
 
 #Create relevant layers from previously imported data (origin paramater) with a name, a color and the mode.
@@ -37,18 +36,20 @@ tisseo_data = import_gtfs_data( data_dir + 'GTFS/tisseo-metro-gtfs.zip', 'Tisseo
 #Mode choose among: mumoro.Foot, mumoro.Bike and mumoro.Car 
 #For GTFS Municipal layer dont mention layer mode
 #--------------------------------------------------------------------------------------------------------------------
-foot = street_layer( data = osm_data, name = 'Foot', color = '#7E2217', mode = Foot )
-car = street_layer( data = osm_data, name = 'Car', color = '#842DCE', mode = Car )
+#foot = street_layer( data = osm_data, name = 'Foot', color = '#7E2217', mode = Foot )
+#car = street_layer( data = osm_data, name = 'Car', color = '#842DCE', mode = Car )
+
+street = mixed_street_layer( data = osm_data, name = 'Street', color = '#842DCE')
 tisseo = public_transport_layer( data = tisseo_data, name = 'Metro Tisseo', color = '#4CC417' )
 
-paths( foot, foot, [ mode_change, line_change ] )
-paths( car, car, [ dist ] )
+#paths( foot, foot, [ mode_change, line_change ] )
+paths( street, street, [ dist ] )
 
 
 #Creates a transit cost variable, including the duration in seconds of the transit and if the mode is changed (True or False)
 #------------------------------------------------------------------------------------------------------------
 cost1 = transferEdge( duration = 120, mode_change = True )
-cost2 = transferEdge( duration = 60, mode_change = False )
+#cost2 = transferEdge( duration = 60, mode_change = False )
 
 #Connect 2 given layers on same nodes with the given cost(s)
 #-----------------------------------------------------------
@@ -61,7 +62,7 @@ cost2 = transferEdge( duration = 60, mode_change = False )
 
 #Connect 2 given layers on nearest nodes
 #----------------------------------------
-connect_layers_on_nearest_nodes( tisseo, foot, cost1 )
+connect_layers_on_nearest_nodes( tisseo, street, cost1 )
 #connect_layers_on_nearest_nodes( muni_sf, foot_california, cost2 )
 #connect_layers_on_nearest_nodes( muni_sf, bart_sf, cost2 )
 

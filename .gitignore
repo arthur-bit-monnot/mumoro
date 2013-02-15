@@ -20,6 +20,7 @@ dist/
 *.kdev4
 *.egg-info/
 *.so
+*-exe
 
 lib/core/mumoro.py
 lib/core/mumoro_wrap.cpp

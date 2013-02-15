@@ -30,18 +30,18 @@ class NotAccessible(Exception):
 class DataIncoherence(Exception):
     pass
  
-def duration(length, property, mode):
-    if mode == mumoro.Foot:
+def duration(length, property, type):
+    if type == mumoro.FootEdge:
         if property == 0:
             raise NotAccessible()
         else:
             return length * 3.6 / 5
-    elif mode == mumoro.Bike:
+    elif type == mumoro.BikeEdge:
         if property == 0:
             raise NotAccessible()
         else:
             return length * 3.6 / 15
-    elif mode == mumoro.Car:
+    elif type == mumoro.CarEdge:
         if property == 1:
             return length * 3.6 / 15
         elif property == 2:
@@ -91,9 +91,8 @@ class BaseLayer(object):
         avg_lat = select([func.avg(self.nodes_table.c.lat, type_=Float )]).execute().first()[0]
         return {'avg_lon':avg_lon, 'avg_lat':avg_lat }
  
-    def match(self, ln, lt):
+    def match(self, ln, lt, epsilon = 0.002):
         print "Trying to match {0}, {1}".format(ln, lt)
-        epsilon = 0.002
         ln = float(ln)
         lt = float(lt)
         res = self.nodes_table.select(
@@ -109,6 +108,13 @@ class BaseLayer(object):
         else:
             return None
 
+    def nearest(self, ln, lt):
+        nearest = None
+        epsilon = 0.002
+        while not nearest:
+            nearest = self.match(ln, lt, epsilon)
+            epsilon += 0.001
+        return nearest
  
     def coordinates(self, nd):
         res = self.nodes_table.select(self.nodes_table.c.id == (nd - self.offset)).execute().first()    
@@ -120,7 +126,8 @@ class BaseLayer(object):
     def nodes(self):
         for row in self.nodes_table.select().execute():
             yield row  
- 
+
+# A street layer containing only Car or Foot or Bike (depending on the value of mode)
 class Layer(BaseLayer):
     def __init__(self, name, mode, data, metadata):
         super(Layer, self).__init__(name, data, metadata)
@@ -133,20 +140,24 @@ class Layer(BaseLayer):
             if self.mode == mumoro.Foot:
                 property = edge.foot
                 property_rev = edge.foot
+                e.type = mumoro.FootEdge
             elif self.mode == mumoro.Bike:
                 property = edge.bike
                 property_rev = edge.bike_rev
+                e.type = mumoro.BikeEdge
             elif self.mode == mumoro.Car:
                 property = edge.car
                 property_rev = edge.car_rev
+                e.type = mumoro.CarEdge
             else:
                 property = 0
                 property_rev = 0
- 
+                e.type = mumoro.UnkwownEdgeType
+            
             node1 = self.map(edge.source)
             node2 = self.map(edge.target)
             try:
-                dur = duration(e.length, property, self.mode)
+                dur = duration(e.length, property, e.type)
                 e.duration = mumoro.Duration(dur)
                 e.elevation = 0
               #  if self.mode == mumoro.Bike:
@@ -160,7 +171,7 @@ class Layer(BaseLayer):
                 pass
  
             try:
-                dur = duration(e.length, property_rev, self.mode)
+                dur = duration(e.length, property_rev, e.type)
                 e.duration = mumoro.Duration(dur)
                 e.elevation = 0
 #                if self.mode == mumoro.Bike:
@@ -173,7 +184,59 @@ class Layer(BaseLayer):
             except NotAccessible:
                 pass
  
-    
+# A street layer with mixed bike, foot and car
+class MixedStreetLayer(BaseLayer):
+    def __init__(self, name, data, metadata):
+        super(MixedStreetLayer, self).__init__(name, data, metadata)
+               
+    def edges(self):
+        for edge in self.edges_table.select().execute():
+            e = mumoro.Edge()
+            e.length = edge.length
+            
+            source = self.map(edge.source)
+            dest = self.map(edge.target)
+            
+            # forward arc
+            properties = [ {'prop': edge.foot, 'type': mumoro.FootEdge}, 
+                           {'prop': edge.bike, 'type': mumoro.BikeEdge}, 
+                           {'prop': edge.car,  'type': mumoro.CarEdge} ]
+                           
+            for property in properties:
+                e.type = property['type']
+
+                try:
+                    dur = duration(e.length, property['prop'], e.type)
+                    e.duration = mumoro.Duration(dur)
+                    e.elevation = 0
+                #  if self.mode == mumoro.Bike:
+                #      e.elevation = max(0, target_alt - source_alt)
+                    yield {
+                        'source': source,
+                        'target': dest,
+                        'properties': e
+                        }
+                except NotAccessible:
+                    pass
+ 
+            # backward arc
+            properties = [ {'prop': edge.foot, 'type': mumoro.FootEdge}, 
+                           {'prop': edge.bike_rev, 'type': mumoro.BikeEdge}, 
+                           {'prop': edge.car_rev,  'type': mumoro.CarEdge} ]
+                           
+            for property in properties:
+                e.type = property['type']
+                try:
+                    dur = duration(e.length, property['prop'], e.type)
+                    e.duration = mumoro.Duration(dur)
+                    e.elevation = 0
+                    yield {
+                        'source': dest,
+                        'target': source,
+                        'properties': e,
+                        }
+                except NotAccessible:
+                    pass
  
 class GTFSLayer(BaseLayer):
     """A layer for public transport described by the General Transit Feed Format"""
@@ -182,6 +245,16 @@ class GTFSLayer(BaseLayer):
         super(GTFSLayer, self).__init__(name, data, metadata)
         self.services = Table(data['services'], metadata, autoload = True)
         self.mode = mumoro.PublicTransport
+        
+    def gtfsMode2EdgeType(self, mode):
+        if mode == 0:
+            return mumoro.TramEdge
+        elif mode == 1: 
+            return mumoro.SubwayEdge
+        elif mode == 3:
+            return mumoro.BusEdge
+        else: 
+            return mumoro.UnknownEdgeType
  
     def edges(self):
         for row in self.edges_table.select().execute():
@@ -191,7 +264,8 @@ class GTFSLayer(BaseLayer):
                     'target': row.target + self.offset,
                     'departure': row.start_secs,
                     'arrival': row.arrival_secs,
-                    'services': services
+                    'services': services,
+                    'type': self.gtfsMode2EdgeType(row.mode)
                     }
  
         # Connects every node corresponding to a same stop:
@@ -201,13 +275,17 @@ class GTFSLayer(BaseLayer):
         res = select([n1,n2], (n1.c.original_id == n2.c.original_id) & (n1.c.route != n2.c.route)).execute()
         e = mumoro.Edge()
         e.line_change = 1
+        e.type = mumoro.TransferEdge
         e.duration = mumoro.Duration(60) # There should be at least a minute between two bus/trains at the same station
+        count = 0
         for r in res:
+            count += 1
             yield {
                     'source': row[0] + self.offset,    
                     'target': row[1] + self.offset,
                     'properties': e
-                    }
+                   }
+        print "{0} transfer edge inserted".format(count)
  
 
 class MultimodalGraph(object):
@@ -232,7 +310,7 @@ class MultimodalGraph(object):
                         self.graph.add_edge(e['source'], e['target'], e['properties'])
                         count += 1
                     else:
-                        if self.graph.public_transport_edge(e['source'], e['target'], e['departure'], e['arrival'], str(e['services'])):
+                        if self.graph.public_transport_edge(e['source'], e['target'], e['departure'], e['arrival'], str(e['services']), e['type']):
                             count += 1
                 print "On layer {0}, {1} edges, {2} nodes".format(l.name, count, l.count)
             self.graph.sort()
@@ -242,11 +320,11 @@ class MultimodalGraph(object):
         self.graph.save(filename)
 
     def load(self, filename):
-        self.graph.save(filename)
+        self.graph.load(filename)
  
     def layer(self, node):
         for l in self.node_to_layer:
-            if int(node) < l[0]:
+            if int(node) <= l[0]: # nodes from 1 to l[0] are in layer 0, etc
                 return l[1]
         print "Unable to find the right layer for node {0}".format(node)
         print self.node_to_layer
@@ -304,8 +382,9 @@ class MultimodalGraph(object):
         if property2 == None:
             property2 = property
         for n in layer1.nodes():
-            nearest = layer2.match(n.lon, n.lat)
+            nearest = layer2.nearest(n.lon, n.lat)
             if nearest:
+                print "Got a match"
                 self.graph.add_edge(n.id + layer1.offset, nearest, property)
                 self.graph.add_edge(nearest, n.id + layer1.offset, property2)
                 count += 2

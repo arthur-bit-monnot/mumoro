@@ -266,6 +266,9 @@ def import_freq(self, line_name, nodesf, linesf):
 def street_layer(data, name, color, mode):
     pass
 
+def mixed_street_layer( data, name, color ):
+    pass
+
 def public_transport_layer(data, name, color):
     pass
 
@@ -280,7 +283,7 @@ def set_destination_layer( layer ):
     pass
 
 #Creates a transit cost variable, including the duration in seconds of the transit and if the mode is changed
-def cost( duration, mode_change ):
+def transferEdge( duration, mode_change ):
     pass
 
 #Connects 2 given layers on same nodes with the given cost(s)

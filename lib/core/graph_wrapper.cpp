@@ -23,7 +23,7 @@
 #include <boost/graph/adj_list_serialize.hpp>
 #include <boost/foreach.hpp>
 
-Edge::Edge() : distance(0), elevation(0), mode_change(0), cost(0), line_change(0), co2(0)
+Edge::Edge() : edge_index(-1), elevation(0), mode_change(0), cost(0), line_change(0), co2(0), type(UnknownEdgeType)
 {
 }
 
@@ -98,12 +98,24 @@ Graph::Graph(int nb_nodes) : g(nb_nodes)
 {
 }
 
+void Graph::initEdgeIndexes() {
+    std::cout << "Populating indexes\n";
+    if(!edges_vec.empty())
+        edges_vec.clear();
+    
+    int index = 0;
+    BOOST_FOREACH(edge_t e, boost::edges(g)) {
+        edges_vec.push_back(e);
+        g[e].edge_index = index++; 
+    }
+}
+
 void Graph::add_edge(int source, int target, const Edge & e)
 {
     boost::add_edge(source, target, e, g);
 }
 
-bool Graph::public_transport_edge(int source, int target, float start, float arrival, const std::string & services)
+bool Graph::public_transport_edge(int source, int target, float start, float arrival, const std::string & services, const EdgeType type)
 {
     edge_t e;
     bool b;
@@ -112,6 +124,7 @@ bool Graph::public_transport_edge(int source, int target, float start, float arr
     {
         bool c;
         tie(e, c) = boost::add_edge(source, target, g);
+        g[e].type = type;
     }
     g[e].duration.append(start, arrival, services);
     return !b;
@@ -190,6 +203,7 @@ void Graph::load(const std::string & filename)
     iArchive >> g; //graph;   
     std::cout << "   " << boost::num_vertices(g) << " nodes" << std::endl;
     std::cout << "   " << boost::num_edges(g) << " edges" << std::endl;
+    initEdgeIndexes();
 }
 
 void Graph::save(const std::string & filename) const
@@ -199,4 +213,43 @@ void Graph::save(const std::string & filename) const
     oArchive << g;
 }
 
+EdgeList Graph::listEdges(const EdgeType type)
+{
+    EdgeList edgeList;
+    int index = 0;
+    BOOST_FOREACH(edge_t e, boost::edges(g)) {
+        if(g[e].edge_index != index++) {
+            this->initEdgeIndexes();
+            return this->listEdges(type);
+        }
+            
+        if(g[e].type == type)
+            edgeList.push_back(g[e].edge_index);
+    }
+    return edgeList;
+}
 
+
+/**
+ * Return the edge descriptor corresponding to a an edge id
+ * 
+ * WARNING : this is done in O(n)
+ */
+inline edge_t Graph::edge_descriptor(const int edge_id) {
+    return edges_vec[edge_id];
+}
+
+Edge Graph::mapEdge(const int edge)
+{
+    return g[this->edge_descriptor(edge)];
+}
+
+int Graph::sourceNode(const int edge)
+{
+    return source(this->edge_descriptor(edge), g);
+}
+
+int Graph::targetNode(const int edge)
+{
+    return target(this->edge_descriptor(edge), g);
+}

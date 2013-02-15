@@ -148,7 +148,19 @@ def street_layer( data, name, color, mode ):
     metadata = MetaData(bind = engine)
     res = layer.Layer(name, mode, data, metadata)
     layer_array.append( {'layer':res,'name':name,'mode':mode,'origin':data,'color':color} )
-    return {'layer':res,'name':name,'mode':mode,'origin':data,'color':color} 
+    return {'layer':res,'name':name,'mode':mode,'origin':data,'color':color}
+
+def mixed_street_layer( data, name, color ):
+    if not data or not name:
+        raise NameError('One or more parameters are missing')
+    if not is_color_valid( color ):
+        raise NameError('Color for the layer is invalid')
+    engine = create_engine(db_type + ":///" + db_params)
+    metadata = MetaData(bind = engine)
+    res = layer.MixedStreetLayer(name, data, metadata)
+    layer_array.append( {'layer':res,'name':name,'origin':data,'color':color} )
+    return {'layer':res,'name':name,'origin':data,'color':color}
+    
     
 def public_transport_layer(data, name, color): 
     engine = create_engine(db_type + ":///" + db_params)
@@ -166,13 +178,14 @@ def paths( starting_layer, destination_layer, objectives ):
     paths_array.append( {'starting_layer':starting_layer,'destination_layer':destination_layer,'objectives':objectives} )
 
 #Creates a transit cost variable, including the duration in seconds of the transit and if the mode is changed
-def cost( duration, mode_change ):
+def transferEdge( duration, mode_change ):
     e = mumoro.Edge()
     if mode_change:
         e.mode_change = 1
     else:
         e.mode_change = 0
     e.duration = mumoro.Duration( duration );
+    e.type = mumoro.TransferEdge
     return e
 
 #Connects 2 given layers on same nodes with the given cost(s)
@@ -390,7 +403,10 @@ class Mumoro:
             features.append(feature)
             p_str['features'] = features
             ret['paths'].append(p_str)
-        return json.dumps(ret)
+            
+            print ret
+        #return json.dumps(ret)
+        return self.edgesToFeatures( mum.g.graph.listEdges(mumoro.TransferEdge) )
     
     @cherrypy.expose
     def bikes(self):
@@ -584,7 +600,66 @@ class Mumoro:
         past_seconds = now_chrone.hour * 60 * 60 + now_chrone.minute * 60 + now_chrone.second
         delta = now_chrone - start_chrone
         return {'seconds':past_seconds,'days':delta.days} 
-        
+
+    def edgesToFeatures(self, edges):
+        ret = {
+                'objectives': '',
+                'paths': []
+                }
+        p_str = {
+                'cost': [],
+                'type': 'FeatureCollection',
+                'crs': {
+                    'type': 'EPSG',
+                    'properties': {
+                        'code': 4326,
+                        'coordinate_order': [1,0]
+                        }
+                    }
+                }
+        #for c in path.cost:
+            #p_str['cost'].append(c)
+
+        features = []
+        feature = {'type': 'feature'}
+        geometry = {'type': 'Linestring'}
+        coordinates = []
+        #last_node = path.nodes[0]
+        #last_coord = self.g.coordinates(last_node)
+        #for node in path.nodes:
+        for edge in edges:
+            #print "{0} {1}".format(self.g.graph.sourceNode(edge), self.g.graph.targetNode(edge))
+            src_coord = self.g.coordinates(self.g.graph.sourceNode(edge))
+            target_coord = self.g.coordinates(self.g.graph.targetNode(edge))
+            if(True or src_coord[3] != target_coord[3]): # different layer
+                geometry['coordinates'] = coordinates
+                feature['geometry'] = geometry
+                feature['properties'] = {'layer': src_coord[3]}
+                features.append(feature)
+
+                feature = {'type': 'feature'}
+                geometry = {'type': 'Linestring'}
+                coordinates = []
+
+                connection = {
+                        'type': 'feature',
+                        'geometry': {
+                            'type': 'Linestring',
+                            'coordinates': [[src_coord[0], src_coord[1]], [target_coord[0], target_coord[1]]]
+                            },
+                        'properties': {'layer': 'connection'}
+                        }
+                features.append(connection);
+            #last_node = node
+            #last_coord = coord
+            #coordinates.append([coord[0], coord[1]])
+        #geometry['coordinates'] = coordinates
+        #feature['geometry'] = geometry
+        #feature['properties'] = {'layer': last_coord[3]}
+        #features.append(feature)
+        p_str['features'] = features
+        ret['paths'].append(p_str)
+        return json.dumps(ret)        
 
 total = len( sys.argv )
 if total != 2:
@@ -601,7 +676,9 @@ cherrypy.config.update({
     'server.socket_port': listening_port,
     'server.socket_host': '0.0.0.0'
 })
+mum = Mumoro(db_type + ":///" + db_params,sys.argv[1],admin_email,web_url)
 
+mum.edgesToFeatures( mum.g.graph.listEdges(mumoro.CarEdge) )
 
 cherrypy.quickstart(Mumoro(db_type + ":///" + db_params,sys.argv[1],admin_email,web_url), '/', config={
     '/': {
