@@ -7,6 +7,17 @@ function disp_path(id) {
     }
 }
 
+function displayMode(f) {
+    $.getJSON("edgeFeatures", 
+              {restriction: $("#modeDisp").val() },
+              function(data) {
+                  clearPath();
+                  paths = data.paths;
+                  disp_path(0);
+              }
+      )
+}
+
 function compute() {
     if( areBothMarked() )
     {
@@ -174,6 +185,13 @@ function init() {
 //     map.addLayer(layerTilesAtHome);
     var styleMap = new OpenLayers.StyleMap({strokeWidth: 3});
     layers[ "connection" ] = {strokeColor: '#830531', strokeDashstyle: 'dashdot', strokeWidth: 2}
+    layers[ "Subway" ] = {strokeColor: '#FF0000', strokeDashstyle: 'dashdot', strokeWidth: 2}
+    layers[ "Bus" ] = {strokeColor: '#800000', strokeDashstyle: 'dashdot', strokeWidth: 2}
+    layers[ "Tram" ] = {strokeColor: '#FFFF00', strokeDashstyle: 'dashdot', strokeWidth: 2}
+    layers[ "Foot" ] = {strokeColor: '#00FF00', strokeDashstyle: 'dashdot', strokeWidth: 2}
+    layers[ "Car" ] = {strokeColor: '#800080', strokeDashstyle: 'dashdot', strokeWidth: 2}
+    layers[ "Bike" ] = {strokeColor: '008000', strokeDashstyle: 'dashdot', strokeWidth: 2}
+    layers[ "Transfer" ] = {strokeColor: '#0000FF', strokeDashstyle: 'dashdot', strokeWidth: 2}
     styleMap.addUniqueValueRules("default", "layer", layers);
     routeLayer = new OpenLayers.Layer.Vector("Route", {
                     styleMap: styleMap

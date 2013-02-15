@@ -112,6 +112,21 @@
                         <input type="submit" value="Calculate route" />
                     </form>
                 </div>
+                
+                <!--  -->
+                <div id="layer_display_form">
+                    <form method="get" action="javascript:displayMode(this);">
+                        <label for="modeDisp">Mode:</label>
+                        <span id="formError_mode"></span>
+                        <br/>           
+                        <input type="text" name="modeDisp" id="modeDisp" tabindex="30" size="50" />
+                        <br/>
+                        <span class="tinyText">Allowed: Bus Subway Transfer ...</span>
+                        <br/>
+                        <input type="submit" value="Display mode" />
+                    </form>
+                </div>
+                
                 <div id="info">
                     <p id="path_costs"></p>
                     <p id="routing_description"></p>

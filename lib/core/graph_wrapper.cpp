@@ -102,7 +102,7 @@ void Graph::initEdgeIndexes() {
     std::cout << "Populating indexes\n";
     if(!edges_vec.empty())
         edges_vec.clear();
-    
+    edges_vec.resize(num_edges(g));
     int index = 0;
     BOOST_FOREACH(edge_t e, boost::edges(g)) {
         edges_vec.push_back(e);
@@ -223,7 +223,7 @@ EdgeList Graph::listEdges(const EdgeType type)
             return this->listEdges(type);
         }
             
-        if(g[e].type == type)
+        if(type == WhateverEdge || g[e].type == type)
             edgeList.push_back(g[e].edge_index);
     }
     return edgeList;

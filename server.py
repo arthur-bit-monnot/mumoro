@@ -408,6 +408,8 @@ class Mumoro:
         #return json.dumps(ret)
         return self.edgesToFeatures( mum.g.graph.listEdges(mumoro.TransferEdge) )
     
+    
+    
     @cherrypy.expose
     def bikes(self):
         if len( self.bike_stations ) > 0:
@@ -600,6 +602,23 @@ class Mumoro:
         past_seconds = now_chrone.hour * 60 * 60 + now_chrone.minute * 60 + now_chrone.second
         delta = now_chrone - start_chrone
         return {'seconds':past_seconds,'days':delta.days} 
+    
+    @cherrypy.expose
+    def edgeFeatures(self, restriction):
+        edges = None
+        if not restriction or restriction == '':
+            edges = mum.g.graph.listEdges()
+        elif restriction == 'Bus':
+            edges = mum.g.graph.listEdges(mumoro.BusEdge)
+        elif restriction == 'Bike':
+            edges = mum.g.graph.listEdges(mumoro.BikeEdge)
+        elif restriction == 'Foot':
+            edges = mum.g.graph.listEdges(mumoro.FootEdge)
+        elif restriction == 'Subway':
+            edges = mum.g.graph.listEdges(mumoro.SubwayEdge)
+        elif restriction == 'Transfer':
+            edges = mum.g.graph.listEdges(mumoro.TransferEdge)
+        return self.edgesToFeatures(edges)
 
     def edgesToFeatures(self, edges):
         ret = {
@@ -617,49 +636,36 @@ class Mumoro:
                         }
                     }
                 }
-        #for c in path.cost:
-            #p_str['cost'].append(c)
-
         features = []
         feature = {'type': 'feature'}
         geometry = {'type': 'Linestring'}
         coordinates = []
-        #last_node = path.nodes[0]
-        #last_coord = self.g.coordinates(last_node)
-        #for node in path.nodes:
-        for edge in edges:
-            #print "{0} {1}".format(self.g.graph.sourceNode(edge), self.g.graph.targetNode(edge))
-            src_coord = self.g.coordinates(self.g.graph.sourceNode(edge))
-            target_coord = self.g.coordinates(self.g.graph.targetNode(edge))
-            if(True or src_coord[3] != target_coord[3]): # different layer
-                geometry['coordinates'] = coordinates
-                feature['geometry'] = geometry
-                feature['properties'] = {'layer': src_coord[3]}
-                features.append(feature)
+        for edge_id in edges:
+            src_coord = self.g.coordinates(self.g.graph.sourceNode(edge_id))
+            target_coord = self.g.coordinates(self.g.graph.targetNode(edge_id))
+            feature = {'type': 'feature'}
+            geometry = {'type': 'Linestring'}
+            coordinates = []
 
-                feature = {'type': 'feature'}
-                geometry = {'type': 'Linestring'}
-                coordinates = []
-
-                connection = {
-                        'type': 'feature',
-                        'geometry': {
-                            'type': 'Linestring',
-                            'coordinates': [[src_coord[0], src_coord[1]], [target_coord[0], target_coord[1]]]
-                            },
-                        'properties': {'layer': 'connection'}
-                        }
-                features.append(connection);
-            #last_node = node
-            #last_coord = coord
-            #coordinates.append([coord[0], coord[1]])
-        #geometry['coordinates'] = coordinates
-        #feature['geometry'] = geometry
-        #feature['properties'] = {'layer': last_coord[3]}
-        #features.append(feature)
+            connection = {
+                    'type': 'feature',
+                    'geometry': {
+                        'type': 'Linestring',
+                        'coordinates': [[src_coord[0], src_coord[1]], [target_coord[0], target_coord[1]]]
+                        },
+                    'properties': { 'layer': EdgeTypesToString[self.g.graph.mapEdge(edge_id).type] }
+                    }
+            features.append(connection);
         p_str['features'] = features
         ret['paths'].append(p_str)
+        print ret
         return json.dumps(ret)        
+
+# FootEdge = 0, BikeEdge = 1, CarEdge = 2, SubwayEdge = 3, BusEdge = 4, TramEdge = 5, TransferEdge = 6, UnknownEdgeType = 
+EdgeTypesToString = [ 'Foot', 'Bike', 'Car', 'Subway', 'Bus', 'Tram', 'Transfer', 'Unknown', 'All' ]
+StringToEdgeType = { 'Foot': mumoro.FootEdge, 'Bike': mumoro.BikeEdge, 'Car': mumoro.CarEdge, 
+                     'Subway': mumoro.SubwayEdge, 'Bus':mumoro.BusEdge, 'Tram':mumoro.TramEdge, 
+                     'Transfer':mumoro.TransferEdge, 'Unknown':mumoro.UnknownEdgeType, 'All':mumoro.WhateverEdge }
 
 total = len( sys.argv )
 if total != 2:

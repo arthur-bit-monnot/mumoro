@@ -30,7 +30,9 @@
 #define GRAPH_WRAPPER_H
 
 typedef enum {Foot, Bike, Car, PublicTransport} Mode;
-typedef enum {FootEdge, BikeEdge, CarEdge, SubwayEdge, BusEdge, TramEdge, TransferEdge, UnknownEdgeType} EdgeType;
+typedef enum { FootEdge = 0, BikeEdge = 1, CarEdge = 2, SubwayEdge = 3, 
+               BusEdge = 4, TramEdge = 5, TransferEdge = 6, UnknownEdgeType = 7, 
+               WhateverEdge = 8 } EdgeType;
 typedef std::bitset<128> Services;
 typedef boost::tuple<float, float, Services> Time;
 
@@ -129,7 +131,7 @@ struct Graph
     void load(const std::string & filename);
     void sort();
     
-    EdgeList listEdges(const EdgeType type);
+    EdgeList listEdges(const EdgeType type = WhateverEdge);
     Edge mapEdge(const int edge);
     int sourceNode(const int edge);
     int targetNode(const int edge);
