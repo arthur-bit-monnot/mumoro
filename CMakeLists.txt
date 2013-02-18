@@ -1,6 +1,23 @@
 cmake_minimum_required (VERSION 2.6)
 project (MUMORO) 
 
+
+
 add_subdirectory (lib)
-add_subdirectory (tools)
-add_subdirectory (ui/gui)
+
+set(CMAKE_CXX_FLAGS Wall)
+
+
+
+# FIND_PACKAGE(SWIG REQUIRED)
+# SET (UseSWIG ON)
+# 
+# INCLUDE(${SWIG_USE_FILE})
+# 
+# FIND_PACKAGE(PythonLibs)
+# INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
+# 
+# INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+# 
+# SET(CMAKE_SWIG_FLAGS "")
+

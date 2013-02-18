@@ -1,8 +1,12 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/heap/fibonacci_heap.hpp>
 #include <boost/tuple/tuple.hpp>
+#include <time.h>
+
 
 #include "path_algo.h"
+//#include "reglc_graph.h"
+
 
 
 typedef boost::heap::fibonacci_heap<node_ptr, boost::heap::compare<Compare> > Heap;
@@ -12,13 +16,18 @@ typedef boost::heap::fibonacci_heap<node_ptr, boost::heap::compare<Compare> > He
 using namespace boost;
 using namespace std;
 
-const char* edgeType2str(EdgeType type) {
+void print_edge(edge_t e, Graph_t g)
+{
+    cout << "("<< source(e, g) <<", "<< target(e, g) <<", "<<g[e].type<<", "<<g[e].duration(0,0)<<")   ";
+}
+
+const char* edgeType2str(EdgeMode type) {
     if(type == FootEdge)
-        return "Foot";//"Foot";
+        return "Foot";
     else if(type == BikeEdge)
         return "Bike";
     else if(type == CarEdge)
-        return "Car";//;"Car";
+        return "Car";
     else if(type == BusEdge)
         return "Bus";
     else if(type == TramEdge)
@@ -31,38 +40,45 @@ const char* edgeType2str(EdgeType type) {
         return "------ Unknown -------";
 }
 
-void dijkstra(int start, int destination, Graph g) {
+
+
+
+EdgeList dijkstra(int start, int destination, float dep_sec, int dep_day, Graph g) {
+    
+    clock_t start_cpu_time, end_cpu_time;
+    double cpu_time_used;
+     
+    start_cpu_time = clock();
     
     Graph_t::edge_iterator tei, tend;
     tie(tei,tend) = edges(g.g);
     
+    //Vecteur de distance
+    vector<float> distance(num_vertices(g.g), std::numeric_limits<float>::max());
     
-    vector<float> distance(num_vertices(g.g), 999999999999999.0);
+    // Vecteur des prédcesseurs
     vector<edge_t> predecessor(num_vertices(g.g), *tei);
+    
+    // Vecteurs des references (objets stockés dans le tas)
     std::vector<Heap::handle_type> references;
     
     Compare comp(distance);
     
     Heap heap(comp);
     
-    for(int i=0 ; i<750 ; ++i)
+    for(uint i=0 ; i<num_vertices(g.g) ; ++i)
         references.push_back(heap.push(node_ptr(i)));
     
-    //references[start]->time = 0.0f;
-    
-    
-    distance[start] = 0.0f;
+    distance[start] = dep_sec;
     predecessor[start] = *tei;
     heap.update(references[start]); 
     
     while (!heap.empty())
     {
-        int dist;
-
         node_ptr np = heap.top();
         heap.pop();
         
-        std::cout << np.index << " "<<distance[start]<<" "<<distance[np.index]<<"\n";
+        std::cout << "Current node : "<< np.index << " "<<distance[np.index]<<" -- ";
 
         if (np.index == destination)
             break;
@@ -71,57 +87,73 @@ void dijkstra(int start, int destination, Graph g) {
         tie(ei,end) = out_edges(np.index, g.g);
         for(; ei != end; ei++) {
             Edge e = g.g[*ei];
-            if(e.type == FootEdge) {
-            
+            try {
+            if(e.type == FootEdge || e.type == TransferEdge || e.type == SubwayEdge) 
+            {
+                cout << "("<<e.edge_index;
                 int target = boost::target(*ei, g.g);
-                float dist = np.time + e.duration(np.time, 0);
-    //             if(e.type == FootEdge)
-                    cout << "("<<target<<", "<<dist<<", "<<e.duration(np.time, 0)<<") ";
-                if(dist < distance[target])// && e.type == FootEdge) 
+                
+                float dist = e.duration(distance[np.index], dep_day);
+                cout << ", "<<target<<", "<<dist<<", "<<") ";
+                
+                if(dist < distance[target])
                 {
                     distance[target] = dist;
                     predecessor[target] = *ei;
-                    heap.update(references[target]);//, dist);
+                    heap.update(references[target]);
                 }
             }
+            } catch(No_traffic) {}
         }
         cout << "\n";
     }
-    /*
+    
+    end_cpu_time = clock();
+    cpu_time_used = ((double) (end_cpu_time - start_cpu_time)) / CLOCKS_PER_SEC;
+    
+    EdgeList path;
+    
+    
     for(int i = destination; i != start; i = source(predecessor[i], g.g))
-            std::cout << i << " - ";
-        std::cout << "\n";
-    */
+        path.push_front(g.g[predecessor[i]].edge_index);
+    
+    std::cout << start << " -> " << destination << " \n\nPath found in " 
+              << cpu_time_used <<" cup sec. Duration : "<< distance[destination]-distance[start] << "\n\n";
+              
+    EdgeList::iterator it;
+    for(it = path.begin(); it != path.end() ; it++) {
+        std::cout << g.sourceNode(*it) <<" ";
+        
+    cout << "\n";
+    }
+    
+    return path;
 }
+
+
 
 int main() {
     
     Graph g("/home/arthur/LAAS/mumoro/3d12fc983d92949462bdc2c3c6a65670.dump");
-    /*
-    std::cout << "Loaded " << num_vertices(g.g);
-    int count = 0;
-    Graph_t::vertex_iterator vi, vi_end, next;
-    tie(vi, vi_end) = vertices(g.g);
-    for (next = vi; vi != vi_end; vi = next) {
-        Graph_t::out_edge_iterator ei, end;
-        tie(ei,end) = out_edges(*vi, g.g);
-        for(; ei != end; ei++) {
-            std::cout << edgeType2str(g.g[*ei].type) << " ";
-            count++;
-        }
-        std::cout << std::endl;
-        ++next;
-    }
-   
-    EdgeList l = g.listEdges(CarEdge);
+
+    EdgeList edges = dijkstra(174, 92, 0, 0, g);
     EdgeList::iterator it;
-    for(it = l.begin(); it != l.end() ; it++) {
-        std::cout << edgeType2str(g.mapEdge(*it).type) << " ";
+    for(it = edges.begin(); it != edges.end() ; it++) {
+        std::cout << "(" << g.sourceNode(*it) <<" "<<*it<<" "<<g.targetNode(*it) <<") ";
     }
+    
+    /*
+    RLC_test(g);
+    RegLCGraph rlc(g, default_dfa());
+    
+    RLCVertice orig(13763823, 2);
+    uint conv = rlc.toInt(orig);
+    RLCVertice fin = rlc.toVertice(conv);
+    
+    cerr << orig.first <<" "<< fin.first <<" "<<orig.second <<" "<< fin.second <<" \n";
+    BOOST_ASSERT(orig.first == fin.first);
+    BOOST_ASSERT(orig.second == fin.second);
     */
-    //std::cout << "\nTraversed "<<count<<" edges\n";
-    
-    dijkstra(234, 238, g);
-    
+  
     return 0;
 }

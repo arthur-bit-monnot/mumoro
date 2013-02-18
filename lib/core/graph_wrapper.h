@@ -26,13 +26,12 @@
 #include <bitset>
 
 #ifndef GRAPH_WRAPPER_H
-
 #define GRAPH_WRAPPER_H
 
 typedef enum {Foot, Bike, Car, PublicTransport} Mode;
 typedef enum { FootEdge = 0, BikeEdge = 1, CarEdge = 2, SubwayEdge = 3, 
                BusEdge = 4, TramEdge = 5, TransferEdge = 6, UnknownEdgeType = 7, 
-               WhateverEdge = 8 } EdgeType;
+               WhateverEdge = 8 } EdgeMode;
 typedef std::bitset<128> Services;
 typedef boost::tuple<float, float, Services> Time;
 
@@ -69,6 +68,7 @@ void serialize(Archive &ar, Time &t, const unsigned int version)
 
 class Duration
 {
+public:
     int const_duration;
     std::vector<Time> timetable;
 public:
@@ -105,7 +105,7 @@ struct Edge
     float cost;
     float line_change;
     float co2;
-    EdgeType type;
+    EdgeMode type;
     Duration duration;
             template<class Archive>
             void serialize(Archive& ar, const unsigned int version)
@@ -125,13 +125,13 @@ struct Graph
     Graph(int nb_nodes);
     Graph(const std::string & filename);
     void add_edge(int source, int target, const Edge & e);
-    bool public_transport_edge(int source, int target, float start, float arrival, const std::string & services, const EdgeType type = UnknownEdgeType);
+    bool public_transport_edge(int source, int target, float start, float arrival, const std::string & services, const EdgeMode type = UnknownEdgeType);
     bool dijkstra(int source, int target);
     void save(const std::string & filename) const;
     void load(const std::string & filename);
     void sort();
     
-    EdgeList listEdges(const EdgeType type = WhateverEdge);
+    EdgeList listEdges(const EdgeMode type = WhateverEdge);
     Edge mapEdge(const int edge);
     int sourceNode(const int edge);
     int targetNode(const int edge);

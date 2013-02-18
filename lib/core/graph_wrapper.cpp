@@ -27,7 +27,7 @@ Edge::Edge() : edge_index(-1), elevation(0), mode_change(0), cost(0), line_chang
 {
 }
 
-Duration::Duration(float d) : const_duration(d) {}
+Duration::Duration(float d) : const_duration(d) { std::cout<<const_duration <<"\n";}
 
 Duration::Duration() : const_duration(-1) {}
 
@@ -53,8 +53,7 @@ void Duration::sort()
 float Duration::operator()(float start, int day) const
 {
     float next_day = 0;
-    int run = 0;
-    if (const_duration >= 0)
+    if (const_duration >= 0) 
         return start + const_duration;
     else
     {
@@ -105,8 +104,10 @@ void Graph::initEdgeIndexes() {
     edges_vec.resize(num_edges(g));
     int index = 0;
     BOOST_FOREACH(edge_t e, boost::edges(g)) {
-        edges_vec.push_back(e);
-        g[e].edge_index = index++; 
+        edges_vec[index] = e;
+        g[e].edge_index = index; 
+        BOOST_ASSERT(edges_vec[index] == e);
+        index++;
     }
 }
 
@@ -115,7 +116,7 @@ void Graph::add_edge(int source, int target, const Edge & e)
     boost::add_edge(source, target, e, g);
 }
 
-bool Graph::public_transport_edge(int source, int target, float start, float arrival, const std::string & services, const EdgeType type)
+bool Graph::public_transport_edge(int source, int target, float start, float arrival, const std::string & services, const EdgeMode type)
 {
     edge_t e;
     bool b;
@@ -213,7 +214,7 @@ void Graph::save(const std::string & filename) const
     oArchive << g;
 }
 
-EdgeList Graph::listEdges(const EdgeType type)
+EdgeList Graph::listEdges(const EdgeMode type)
 {
     EdgeList edgeList;
     int index = 0;

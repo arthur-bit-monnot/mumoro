@@ -9,12 +9,12 @@ struct Compare;
 struct node_ptr
 {
   int index;    // index of the string
-  float time; // current distance
+//   float time; // current distance
 
-  explicit node_ptr(int idx): index(idx), time(9999999999.0) {}
-  void operator= (float t) { time = t; }
+  explicit node_ptr(int idx): index(idx) {}
+//   void operator= (float t) { time = t; }
 
-  bool operator< (node_ptr const& np) const { return time > np.time; }
+//   bool operator< (node_ptr const& np) const { return time > np.time; }
 };
 
 struct Compare
@@ -26,6 +26,8 @@ struct Compare
         return vec[a.index] > vec[b.index];
     }
 };
+
+EdgeList dijkstra(int start, int destination, float dep_sec, int dep_day, Graph g);
 
 
 

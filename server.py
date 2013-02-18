@@ -304,111 +304,12 @@ class Mumoro:
 
     @cherrypy.expose
     def path(self, slon, slat, dlon, dlat, time):
-        u_obj = []
-        #Creates the union of all used objectives
-        for p in paths_array:
-            for o in p['objectives'] :
-                if not o in u_obj:
-                    u_obj.append( o )
-        u_obj = self.sort_objectives( u_obj )
-        p = tuple()
-        c = self.analyse_date( time )
-        #Call martins with the sorted objectives
-        for y in paths_array:
-            s = self.g.match( y['starting_layer']['name'], float(slon), float(slat))
-            d = self.g.match( y['destination_layer']['name'], float(dlon), float(dlat))
-            tmp = y['objectives']
-            tmp = self.sort_objectives( tmp )
-            t = len( tmp )
-            print c['seconds'], c['days']
-            if t == 0:
-                p = p + self.normalise_paths( mumoro.martins(s, d, self.g.graph,c['seconds'], c['days']),[],u_obj )
-            elif t == 1:
-                p = p + self.normalise_paths( mumoro.martins(s, d, self.g.graph,c['seconds'], c['days'], tmp[0] ), [ tmp[0] ], u_obj )
-            elif t == 2:
-                p = p + self.normalise_paths( mumoro.martins(s, d, self.g.graph,c['seconds'], c['days'], tmp[0], tmp[1] ), [ tmp[0], tmp[1] ], u_obj )
-            elif t >= 3:
-                p = p + self.normalise_paths( mumoro.martins(s, d, self.g.graph,c['seconds'], c['days'], tmp[0], tmp[1], tmp[2] ), [ tmp[0], tmp[1], tmp[2] ], u_obj )
-        #Creates the array containing the user-oriented string for each objective
-        str_obj = ['Duration']
-        for j in u_obj:
-            if j == mumoro.dist:
-                str_obj.append( 'Distance' )
-            elif j == mumoro.cost:
-                str_obj.append( 'Cost' )
-            elif j == mumoro.elevation:
-                str_obj.append( 'Elevation ' )
-            elif j == mumoro.co2:
-                str_obj.append( 'CO2 Emission' )
-            elif j == mumoro.mode_change:
-                str_obj.append( 'Mode Change' )
-            elif j == mumoro.line_change:
-                str_obj.append( 'Line Change' )
-        cherrypy.response.headers['Content-Type']= 'application/json'
-        if len(p) == 0:
-            return json.dumps({'error': 'No route found'})
-        print "Len of routes " + str( len( p ) )
-        ret = {
-                'objectives': str_obj,
-                'paths': []
-                }
-        for path in p:
-            p_str = {
-                    'cost': [],
-                    'type': 'FeatureCollection',
-                    'crs': {
-                        'type': 'EPSG',
-                        'properties': {
-                            'code': 4326,
-                            'coordinate_order': [1,0]
-                            }
-                        }
-                    }
-            for c in path.cost:
-                p_str['cost'].append(c)
-
-            features = []
-            feature = {'type': 'feature'}
-            geometry = {'type': 'Linestring'}
-            coordinates = []
-            last_node = path.nodes[0]
-            last_coord = self.g.coordinates(last_node)
-            for node in path.nodes:
-                coord = self.g.coordinates(node)
-                if(last_coord[3] != coord[3]):
-                    geometry['coordinates'] = coordinates
-                    feature['geometry'] = geometry
-                    feature['properties'] = {'layer': last_coord[3]}
-                    features.append(feature)
-
-                    feature = {'type': 'feature'}
-                    geometry = {'type': 'Linestring'}
-                    coordinates = []
-
-                    connection = {
-                            'type': 'feature',
-                            'geometry': {
-                                'type': 'Linestring',
-                                'coordinates': [[last_coord[0], last_coord[1]], [coord[0], coord[1]]]
-                                },
-                            'properties': {'layer': 'connection'}
-                            }
-                    features.append(connection);
-                last_node = node
-                last_coord = coord
-                coordinates.append([coord[0], coord[1]])
-            geometry['coordinates'] = coordinates
-            feature['geometry'] = geometry
-            feature['properties'] = {'layer': last_coord[3]}
-            features.append(feature)
-            p_str['features'] = features
-            ret['paths'].append(p_str)
-            
-            print ret
-        #return json.dumps(ret)
-        return self.edgesToFeatures( mum.g.graph.listEdges(mumoro.TransferEdge) )
-    
-    
+        start = self.g.match( 'Street', float(slon), float(slat))
+        dest = self.g.match( 'Street', float(dlon), float(dlat))
+        date = self.analyse_date( time )
+        print "Searching path from {0} to {1} at time {2} on day {3}".format(start, dest, date['seconds'], date['days'])
+        edges = mumoro.dijkstra( start, dest, date['seconds'], date['days'], self.g.graph ) #date['seconds'] )
+        return self.edgesToFeatures( edges )
     
     @cherrypy.expose
     def bikes(self):
@@ -607,17 +508,19 @@ class Mumoro:
     def edgeFeatures(self, restriction):
         edges = None
         if not restriction or restriction == '':
-            edges = mum.g.graph.listEdges()
+            edges = self.g.graph.listEdges()
         elif restriction == 'Bus':
-            edges = mum.g.graph.listEdges(mumoro.BusEdge)
+            edges = self.g.graph.listEdges(mumoro.BusEdge)
         elif restriction == 'Bike':
-            edges = mum.g.graph.listEdges(mumoro.BikeEdge)
+            edges = self.g.graph.listEdges(mumoro.BikeEdge)
         elif restriction == 'Foot':
-            edges = mum.g.graph.listEdges(mumoro.FootEdge)
+            edges = self.g.graph.listEdges(mumoro.FootEdge)
+        elif restriction == 'Car':
+            edges = self.g.graph.listEdges(mumoro.CarEdge)
         elif restriction == 'Subway':
-            edges = mum.g.graph.listEdges(mumoro.SubwayEdge)
+            edges = self.g.graph.listEdges(mumoro.SubwayEdge)
         elif restriction == 'Transfer':
-            edges = mum.g.graph.listEdges(mumoro.TransferEdge)
+            edges = self.g.graph.listEdges(mumoro.TransferEdge)
         return self.edgesToFeatures(edges)
 
     def edgesToFeatures(self, edges):
@@ -682,9 +585,13 @@ cherrypy.config.update({
     'server.socket_port': listening_port,
     'server.socket_host': '0.0.0.0'
 })
-mum = Mumoro(db_type + ":///" + db_params,sys.argv[1],admin_email,web_url)
+#mum = Mumoro(db_type + ":///" + db_params,sys.argv[1],admin_email,web_url)
 
-mum.edgesToFeatures( mum.g.graph.listEdges(mumoro.CarEdge) )
+#e = mum.g.graph.mapEdge( 3983 )
+#print e.duration(375, 0)
+#print e.duration(376, 0)
+#print e.type
+#print e.duration.const_duration
 
 cherrypy.quickstart(Mumoro(db_type + ":///" + db_params,sys.argv[1],admin_email,web_url), '/', config={
     '/': {

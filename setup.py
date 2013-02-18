@@ -15,7 +15,11 @@ setup(name='Mumoro',
       py_modules = ['server', 'data_import', 'web', 'lib'],
       ext_modules = [
           Extension("lib.core._mumoro",
-              sources=["lib/core/martins.cpp", "lib/core/graph_wrapper.cpp", "lib/core/mumoro.i"],
+              sources=["lib/core/martins.cpp", 
+                       "lib/core/graph_wrapper.cpp", 
+                       "lib/core/path_algo.cpp", 
+                       "lib/core/reglc_graph.cpp",
+                       "lib/core/mumoro.i"],
               swig_opts=['-c++'],
               include_dirs=['lib/core/'],
               libraries = ["boost_serialization"])

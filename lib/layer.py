@@ -31,6 +31,7 @@ class DataIncoherence(Exception):
     pass
  
 def duration(length, property, type):
+    print length
     if type == mumoro.FootEdge:
         if property == 0:
             raise NotAccessible()
