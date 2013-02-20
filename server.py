@@ -20,7 +20,7 @@
 
 
 from lib.core import mumoro
-from lib.core.mumoro import Bike, Car, Foot, PublicTransport, cost, co2, dist, elevation, line_change, mode_change, Costs
+from lib.core.mumoro import Bike, Car, Foot, PublicTransport
 from lib import layer
 
 from lib import bikestations as bikestations
@@ -308,7 +308,7 @@ class Mumoro:
         dest = self.g.match( 'Street', float(dlon), float(dlat))
         date = self.analyse_date( time )
         print "Searching path from {0} to {1} at time {2} on day {3}".format(start, dest, date['seconds'], date['days'])
-        edges = self.reglc_dij_path( start, dest, date['seconds'], date['days'], self.g.graph )
+        edges = self.regular_dij_path( start, dest, date['seconds'], date['days'], self.g.graph )
         return self.edgesToFeatures( edges )
     
     def regular_dij_path(self, start, dest, secs, day, graph ):
@@ -317,8 +317,8 @@ class Mumoro:
     def reglc_dij_path(self, start, dest, secs, day, graph ):
         rlc = mumoro.RegLCGraph(graph, mumoro.all_dfa())
         dij = mumoro.Dijkstra(rlc, start, dest, secs, day)
-        return dij.run()
-        return dij.touched_edges
+        dij.run()
+        return dij.get_transport_path()
     
     @cherrypy.expose
     def bikes(self):
@@ -471,23 +471,6 @@ class Mumoro:
             else:
                 print lon,lat, b
         return False
-
-    def sort_objectives(self,obj):
-        res = []
-        #Sorts the objective array in a unique way
-        if mumoro.cost in obj:
-            res.append( mumoro.cost )
-        if mumoro.co2 in obj:
-            res.append( mumoro.co2 )
-        if mumoro.dist in obj:
-            res.append( mumoro.dist )
-        if mumoro.elevation in obj and len( res ) < 3:
-            res.append( mumoro.elevation )
-        if mumoro.line_change in obj and len( res ) < 3:
-            res.append( mumoro.line_change )  
-        if mumoro.mode_change in obj and len( res ) < 3:
-            res.append( mumoro.mode_change )
-        return res
 
     def normalise_paths(self,route,used_objectives,union_objectives):
         for i in route:

@@ -43,7 +43,7 @@ street = mixed_street_layer( data = osm_data, name = 'Street', color = '#842DCE'
 tisseo = public_transport_layer( data = tisseo_data, name = 'Metro Tisseo', color = '#4CC417' )
 
 #paths( foot, foot, [ mode_change, line_change ] )
-paths( street, street, [ dist ] )
+paths( street, street, [  ] )
 
 
 #Creates a transit cost variable, including the duration in seconds of the transit and if the mode is changed (True or False)

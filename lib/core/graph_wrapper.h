@@ -100,18 +100,12 @@ struct Edge
 {
     Edge();
     int edge_index;
-    float distance;
-    float elevation;
-    float mode_change;
-    float cost;
-    float line_change;
-    float co2;
     EdgeMode type;
     Duration duration;
             template<class Archive>
             void serialize(Archive& ar, const unsigned int version)
             {
-                ar & edge_index & distance & elevation & mode_change & line_change & co2 & type & duration;
+                ar & edge_index & type & duration;
             }
 
 };

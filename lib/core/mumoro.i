@@ -5,20 +5,16 @@
  %include "std_set.i"
 
  %{
- #include "martins.h"
  #include "graph_wrapper.h"
  #include "path_algo.h"
  #include "reglc_graph.h"
   %}
-
- %template(Paths) std::vector<Path>;
- %template(Costs) std::vector<float>;
- %template(Nodes) std::list<int>;
+  
+  %template(EdgeList) std::list<int>;
 
  %rename(RLC_Compare) RLC::Compare;
 
  // Parse the original header file
- %include "martins.h"
  %include "graph_wrapper.h" 
  %include "path_algo.h"
  %include "reglc_graph.h"

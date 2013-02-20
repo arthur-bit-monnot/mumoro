@@ -49,7 +49,7 @@ void print_edge(edge_t e, Graph_t g)
     cout << "("<< source(e, g) <<", "<< target(e, g) <<", "<<g[e].type<<", "<<g[e].duration(0,0)<<")   ";
 }
 
-Edge::Edge() : edge_index(-1), elevation(0), mode_change(0), cost(0), line_change(0), co2(0), type(UnknownEdgeType)
+Edge::Edge() : edge_index(-1), type(UnknownEdgeType)
 {
 }
 

@@ -28,31 +28,9 @@ IF(TESTS)
     IF(VERBOSE)
         target_link_libraries( core debug cwd )
     ENDIF(VERBOSE)
+    
+    add_subdirectory(test)
 ENDIF(TESTS)
 
 
 
-# FIND_PACKAGE(Boost)
-# IF (Boost_FOUND)
-#     INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
-#     ADD_DEFINITIONS( "-DHAS_BOOST" )
-# ENDIF()
-# 
-# FIND_PACKAGE(SWIG REQUIRED)
-# SET (UseSWIG ON)
-# 
-# INCLUDE(${SWIG_USE_FILE})
-# 
-# FIND_PACKAGE(PythonLibs)
-# INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
-# 
-# INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
-# 
-# SET(CMAKE_SWIG_FLAGS "")
-# 
-# SET_SOURCE_FILES_PROPERTIES(mumoro.i PROPERTIES CPLUSPLUS ON)
-# SET_SOURCE_FILES_PROPERTIES(mumoro.i PROPERTIES SWIG_FLAGS "-includeall")
-# 
-# SWIG_ADD_MODULE(mumoro python mumoro.i graph_wrapper.cpp)
-# SWIG_LINK_LIBRARIES(mumoro ${PYTHON_LIBRARIES})
-add_subdirectory(test)
