@@ -7,11 +7,30 @@ SET(core_SOURCES
    )
    
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g -DCWDEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g")
 
-add_executable(path-exe ${core_SOURCES})
-target_link_libraries(path-exe boost_serialization)
-target_link_libraries( path-exe debug cwd)
+IF(VERBOSE)
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DCWDEBUG")
+ENDIF(VERBOSE)
+
+
+add_executable(path-exe ${core_SOURCES} main.cpp)
+target_link_libraries( path-exe boost_serialization)
+IF(VERBOSE)
+  target_link_libraries( path-exe debug cwd)
+ENDIF(VERBOSE)
+
+# Build a library containing core for tests
+IF(TESTS)
+    add_library(core ${core_SOURCES})
+    target_link_libraries( core boost_serialization )
+    
+    IF(VERBOSE)
+        target_link_libraries( core debug cwd )
+    ENDIF(VERBOSE)
+ENDIF(TESTS)
+
+
 
 # FIND_PACKAGE(Boost)
 # IF (Boost_FOUND)
@@ -36,3 +55,4 @@ target_link_libraries( path-exe debug cwd)
 # 
 # SWIG_ADD_MODULE(mumoro python mumoro.i graph_wrapper.cpp)
 # SWIG_LINK_LIBRARIES(mumoro ${PYTHON_LIBRARIES})
+add_subdirectory(test)

@@ -19,6 +19,12 @@ On ubuntu or debian, please install the developpment versions
 * Python
 * Swig: for interfacing python
 
+== Optional Dependencies ==
+For Debug output, you need the following the developpment version of :
+* cwd (libcwd-dev on Debian-based distributions)
+For Unit-testing :
+* Boost Testing (libboost-test-dev on Debian-based distributions)
+
 == How to install ==
 # Just run the following command
 sudo python setup.py install

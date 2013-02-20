@@ -1,12 +1,18 @@
 cmake_minimum_required (VERSION 2.6)
 project (MUMORO) 
 
+OPTION(VERBOSE "Debug output with CWD" OFF)
+OPTION(TESTS   "Build tests"           OFF)
+
+IF(TESTS)
+    ENABLE_TESTING()
+ENDIF(TESTS)
 
 
 add_subdirectory (lib)
 
-set(CMAKE_CXX_FLAGS Wall)
-
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g")
 
 
 # FIND_PACKAGE(SWIG REQUIRED)

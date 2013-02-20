@@ -31,7 +31,7 @@ class RegLCGraph
 {
 public:
     RegLCGraph(Graph g, DFA dfa);
-    Graph g;
+    Graph transport;
     DFA dfa;
     
     
@@ -89,8 +89,30 @@ public:
     Dijkstra(RegLCGraph *graph, int source, int dest, float start_sec, int start_day);
     ~Dijkstra();
     
-    std::list<int> run();
+    bool run();
     
+
+    
+    
+    float **arr_times;
+    Heap::handle_type **references;
+    RLCEdge **predecessors;
+    uint **status; //TODO : very big for only two bits ...
+    
+    int source;
+    int dest;
+    float start_sec;
+    int start_day;
+    bool path_found;
+    Heap heap;
+    
+    std::list< int > touched_edges;
+    float path_arrival;
+    std::list< RLCEdge > path;
+    
+    EdgeList get_transport_path();
+    
+private:
     inline float arrival(RLCVertice v) { return arr_times[v.second][v.first]; }
     inline void set_arrival(RLCVertice v, float time) { arr_times[v.second][v.first] = time; }
     
@@ -111,21 +133,6 @@ public:
     inline void set_white(RLCVertice v) { status[v.second][v.first] = 0; }
     inline void set_gray(RLCVertice v) { status[v.second][v.first] = 1; }
     inline void set_black(RLCVertice v) { status[v.second][v.first] = 2; }
-    
-    
-    float **arr_times;
-    Heap::handle_type **references;
-    RLCEdge **predecessors;
-    uint **status; //TODO : very big for only two bits ...
-    
-    int source;
-    int dest;
-    float start_sec;
-    int start_day;
-    
-    Heap heap;
-    
-    std::list< int > touched_edges;
 };
 
 
