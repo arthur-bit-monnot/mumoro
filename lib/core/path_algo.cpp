@@ -16,32 +16,6 @@ typedef boost::heap::fibonacci_heap<node_ptr, boost::heap::compare<Compare> > He
 using namespace boost;
 using namespace std;
 
-void print_edge(edge_t e, Graph_t g)
-{
-    cout << "("<< source(e, g) <<", "<< target(e, g) <<", "<<g[e].type<<", "<<g[e].duration(0,0)<<")   ";
-}
-
-const char* edgeType2str(EdgeMode type) {
-    if(type == FootEdge)
-        return "Foot";
-    else if(type == BikeEdge)
-        return "Bike";
-    else if(type == CarEdge)
-        return "Car";
-    else if(type == BusEdge)
-        return "Bus";
-    else if(type == TramEdge)
-        return "Tram";
-    else if(type == SubwayEdge)
-        return "Subway";
-    else if(type == TransferEdge)
-        return "--Transfer--";
-    else
-        return "------ Unknown -------";
-}
-
-
-
 
 EdgeList dijkstra(int start, int destination, float dep_sec, int dep_day, Graph g) {
     
@@ -131,7 +105,7 @@ EdgeList dijkstra(int start, int destination, float dep_sec, int dep_day, Graph 
 }
 
 
-
+/*
 int main() {
     
     Graph g("/home/arthur/LAAS/mumoro/3d12fc983d92949462bdc2c3c6a65670.dump");
@@ -142,7 +116,6 @@ int main() {
         std::cout << "(" << g.sourceNode(*it) <<" "<<*it<<" "<<g.targetNode(*it) <<") ";
     }
     
-    /*
     RLC_test(g);
     RegLCGraph rlc(g, default_dfa());
     
@@ -153,7 +126,7 @@ int main() {
     cerr << orig.first <<" "<< fin.first <<" "<<orig.second <<" "<< fin.second <<" \n";
     BOOST_ASSERT(orig.first == fin.first);
     BOOST_ASSERT(orig.second == fin.second);
-    */
+
   
     return 0;
-}
+}*/

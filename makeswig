@@ -1,3 +1,5 @@
 #!/bin/bash
-swig -c++ -python lib/core/mumoro.i
+
+#swig -c++ -python lib/core/mumoro.i
+
 python setup.py build_ext --inplace && python server.py scenarios/toulouse-mixed.py

@@ -23,6 +23,32 @@
 #include <boost/graph/adj_list_serialize.hpp>
 #include <boost/foreach.hpp>
 
+using namespace std;
+
+const char* edgeTypeToString(EdgeMode type) {
+    if(type == FootEdge)
+        return "Foot";
+    else if(type == BikeEdge)
+        return "Bike";
+    else if(type == CarEdge)
+        return "Car";
+    else if(type == BusEdge)
+        return "Bus";
+    else if(type == TramEdge)
+        return "Tram";
+    else if(type == SubwayEdge)
+        return "Subway";
+    else if(type == TransferEdge)
+        return "--Transfer--";
+    else
+        return "------ Unknown -------";
+}
+
+void print_edge(edge_t e, Graph_t g)
+{
+    cout << "("<< source(e, g) <<", "<< target(e, g) <<", "<<g[e].type<<", "<<g[e].duration(0,0)<<")   ";
+}
+
 Edge::Edge() : edge_index(-1), elevation(0), mode_change(0), cost(0), line_change(0), co2(0), type(UnknownEdgeType)
 {
 }
@@ -64,7 +90,7 @@ float Duration::operator()(float start, int day) const
             float tt_start, tt_arrival;
             Services s;
             boost::tie(tt_start, tt_arrival, s) = *it;
-//            std::cout << s << " " << tt_start << " " << tt_arrival << std::endl;
+//             std::cout << s << " " << tt_start << " " << tt_arrival << " " << start << " " <<day<< std::endl;
             if (tt_start >= start && s[day])
             {
 //                std::cout << "Ret : " << tt_arrival << std::endl;

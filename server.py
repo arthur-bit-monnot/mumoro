@@ -308,8 +308,17 @@ class Mumoro:
         dest = self.g.match( 'Street', float(dlon), float(dlat))
         date = self.analyse_date( time )
         print "Searching path from {0} to {1} at time {2} on day {3}".format(start, dest, date['seconds'], date['days'])
-        edges = mumoro.dijkstra( start, dest, date['seconds'], date['days'], self.g.graph ) #date['seconds'] )
+        edges = self.reglc_dij_path( start, dest, date['seconds'], date['days'], self.g.graph )
         return self.edgesToFeatures( edges )
+    
+    def regular_dij_path(self, start, dest, secs, day, graph ):
+        return mumoro.dijkstra( start, dest, secs, day, graph )
+    
+    def reglc_dij_path(self, start, dest, secs, day, graph ):
+        rlc = mumoro.RegLCGraph(graph, mumoro.all_dfa())
+        dij = mumoro.Dijkstra(rlc, start, dest, secs, day)
+        return dij.run()
+        return dij.touched_edges
     
     @cherrypy.expose
     def bikes(self):

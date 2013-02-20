@@ -15,7 +15,7 @@
  %template(Costs) std::vector<float>;
  %template(Nodes) std::list<int>;
 
-
+ %rename(RLC_Compare) RLC::Compare;
 
  // Parse the original header file
  %include "martins.h"

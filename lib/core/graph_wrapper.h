@@ -35,6 +35,7 @@ typedef enum { FootEdge = 0, BikeEdge = 1, CarEdge = 2, SubwayEdge = 3,
 typedef std::bitset<128> Services;
 typedef boost::tuple<float, float, Services> Time;
 
+const char* edgeTypeToString(EdgeMode type);
 
 struct No_traffic{};
 
@@ -118,6 +119,8 @@ struct Edge
 typedef boost::adjacency_list<boost::listS, boost::vecS, boost::directedS, Node, Edge > Graph_t;
 typedef boost::graph_traits<Graph_t>::edge_descriptor edge_t;
 typedef std::list<int> EdgeList;
+
+void print_edge(edge_t e, Graph_t g);
 
 struct Graph
 {

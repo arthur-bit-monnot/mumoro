@@ -2,12 +2,16 @@ SET(core_SOURCES
     path_algo.cpp 
     graph_wrapper.cpp
     reglc_graph.cpp
+    debug/cwd_debug.cc
+    debug/stack_trace.cpp
    )
    
-set(CMAKE_CXX_FLAGS -Wall)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g -DCWDEBUG")
 
 add_executable(path-exe ${core_SOURCES})
 target_link_libraries(path-exe boost_serialization)
+target_link_libraries( path-exe debug cwd)
 
 # FIND_PACKAGE(Boost)
 # IF (Boost_FOUND)

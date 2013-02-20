@@ -1,10 +1,17 @@
 #ifndef REGLC_GRAPH_H
 #define REGLC_GRAPH_H
 
+#include <boost/heap/fibonacci_heap.hpp>
+#include <boost/foreach.hpp> //TODO : remove when not used
+
 #include "graph_wrapper.h"
+
 
 // TODO : this type def should be a tuple and the third part shoul be a EdgeMode.
 // It is done this way to workaround problems with SWIG
+
+namespace RLC {
+
 typedef std::pair<std::pair<int, int>, int> DfaEdge;
 typedef std::vector<DfaEdge> DfaEdgeList;
 
@@ -51,25 +58,85 @@ public:
     
     /**
      * Return the maximum index of a vertice in this graph
-     */
-    int max_vertices() { return (int) _max_vertices; }
-    
-    
-    RLCVertice toVertice(uint composed_vertice);
-    uint toInt(RLCVertice vertice);
-    
-private:
-    const uint _max_vertices;
-    uint vertice_conv_mask;
-    const uint length_dfa;
-    const uint length_graph;
+     */    
+};
+
+
+
+struct Dij_node 
+{
+    RLCVertice v;
+};
+
+struct Compare
+{
+    float ***vec;
+    Compare() {}
+    Compare(float *** dist) { vec = dist; }
+    bool operator()(Dij_node a, Dij_node b) const
+    {
+        return (*vec)[a.v.second][a.v.first] > (*vec)[b.v.second][b.v.first];
+    }
     
 };
 
+typedef boost::heap::fibonacci_heap<Dij_node, boost::heap::compare<Compare> > Heap;
+
+class Dijkstra
+{
+    RegLCGraph *graph;
+public:
+    Dijkstra(RegLCGraph *graph, int source, int dest, float start_sec, int start_day);
+    ~Dijkstra();
+    
+    std::list<int> run();
+    
+    inline float arrival(RLCVertice v) { return arr_times[v.second][v.first]; }
+    inline void set_arrival(RLCVertice v, float time) { arr_times[v.second][v.first] = time; }
+    
+    inline Heap::handle_type dij_node(RLCVertice v) { return references[v.second][v.first]; }
+    inline void put_dij_node(RLCVertice v) { 
+        Dij_node n;
+        n.v = v;
+        references[v.second][v.first] = heap.push(n); //PB
+    }
+    inline void set_pred(RLCVertice v, RLCEdge pred) { predecessors[v.second][v.first] = pred; }
+    inline RLCEdge get_pred(RLCVertice v) { return predecessors[v.second][v.first]; }
+    
+    inline Heap::handle_type handle(RLCVertice v) { return references[v.second][v.first]; }
+    
+    inline bool white(RLCVertice v) { return status[v.second][v.first] == 0; }
+    inline bool gray(RLCVertice v) { return status[v.second][v.first] == 1; }
+    inline bool black(RLCVertice v) { return status[v.second][v.first] == 2; }
+    inline void set_white(RLCVertice v) { status[v.second][v.first] = 0; }
+    inline void set_gray(RLCVertice v) { status[v.second][v.first] = 1; }
+    inline void set_black(RLCVertice v) { status[v.second][v.first] = 2; }
+    
+    
+    float **arr_times;
+    Heap::handle_type **references;
+    RLCEdge **predecessors;
+    uint **status; //TODO : very big for only two bits ...
+    
+    int source;
+    int dest;
+    float start_sec;
+    int start_day;
+    
+    Heap heap;
+    
+    std::list< int > touched_edges;
+};
+
+
+DFA foot_subway_dfa();
+DFA all_dfa();
+
+}
+
 /********** Test and temporary functions *********/
 
-DFA default_dfa();
-void RLC_test(Graph g);
+
 
 
 #endif
