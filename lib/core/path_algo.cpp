@@ -1,3 +1,5 @@
+#include "debug/cwd_sys.h"
+
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/heap/fibonacci_heap.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -17,7 +19,7 @@ using namespace boost;
 using namespace std;
 
 
-EdgeList dijkstra(int start, int destination, float dep_sec, int dep_day, Graph g) {
+EdgeList dijkstra(int start, int destination, float dep_sec, int dep_day, Transport::Graph g) {
     
     clock_t start_cpu_time, end_cpu_time;
     double cpu_time_used;
@@ -117,11 +119,11 @@ int main() {
     }
     
     RLC_test(g);
-    RegLCGraph rlc(g, default_dfa());
+    Graph rlc(g, default_dfa());
     
-    RLCVertice orig(13763823, 2);
+    RLC::Vertice orig(13763823, 2);
     uint conv = rlc.toInt(orig);
-    RLCVertice fin = rlc.toVertice(conv);
+    RLC::Vertice fin = rlc.toVertice(conv);
     
     cerr << orig.first <<" "<< fin.first <<" "<<orig.second <<" "<< fin.second <<" \n";
     BOOST_ASSERT(orig.first == fin.first);

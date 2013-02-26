@@ -9,12 +9,12 @@ db_type = 'sqlite'
 #For user oriented databases : 'username:password@host:port/database'
 #Port can be excluded (default one depending on db_type will be used) : 'username:password@host/database'
 #For SQLiTE : 'file_name.db' for relative path or absolute : '/data/guidage/file_name.db'
-db_params = data_dir + 'DB/toulouse-mixed.db'
+db_params = data_dir + 'DB/midi-pyrennees.db'
 
 #Load street data from (compressed or not) osm file(s)
 #-----------------------------------------------------
 
-osm_data = import_street_data (data_dir + "OSM/toulouse-centre.osm")
+osm_data = import_street_data (data_dir + "OSM/mp-filtered.osm")
 #osm_data = data_dir + "OSM/toulouse-centre.osm"
 
 
@@ -26,9 +26,9 @@ osm_data = import_street_data (data_dir + "OSM/toulouse-centre.osm")
 #starting_date and end_date MUST be defined if municipal data is imported
 #------------------------------------------------------------------------------------------------------------------
 start_date = '20130208'
-end_date = '20130308'
+end_date = '20130310'
 
-tisseo_data = import_gtfs_data( data_dir + 'GTFS/tisseo-metro-gtfs.zip', 'Tisseo' )
+tisseo_data = import_gtfs_data( data_dir + 'GTFS/tisseo-raw.zip', 'Tisseo' )
 
 
 #Create relevant layers from previously imported data (origin paramater) with a name, a color and the mode.
@@ -48,7 +48,7 @@ paths( street, street, [  ] )
 
 #Creates a transit cost variable, including the duration in seconds of the transit and if the mode is changed (True or False)
 #------------------------------------------------------------------------------------------------------------
-cost1 = transferEdge( duration = 120, mode_change = True )
+cost1 = transferEdge( duration = 60, mode_change = True )
 #cost2 = transferEdge( duration = 60, mode_change = False )
 
 #Connect 2 given layers on same nodes with the given cost(s)

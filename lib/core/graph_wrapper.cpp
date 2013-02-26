@@ -16,6 +16,8 @@
     © Université de Toulouse 1 2010
     Author: Tristram Gräbener*/
 
+#include "debug/cwd_sys.h"
+
 #include "graph_wrapper.h"
 #include <iostream>
 #include <fstream>
@@ -53,7 +55,7 @@ Edge::Edge() : edge_index(-1), type(UnknownEdgeType)
 {
 }
 
-Duration::Duration(float d) : const_duration(d) { std::cout<<const_duration <<"\n";}
+Duration::Duration(float d) : const_duration(d) { }
 
 Duration::Duration() : const_duration(-1) {}
 
@@ -90,10 +92,8 @@ float Duration::operator()(float start, int day) const
             float tt_start, tt_arrival;
             Services s;
             boost::tie(tt_start, tt_arrival, s) = *it;
-//             std::cout << s << " " << tt_start << " " << tt_arrival << " " << start << " " <<day<< std::endl;
             if (tt_start >= start && s[day])
             {
-//                std::cout << "Ret : " << tt_arrival << std::endl;
                 return tt_arrival;
             }
             if (next_day != 0 && s[day+1])
@@ -103,23 +103,26 @@ float Duration::operator()(float start, int day) const
         }
         if(next_day > 0)
         {
-//            std::cout << "Next day: " << next_day << std::endl;
+//             std::cout << "Next day: " << next_day << std::endl;
             return next_day;
         }
         else 
         {
-//            std::cout << "No traffic on day " << day << std::endl;
+//             return -1.0f;
+//             std::cout << "No traffic on day " << day << std::endl;
             throw No_traffic();
         }
     }
 }
+
+namespace Transport {
 
 Graph::Graph(const std::string & filename)
 {
     load(filename);
 }
 
-Graph::Graph(int nb_nodes) : g(nb_nodes)
+Graph::Graph(int nb_nodes) : g(nb_nodes+1)
 {
 }
 
@@ -280,3 +283,5 @@ int Graph::targetNode(const int edge)
 {
     return target(this->edge_descriptor(edge), g);
 }
+
+} // end namespace Transport

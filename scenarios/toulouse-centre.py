@@ -9,7 +9,7 @@ db_type = 'sqlite'
 #For user oriented databases : 'username:password@host:port/database'
 #Port can be excluded (default one depending on db_type will be used) : 'username:password@host/database'
 #For SQLiTE : 'file_name.db' for relative path or absolute : '/data/guidage/file_name.db'
-db_params = data_dir + 'DB/toulouse-centre.db'
+db_params = data_dir + 'DB/test-toulouse-centre.db'
 
 #Load street data from (compressed or not) osm file(s)
 #-----------------------------------------------------
@@ -25,8 +25,8 @@ osm_data = import_street_data (data_dir + "OSM/toulouse-centre.osm")
 #starting_date & end_date in this format : 'YYYYMMDD' Y for year's digists, M for month's and D for day's
 #starting_date and end_date MUST be defined if municipal data is imported
 #------------------------------------------------------------------------------------------------------------------
-start_date = '20120701'
-end_date = '20131229'
+start_date = '20130208'
+end_date = '20130329'
 
 tisseo_data = import_gtfs_data( data_dir + 'GTFS/tisseo-metro-gtfs.zip', 'Tisseo' )
 #tisseo_data = data_dir + 'GTFS/tisseo-metro-gtfs.zip'

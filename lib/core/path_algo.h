@@ -23,6 +23,6 @@ struct Compare
     }
 };
 
-EdgeList dijkstra(int start, int destination, float dep_sec, int dep_day, Graph g);
+EdgeList dijkstra(int start, int destination, float dep_sec, int dep_day, Transport::Graph g);
 
 #endif

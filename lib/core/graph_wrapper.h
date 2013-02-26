@@ -37,6 +37,8 @@ typedef boost::tuple<float, float, Services> Time;
 
 const char* edgeTypeToString(EdgeMode type);
 
+
+
 struct No_traffic{};
 
 namespace boost { namespace serialization {
@@ -66,6 +68,8 @@ void serialize(Archive &ar, Time &t, const unsigned int version)
 }
 }
 } 
+
+
 
 class Duration
 {
@@ -116,6 +120,8 @@ typedef std::list<int> EdgeList;
 
 void print_edge(edge_t e, Graph_t g);
 
+namespace Transport {
+
 struct Graph
 {
     Graph_t g;
@@ -140,5 +146,7 @@ private:
 };
 
 const int invalid_node = -1;
+
+} // end namespace Transport
 
 #endif

@@ -31,7 +31,6 @@ class DataIncoherence(Exception):
     pass
  
 def duration(length, property, type):
-    print length
     if type == mumoro.FootEdge:
         if property == 0:
             raise NotAccessible()
@@ -93,7 +92,6 @@ class BaseLayer(object):
         return {'avg_lon':avg_lon, 'avg_lat':avg_lat }
  
     def match(self, ln, lt, epsilon = 0.002):
-        print "Trying to match {0}, {1}".format(ln, lt)
         ln = float(ln)
         lt = float(lt)
         res = self.nodes_table.select(
@@ -110,6 +108,7 @@ class BaseLayer(object):
             return None
 
     def nearest(self, ln, lt):
+        print "Trying to match {0}, {1}".format(ln, lt)
         nearest = None
         epsilon = 0.002
         while not nearest:
@@ -298,6 +297,7 @@ class MultimodalGraph(object):
             l.offset = nb_nodes
             nb_nodes += l.count
             self.node_to_layer.append((nb_nodes, l.name))
+            print "Layer " + l.name + " for nodes from " + str(l.offset) +" to "+ str(nb_nodes)
  
         self.graph = mumoro.Graph(nb_nodes)
  
@@ -340,7 +340,7 @@ class MultimodalGraph(object):
     def match(self, name, lon, lat):
         for l in self.layers:
             if l.name == name:
-                return l.match(lon, lat)
+                return l.nearest(lon, lat)
 
  
     def connect_same_nodes(self, layer1, layer2, property):
