@@ -24,6 +24,7 @@
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 #include <boost/graph/adj_list_serialize.hpp>
 #include <boost/foreach.hpp>
+#include <boost/assert.hpp>
 
 using namespace std;
 
@@ -78,20 +79,25 @@ void Duration::sort()
     }
 }
 
-float Duration::operator()(float start, int day) const
-{
+// TODO: remove when it won't be usefull for tests
+float Duration::seq_duration(float start, int day) const
+{ 
     float next_day = 0;
     if (const_duration >= 0) 
         return start + const_duration;
     else
     {
         std::vector<Time>::const_iterator it;
-
-        for(it = timetable.begin(); it != timetable.end(); it++)
-        {
+        int i=0;
+        BOOST_FOREACH(Time t, timetable) {
+//         for(it = timetable.begin(); it != timetable.end(); it++)
+//         {
             float tt_start, tt_arrival;
             Services s;
-            boost::tie(tt_start, tt_arrival, s) = *it;
+            boost::tie(tt_start, tt_arrival, s) = t;
+            if(timetable.size() == 126) {
+                cerr << i++ <<" "<<start<<" "<<tt_start <<" "<<tt_arrival<<" "<<endl;
+            }
             if (tt_start >= start && s[day])
             {
                 return tt_arrival;
@@ -103,15 +109,171 @@ float Duration::operator()(float start, int day) const
         }
         if(next_day > 0)
         {
-//             std::cout << "Next day: " << next_day << std::endl;
+            //             std::cout << "Next day: " << next_day << std::endl;
             return next_day;
         }
         else 
         {
-//             return -1.0f;
-//             std::cout << "No traffic on day " << day << std::endl;
+            return -1;
             throw No_traffic();
         }
+    }
+} 
+
+
+float Duration::operator()(float start, int day, bool backward) const
+{
+    if(backward) {
+        float ret = -1;
+        
+        if (const_duration >= 0) 
+            return start - const_duration;
+        else 
+        {
+            uint min = 0;
+            uint max = timetable.size()-1;
+            uint i = (max + min) /2;
+            
+            float tt_start, tt_arrival;
+            Services s;
+            boost::tie(tt_start, tt_arrival, s) = timetable[i];
+                
+            while(min != max) 
+            {
+                if(!(tt_arrival <= start)) 
+                {
+                    min = min;
+                    max = i;
+                    i = (max + min) /2;   
+                    
+                    boost::tie(tt_start, tt_arrival, s) = timetable[i];
+                    cerr << min <<" "<<max<<" "<<i<<" "<<timetable.size()<<" "<<start<<" "<<tt_arrival<<endl;
+                }
+                else 
+                {
+                    if(i==max) 
+                    {
+                        break;
+                    }
+                    else if(timetable[i+1].get<0>() > start)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        min = i+1;
+                        max = max;
+                        i = (min+max)/2;
+                        boost::tie(tt_start, tt_arrival, s) = timetable[i];
+                        cerr << min <<" "<<max<<" "<<i<<" "<<timetable.size()<<" "<<start<<" "<<tt_arrival<<endl;
+                    }
+                }
+            }
+            if(tt_arrival > start)
+                ret = -1;
+            else
+            {
+                bool found = false;
+                while(i >= 0) {
+                    boost::tie(tt_start, tt_arrival, s) = timetable[i];
+                    if(s[day]) 
+                    {
+                        found = true;
+                        break;
+                    }
+                    --i;
+                }
+                if(!found)
+                    ret = -1;
+                else 
+                    ret = tt_start;
+            }
+//             if(ret >= 0) {
+//                 float ret_seq = this->seq_duration(ret, day);
+//                 cerr << ret << " " << ret_seq << " " << start <<endl;
+//                 cerr << s[day] <<" "<< tt_start <<" "<<tt_arrival<< endl;
+//                 BOOST_ASSERT(ret <= start);
+//                 BOOST_ASSERT(this->seq_duration(ret, day) <= start);
+//                 BOOST_ASSERT(this->seq_duration(ret, day) == tt_arrival);
+//                 
+//                 BOOST_ASSERT(tt_arrival == ret_seq);
+//             }
+            return ret;
+        }
+    }
+    else // backward
+    {
+        float ret = -1;
+        
+        if (const_duration >= 0) 
+            return start + const_duration;
+        else 
+        {
+            uint min = 0;
+            uint max = timetable.size()-1;
+            uint i = (max + min) /2;
+            
+            float tt_start, tt_arrival;
+            Services s;
+            boost::tie(tt_start, tt_arrival, s) = timetable[i];
+                
+            while(min != max) 
+            {
+                if(!(tt_start >= start)) 
+                {
+                    min = i+1;
+                    max = max;
+                    i = (max + min) /2;   
+                    boost::tie(tt_start, tt_arrival, s) = timetable[i];
+                }
+                else 
+                {
+                    if(i==min) 
+                    {
+                        break;
+                    }
+                    else if(timetable[i-1].get<0>() < start)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        min = min;
+                        max = i-1;
+                        i = (min+max)/2;
+                        boost::tie(tt_start, tt_arrival, s) = timetable[i];
+                    }
+                }
+            }
+            if( start > tt_start)
+                ret = -1;
+            else
+            {
+                bool found = false;
+                while(i < timetable.size()) {
+                    boost::tie(tt_start, tt_arrival, s) = timetable[i];
+                    if(s[day]) 
+                    {
+                        found = true;
+                        break;
+                    }
+                    ++i;
+                }
+                if(!found)
+                    ret = -1;
+                else 
+                    ret = tt_arrival;
+            }
+            float ret_seq = this->seq_duration(start, day);
+                if(ret_seq != ret) {
+                    cerr << ret << " " << ret_seq << " " << start <<endl;
+                    cerr << s[day] <<" "<< tt_start <<" "<<tt_arrival<< endl;
+                }
+//             BOOST_ASSERT(ret == this->seq_duration(start, day));
+//             (*this)(ret, day, true);
+            return ret;
+        }
+        
     }
 }
 

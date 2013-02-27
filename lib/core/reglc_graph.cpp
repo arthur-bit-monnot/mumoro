@@ -162,10 +162,6 @@ Dijkstra::Dijkstra( Graph* graph, int source, int dest, float start_sec, int sta
 source(source), dest(dest), start_sec(start_sec), start_day(start_day), path_found(false),
 heap(Compare(&(this->arr_times)))
 {
-    
-    //TODO remove that
-    start_day = 15;
-    
     this->graph = graph;
     
     const int g_num_vert = num_vertices(graph->transport->g);

@@ -315,7 +315,7 @@ class Mumoro:
         return mumoro.dijkstra( start, dest, secs, day, graph )
     
     def reglc_dij_path(self, start, dest, secs, day, graph ):
-        rlc = mumoro.RLC_Graph(graph, mumoro.pt_foot_dfa())
+        rlc = mumoro.RLC_Graph(graph, mumoro.foot_subway_dfa())
         dij = mumoro.Dijkstra(rlc, start, dest, secs, day)
         dij.run()
         return dij.get_transport_path()
@@ -513,6 +513,8 @@ class Mumoro:
             edges = self.g.graph.listEdges(mumoro.SubwayEdge)
         elif restriction == 'Transfer':
             edges = self.g.graph.listEdges(mumoro.TransferEdge)
+        elif restriction == 'Tram':
+            edges = self.g.graph.listEdges(mumoro.TramEdge)
         return self.edgesToFeatures(edges)
 
     def edgesToFeatures(self, edges):

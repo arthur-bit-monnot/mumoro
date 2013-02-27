@@ -81,7 +81,8 @@ public:
     Duration(float const_duration);
     void append(float start, float arrival, const std::string & services);
     void sort();
-    float operator()(float start_time, int day) const;
+    float operator()(float start_time, int day, bool backward = false) const;
+    float seq_duration(float start, int day) const;
 
     template<class Archive>
         void serialize(Archive& ar, const unsigned int version)
