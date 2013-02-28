@@ -69,7 +69,9 @@ EdgeList dijkstra(int start, int destination, float dep_sec, int dep_day, Transp
                 cout << "("<<e.edge_index;
                 int target = boost::target(*ei, g.g);
                 
-                float dist = e.duration(distance[np.index], dep_day);
+                bool has_traffic;
+                int dist;
+                boost::tie(has_traffic, dist) = e.duration(distance[np.index], dep_day);
                 cout << ", "<<target<<", "<<dist<<", "<<") ";
                 
                 if(dist < distance[target])

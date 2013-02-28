@@ -10,16 +10,19 @@ int main()
     Debug( dc::notice.on() );             // Turn on the NOTICE Debug Channel.
     Debug( libcw_do.on() );               // Turn on the default Debug Object.
   
-    Transport::Graph g("/home/arthur/LAAS/mumoro/797546be36d0b96affbcf4400f6a62aa.dump");
+//     Transport::Graph g("/home/arthur/LAAS/mumoro/976c9329c82da079f78be26dddcf1174.dump");
 //     Transport::Graph g("/home/arthur/LAAS/Data/Graphs/toulouse.dump");
-//     Transport::Graph g("/home/arthur/LAAS/Data/Graphs/midi-pyrennees.dump");
-    std::cerr << "ICICICICI\n";
+    Transport::Graph g("/home/arthur/LAAS/Data/Graphs/midi-pyrennees.dump");
     RLC::Graph rlc(&g, RLC::pt_foot_dfa());// RLC::foot_subway_dfa());
-    std::cerr << "Here\n";
+    
+    RLC::BackwardGraph back_rlc( &rlc );
     
 //     RLC::Dijkstra dij(&rlc, 382, 733, 50400, 233);
-    RLC::Dijkstra dij(&rlc, 710, 321, 50520.0f, 17);
+    float start_secs = 33240.0f;
+    float start_day = 20;
+    RLC::Dijkstra dij(&rlc, 609, 87, start_secs, start_day);
     
+    // Forward search
     if( dij.run() ) 
     {
         EdgeList edges = dij.get_transport_path();
@@ -28,6 +31,11 @@ int main()
             Edge e = g.mapEdge(*it);
             std::cout << "(" << g.sourceNode(*it) <<" "<<*it<<" "<<g.targetNode(*it) <<") "<<edgeTypeToString(e.type)<<" \n";
         }
+        
+        std::cout << "\nBackward search\n\n";
+        
+        RLC::Dijkstra back_dij(&back_rlc, 87, 609, dij.path_arrival, start_day);
+        back_dij.run();
     } 
     else 
     {

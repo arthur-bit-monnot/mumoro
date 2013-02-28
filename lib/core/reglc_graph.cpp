@@ -73,6 +73,7 @@ DFA pt_foot_dfa()
 
 
 Graph::Graph(Transport::Graph* transport, DFA dfa) : 
+AbstractGraph(true),
 transport(transport), 
 dfa(dfa)
 {
@@ -110,13 +111,97 @@ std::list<RLC::Edge> Graph::out_edges(RLC::Vertice vertice)
     return edges;
 }
 
-float Graph::duration(RLC::Edge edge, float start_sec, int day)
+std::pair<bool, int> Graph::duration(RLC::Edge edge, float start_sec, int day)
 {
-    try {
-        return transport->g[edge.first].duration(start_sec, day);
-    } catch(No_traffic) {
-        return -1.0f;
+    return transport->g[edge.first].duration(start_sec, day);
+}
+
+std::set<int> Graph::dfa_start_states()
+{
+    std::set<int> states;
+    states.insert(dfa.start_state);
+    return states;
+}
+
+std::set<int> Graph::dfa_accepting_states()
+{
+    return dfa.accepting_states;
+}
+
+int Graph::num_transport_vertices()
+{
+    return num_vertices(transport->g);
+}
+
+int Graph::num_dfa_vertices()
+{
+    return num_vertices(dfa.graph);
+}
+
+
+/****************** Backward Graph ************************/
+
+BackwardGraph::BackwardGraph ( Graph* forward_graph ) :
+AbstractGraph(false),
+forward_graph(forward_graph)
+{
+}
+
+Vertice BackwardGraph::source ( Edge edge )
+{
+    return forward_graph->target( edge );
+}
+
+Vertice BackwardGraph::target ( Edge edge )
+{
+    return forward_graph->source( edge );
+}
+
+list< Edge > BackwardGraph::out_edges ( Vertice vertice )
+{
+    std::list<RLC::Edge> edges;
+    
+    Graph_t::in_edge_iterator g_ei, g_end, dfa_beg, dfa_end, dfa_it;
+    tie(g_ei,g_end) = boost::in_edges(vertice.first, forward_graph->transport->g);
+    tie(dfa_beg,dfa_end) = boost::in_edges(vertice.second, forward_graph->dfa.graph);
+    dfa_it = dfa_beg;
+    
+    while(g_ei != g_end && dfa_it != dfa_end) {
+        while(dfa_it != dfa_end) {
+            if(forward_graph->transport->g[*g_ei].type == forward_graph->dfa.graph[*dfa_it].type)
+                edges.push_back(RLC::Edge(*g_ei, *dfa_it));
+            ++dfa_it;
+        }
+        ++g_ei;
+        dfa_it = dfa_beg;
     }
+    return edges;
+}
+
+std::pair<bool, int> BackwardGraph::duration ( Edge edge, float start_sec, int day )
+{
+    return forward_graph->transport->g[edge.first].duration(start_sec, day, true);
+}
+
+
+std::set< int > BackwardGraph::dfa_start_states()
+{
+    return forward_graph->dfa_accepting_states();
+}
+
+std::set< int > BackwardGraph::dfa_accepting_states()
+{
+    return forward_graph->dfa_start_states();
+}
+
+int BackwardGraph::num_transport_vertices()
+{
+    return forward_graph->num_transport_vertices();
+}
+
+int BackwardGraph::num_dfa_vertices()
+{
+    return forward_graph->num_dfa_vertices();
 }
 
 
@@ -131,14 +216,14 @@ void show_edges(Graph *rlc, RLC::Vertice v)
     cout << "Street edges : ";
     for(; ei != end; ei++) {
         ::Edge e = rlc->transport->g[*ei];
-        cout << "("<< source(*ei, rlc->transport->g) <<", "<< target(*ei, rlc->transport->g) <<", "<<e.type<<", "<<e.duration(0,0)<<")   ";
+        cout << "("<< source(*ei, rlc->transport->g) <<", "<< target(*ei, rlc->transport->g) <<", "<<e.type<<", "<<e.duration(0,0).second<<")   ";
     }
     
     cout << "\n DFA edges : ";
     tie(ei,end) = out_edges(v.second, rlc->dfa.graph);
     for(; ei != end; ei++) {
         ::Edge e = rlc->transport->g[*ei];
-        cout << "("<< source(*ei, rlc->transport->g) <<", "<< target(*ei, rlc->transport->g) <<", "<<e.type<<", "<<e.duration(0,0)<<")   ";
+        cout << "("<< source(*ei, rlc->transport->g) <<", "<< target(*ei, rlc->transport->g) <<", "<<e.type<<", "<<e.duration(0,0).second<<")   ";
     }    
     
     cout << "\nRLC Edges : ";
@@ -146,7 +231,7 @@ void show_edges(Graph *rlc, RLC::Vertice v)
     std::list<RLC::Edge> edges = rlc->out_edges(v);
     for(it = edges.begin() ; it != edges.end() ; ++it) {
         cout << "( "<< rlc->source(*it).first <<"-"<< rlc->source(*it).second <<", "
-             << rlc->target(*it).first <<"-"<< rlc->target(*it).second <<", "<<rlc->duration(*it, 0,0)<<")   ";
+             << rlc->target(*it).first <<"-"<< rlc->target(*it).second <<", "<<rlc->duration(*it, 0,0).second<<")   ";
     }
     cout <<endl;
                 
@@ -158,14 +243,16 @@ void show_edges(Graph *rlc, RLC::Vertice v)
 
 
 
-Dijkstra::Dijkstra( Graph* graph, int source, int dest, float start_sec, int start_day ) :
-source(source), dest(dest), start_sec(start_sec), start_day(start_day), path_found(false),
-heap(Compare(&(this->arr_times)))
+Dijkstra::Dijkstra( AbstractGraph* graph, int source, int dest, float start_sec, int start_day ) :
+source(source), dest(dest), 
+start_sec(start_sec), start_day(start_day), 
+path_found(false),
+heap(Compare(graph->forward, &(this->arr_times)))
 {
     this->graph = graph;
     
-    const int g_num_vert = num_vertices(graph->transport->g);
-    const int dfa_num_vert = num_vertices(graph->dfa.graph);
+    const int g_num_vert = graph->num_transport_vertices();
+    const int dfa_num_vert = graph->num_dfa_vertices();
     
     arr_times = new float*[dfa_num_vert];
     references = new Heap::handle_type*[dfa_num_vert];
@@ -186,7 +273,7 @@ heap(Compare(&(this->arr_times)))
 
 Dijkstra::~Dijkstra()
 {
-    const int dfa_num_vert = num_vertices(graph->dfa.graph);
+    const int dfa_num_vert = graph->num_dfa_vertices();
     
     for(int i=0 ; i<dfa_num_vert ; ++i) {
         delete[] arr_times[i];
@@ -206,18 +293,15 @@ bool Dijkstra::run()
     std::cout << "Running Dijkstra on RegLCGraph from node "<<source <<" to node "<<dest<<"on time ("<<start_sec<<" "<<start_day<<")\n";
     RLC::Vertice rlc_start, rlc_dest;
     rlc_start.first = source;
-    rlc_start.second = graph->dfa.start_state;
+    rlc_start.second = *( graph->dfa_start_states().begin() );
     rlc_dest.first = dest;
-    rlc_dest.second = *(graph->dfa.accepting_states.begin());
+    rlc_dest.second = *( graph->dfa_accepting_states().begin() );
     
     set_arrival(rlc_start, start_sec);
     set_gray(rlc_start);
-    {
-        Graph_t::edge_iterator g_tei, dfa_tei, tend ;
-        tie(g_tei,tend) = edges(graph->transport->g);
-        tie(dfa_tei,tend) = edges(graph->dfa.graph);
-        put_dij_node(rlc_start);
-    }
+
+    put_dij_node(rlc_start);
+
     
     while( !heap.empty() ) 
     {
@@ -234,15 +318,17 @@ bool Dijkstra::run()
         BOOST_FOREACH(RLC::Edge e, n_out_edges) 
         {
             RLC::Vertice target = graph->target(e);
-                
-            float target_arr = graph->duration(e, arrival(curr.v), start_day);
+            
+            bool has_traffic;
+            int target_arr;
+            boost::tie(has_traffic, target_arr) = graph->duration(e, arrival(curr.v), start_day);
             
             Dout(dc::notice, " - edge {target: ("<<target.first<<", "<<target.second<<") }");
             
             //TODO: Only useful for debugging 
             //touched_edges.push_back( graph->g.g[e.first].edge_index );
             
-            if(target_arr >= 0.0f && white(target))
+            if(has_traffic && white(target))
             {
                 Dout(dc::notice, " -- Inserting target into heap : ("<< target.first<<", "<<target.second<<")");
                 set_arrival(target, target_arr);
@@ -250,9 +336,11 @@ bool Dijkstra::run()
                 put_dij_node(target);
                 set_gray(target);
             }
-            else if(target_arr >= 0.0f && target_arr < arrival(target))
+            else if(has_traffic && ( ( graph->forward && (target_arr < arrival(target)) ) 
+                                           || ( (!graph->forward) && (target_arr > arrival(target)) )))
             {
-                Dout(dc::notice, " -- Updating target in heap : ("<< target.first<<", "<<target.second<<") "<<target_arr);
+                Dout(dc::notice, " -- Updating target in heap : ("<< target.first<<", "<<target.second<<") new: "<<target_arr
+                                  << " old: "<<arrival(target)                );
                 BOOST_ASSERT(!black(target));
                 
                 set_arrival(target, target_arr);
@@ -292,7 +380,7 @@ EdgeList Dijkstra::get_transport_path()
     EdgeList edges;
     BOOST_FOREACH(RLC::Edge e, path) 
     {
-        edges.push_back(graph->transport->g[e.first].edge_index);
+        //edges.push_back(graph->transport->g[e.first].edge_index);
     }
     return edges;
 }

@@ -49,7 +49,7 @@ const char* edgeTypeToString(EdgeMode type) {
 
 void print_edge(edge_t e, Graph_t g)
 {
-    cout << "("<< source(e, g) <<", "<< target(e, g) <<", "<<g[e].type<<", "<<g[e].duration(0,0)<<")   ";
+    cout << "("<< source(e, g) <<", "<< target(e, g) <<", "<<g[e].type<<", "<<g[e].duration(0,0).second<<")   ";
 }
 
 Edge::Edge() : edge_index(-1), type(UnknownEdgeType)
@@ -88,16 +88,12 @@ float Duration::seq_duration(float start, int day) const
     else
     {
         std::vector<Time>::const_iterator it;
-        int i=0;
         BOOST_FOREACH(Time t, timetable) {
 //         for(it = timetable.begin(); it != timetable.end(); it++)
 //         {
             float tt_start, tt_arrival;
             Services s;
             boost::tie(tt_start, tt_arrival, s) = t;
-            if(timetable.size() == 126) {
-                cerr << i++ <<" "<<start<<" "<<tt_start <<" "<<tt_arrival<<" "<<endl;
-            }
             if (tt_start >= start && s[day])
             {
                 return tt_arrival;
@@ -121,18 +117,19 @@ float Duration::seq_duration(float start, int day) const
 } 
 
 
-float Duration::operator()(float start, int day, bool backward) const
+std::pair<bool, int> Duration::operator()(float start, int day, bool backward) const
 {
+    bool has_traffic = false;
     if(backward) {
         float ret = -1;
         
         if (const_duration >= 0) 
-            return start - const_duration;
+            return std::make_pair<bool, int>(true, start - const_duration);
         else 
         {
-            uint min = 0;
-            uint max = timetable.size()-1;
-            uint i = (max + min) /2;
+            int min = 0;
+            int max = timetable.size()-1;
+            int i = (max + min) /2;
             
             float tt_start, tt_arrival;
             Services s;
@@ -145,12 +142,12 @@ float Duration::operator()(float start, int day, bool backward) const
                     min = min;
                     max = i;
                     i = (max + min) /2;   
-                    
+                    BOOST_ASSERT(i < (int) timetable.size());
                     boost::tie(tt_start, tt_arrival, s) = timetable[i];
-                    cerr << min <<" "<<max<<" "<<i<<" "<<timetable.size()<<" "<<start<<" "<<tt_arrival<<endl;
                 }
                 else 
                 {
+                    BOOST_ASSERT(i < (int) timetable.size());
                     if(i==max) 
                     {
                         break;
@@ -164,8 +161,8 @@ float Duration::operator()(float start, int day, bool backward) const
                         min = i+1;
                         max = max;
                         i = (min+max)/2;
+                        BOOST_ASSERT(i < (int) timetable.size());
                         boost::tie(tt_start, tt_arrival, s) = timetable[i];
-                        cerr << min <<" "<<max<<" "<<i<<" "<<timetable.size()<<" "<<start<<" "<<tt_arrival<<endl;
                     }
                 }
             }
@@ -173,17 +170,17 @@ float Duration::operator()(float start, int day, bool backward) const
                 ret = -1;
             else
             {
-                bool found = false;
                 while(i >= 0) {
+                    BOOST_ASSERT(i < (int) timetable.size());
                     boost::tie(tt_start, tt_arrival, s) = timetable[i];
                     if(s[day]) 
                     {
-                        found = true;
+                        has_traffic = true;
                         break;
                     }
                     --i;
                 }
-                if(!found)
+                if(!has_traffic)
                     ret = -1;
                 else 
                     ret = tt_start;
@@ -198,15 +195,15 @@ float Duration::operator()(float start, int day, bool backward) const
 //                 
 //                 BOOST_ASSERT(tt_arrival == ret_seq);
 //             }
-            return ret;
+            return std::make_pair<bool, int>(has_traffic, ret);
         }
     }
-    else // backward
+    else // forward
     {
         float ret = -1;
         
         if (const_duration >= 0) 
-            return start + const_duration;
+            return std::make_pair<bool, int>(true, start + const_duration);
         else 
         {
             uint min = 0;
@@ -249,17 +246,16 @@ float Duration::operator()(float start, int day, bool backward) const
                 ret = -1;
             else
             {
-                bool found = false;
                 while(i < timetable.size()) {
                     boost::tie(tt_start, tt_arrival, s) = timetable[i];
                     if(s[day]) 
                     {
-                        found = true;
+                        has_traffic = true;
                         break;
                     }
                     ++i;
                 }
-                if(!found)
+                if(!has_traffic)
                     ret = -1;
                 else 
                     ret = tt_arrival;
@@ -271,7 +267,7 @@ float Duration::operator()(float start, int day, bool backward) const
                 }
 //             BOOST_ASSERT(ret == this->seq_duration(start, day));
 //             (*this)(ret, day, true);
-            return ret;
+            return std::make_pair<bool, int>(has_traffic, ret);
         }
         
     }
@@ -347,7 +343,7 @@ bool Graph::public_transport_edge(int source, int target, float start, float arr
 
 float calc_duration(float in, Duration d)
 {
-    return d(in, 0);
+    return d(in, 0).second;
 }
 
 struct Comp

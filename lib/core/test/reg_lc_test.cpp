@@ -45,7 +45,9 @@ BOOST_AUTO_TEST_CASE(Validate_path_length)
             BOOST_FOREACH(int edge_id, path)
             {
                 Edge e = g.transport->mapEdge(edge_id);
-                curr_time = e.duration(curr_time, start_day);
+                std::pair<bool, int> duration  = e.duration(curr_time, start_day);
+                BOOST_ASSERT(duration.first); // It must have traffic
+                curr_time = duration.second;
             }
             
             BOOST_CHECK(curr_time == dij.path_arrival);

@@ -31,7 +31,43 @@ DFA pt_foot_dfa();
 typedef std::pair<int, int> Vertice;
 typedef std::pair<edge_t, edge_t> Edge;
 
-class Graph
+class AbstractGraph {
+public:
+    /**
+     * Is this graph used for forward or backward path search
+     */
+    const bool forward;
+    
+    AbstractGraph( bool forward ) : forward(forward) {}
+    
+    /**
+     * Returns the source node of an edge
+     */
+    virtual RLC::Vertice source(RLC::Edge edge) = 0;
+    
+    /**
+     * Return the target node of an edge
+     */
+    virtual RLC::Vertice target(RLC::Edge) = 0;
+    
+    /**
+     * Return a list containing every outgoing edge of a node
+     */
+    virtual std::list<RLC::Edge> out_edges(RLC::Vertice) = 0;
+    
+    /**
+     * Returns the arrival time of trip starting at the source node of the edge at time
+     * start_sec on day day
+     */
+    virtual std::pair<bool, int> duration(RLC::Edge edge, float start_sec, int day) = 0;
+    
+    virtual std::set<int> dfa_start_states() = 0;
+    virtual std::set<int> dfa_accepting_states() = 0;
+    virtual int num_transport_vertices() = 0;
+    virtual int num_dfa_vertices() = 0;
+};
+
+class Graph : public AbstractGraph
 {
 public:
     Graph(Transport::Graph *trans, DFA dfa);
@@ -58,11 +94,77 @@ public:
      * Returns the arrival time of trip starting at the source node of the edge at time
      * start_sec on day day
      */
-    float duration(RLC::Edge edge, float start_sec, int day);
+    std::pair<bool, int> duration(RLC::Edge edge, float start_sec, int day);
     
     /**
-     * Return the maximum index of a vertice in this graph
-     */    
+     * Start states in the DFA.
+     * 
+     * For backward graphs, this is the set of accepting states.
+     */
+    std::set<int> dfa_start_states();
+    
+    /**
+     * Accepting states in the DFA.
+     * 
+     * For backward graphs, this is the start state.
+     */
+    std::set<int> dfa_accepting_states();
+    
+    /**
+     * Number of vertices in the transport graph
+     */
+    int num_transport_vertices();
+    
+    /**
+     * Number of vertices in the DFA
+     */
+    int num_dfa_vertices();
+};
+
+class BackwardGraph : public AbstractGraph
+{
+public:
+    Graph *forward_graph;
+    
+    BackwardGraph ( Graph *forward_graph );
+    
+    /**
+     * Returns the source node of an edge
+     */
+    RLC::Vertice source(RLC::Edge edge);
+    
+    /**
+     * Return the target node of an edge
+     */
+    RLC::Vertice target(RLC::Edge);
+    
+    /**
+     * Return a list containing every outgoing edge of a node
+     */
+    std::list<RLC::Edge> out_edges(RLC::Vertice);
+    
+    /**
+     * Returns the arrival time of trip starting at the source node of the edge at time
+     * start_sec on day day
+     */
+    std::pair<bool, int> duration(RLC::Edge edge, float start_sec, int day);
+    
+    /**
+     * Start states in the DFA.
+     * 
+     * For backward graphs, this is the set of accepting states.
+     */
+    std::set<int> dfa_start_states();
+    
+    /**
+     * Accepting states in the DFA.
+     * 
+     * For backward graphs, this is the start state.
+     */
+    std::set<int> dfa_accepting_states();
+    int num_transport_vertices();
+    int num_dfa_vertices();
+    
 };
 
 
@@ -75,11 +177,15 @@ struct Dij_node
 struct Compare
 {
     float ***vec;
+    bool forward;
     Compare() {}
-    Compare(float *** dist) { vec = dist; }
+    Compare(bool forward, float *** dist) : forward(forward) { vec = dist; }
     bool operator()(Dij_node a, Dij_node b) const
     {
-        return (*vec)[a.v.second][a.v.first] > (*vec)[b.v.second][b.v.first];
+        if(forward)
+            return (*vec)[a.v.second][a.v.first] > (*vec)[b.v.second][b.v.first];
+        else 
+            return (*vec)[a.v.second][a.v.first] < (*vec)[b.v.second][b.v.first];
     }
     
 };
@@ -88,15 +194,12 @@ typedef boost::heap::fibonacci_heap<Dij_node, boost::heap::compare<Compare> > He
 
 class Dijkstra
 {
-    Graph *graph;
+    AbstractGraph *graph;
 public:
-    Dijkstra(Graph *graph, int source, int dest, float start_sec, int start_day);
+    Dijkstra(AbstractGraph *graph, int source, int dest, float start_sec, int start_day);
     ~Dijkstra();
     
     bool run();
-    
-
-    
     
     float **arr_times;
     Heap::handle_type **references;

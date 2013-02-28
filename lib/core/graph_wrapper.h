@@ -81,7 +81,7 @@ public:
     Duration(float const_duration);
     void append(float start, float arrival, const std::string & services);
     void sort();
-    float operator()(float start_time, int day, bool backward = false) const;
+    std::pair<bool, int> operator()(float start_time, int day, bool backward = false) const;
     float seq_duration(float start, int day) const;
 
     template<class Archive>
@@ -115,7 +115,7 @@ struct Edge
 
 };
 
-typedef boost::adjacency_list<boost::listS, boost::vecS, boost::directedS, Node, Edge > Graph_t;
+typedef boost::adjacency_list<boost::listS, boost::vecS, boost::bidirectionalS, Node, Edge > Graph_t;
 typedef boost::graph_traits<Graph_t>::edge_descriptor edge_t;
 typedef std::list<int> EdgeList;
 
