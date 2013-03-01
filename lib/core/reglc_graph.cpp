@@ -73,7 +73,7 @@ DFA pt_foot_dfa()
 
 
 Graph::Graph(Transport::Graph* transport, DFA dfa) : 
-AbstractGraph(true),
+AbstractGraph(true, transport),
 transport(transport), 
 dfa(dfa)
 {
@@ -142,7 +142,7 @@ int Graph::num_dfa_vertices()
 /****************** Backward Graph ************************/
 
 BackwardGraph::BackwardGraph ( Graph* forward_graph ) :
-AbstractGraph(false),
+AbstractGraph(false, forward_graph->transport),
 forward_graph(forward_graph)
 {
 }
@@ -244,27 +244,26 @@ void show_edges(Graph *rlc, RLC::Vertice v)
 
 
 Dijkstra::Dijkstra( AbstractGraph* graph, int source, int dest, float start_sec, int start_day ) :
-source(source), dest(dest), 
-start_sec(start_sec), start_day(start_day), 
-path_found(false),
-heap(Compare(graph->forward, &(this->arr_times)))
+source( source ), dest( dest ), 
+start_sec( start_sec ), start_day( start_day ), 
+path_found( false ),
+heap( Compare(graph->forward, &(this->arr_times)) ),
+trans_num_vert( graph->num_transport_vertices() ),
+dfa_num_vert( graph->num_dfa_vertices() )
 {
     this->graph = graph;
-    
-    const int g_num_vert = graph->num_transport_vertices();
-    const int dfa_num_vert = graph->num_dfa_vertices();
     
     arr_times = new float*[dfa_num_vert];
     references = new Heap::handle_type*[dfa_num_vert];
     status = new uint*[dfa_num_vert];
     predecessors = new RLC::Edge*[dfa_num_vert];
     for(int i=0 ; i<dfa_num_vert ; ++i) {
-        arr_times[i] = new float[g_num_vert];
-        references[i] = new Heap::handle_type[g_num_vert];
-        status[i] = new uint[g_num_vert];
-        predecessors[i] = new RLC::Edge[g_num_vert];
+        arr_times[i] = new float[trans_num_vert];
+        references[i] = new Heap::handle_type[trans_num_vert];
+        status[i] = new uint[trans_num_vert];
+        predecessors[i] = new RLC::Edge[trans_num_vert];
         //TODO: use a memset, possibly merge all those arrays
-        for(int j=0 ; j<g_num_vert ; ++j)
+        for(int j=0 ; j<trans_num_vert ; ++j)
             status[i][j] = 0;
     }
     
@@ -272,9 +271,7 @@ heap(Compare(graph->forward, &(this->arr_times)))
 }
 
 Dijkstra::~Dijkstra()
-{
-    const int dfa_num_vert = graph->num_dfa_vertices();
-    
+{    
     for(int i=0 ; i<dfa_num_vert ; ++i) {
         delete[] arr_times[i];
         delete[] references[i];
@@ -380,7 +377,7 @@ EdgeList Dijkstra::get_transport_path()
     EdgeList edges;
     BOOST_FOREACH(RLC::Edge e, path) 
     {
-        //edges.push_back(graph->transport->g[e.first].edge_index);
+        edges.push_back(graph->transport->g[e.first].edge_index);
     }
     return edges;
 }

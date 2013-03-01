@@ -38,7 +38,14 @@ public:
      */
     const bool forward;
     
-    AbstractGraph( bool forward ) : forward(forward) {}
+    /**
+     * Associated transport graph. 
+     * This should not used directly except for information regarding edges and node properties.
+     */
+    Transport::Graph *transport;
+    
+    AbstractGraph( bool forward, Transport::Graph *transport ) : forward(forward), transport(transport) {}
+    virtual ~AbstractGraph() {}
     
     /**
      * Returns the source node of an edge
@@ -71,6 +78,8 @@ class Graph : public AbstractGraph
 {
 public:
     Graph(Transport::Graph *trans, DFA dfa);
+    virtual ~Graph() {}
+    
     Transport::Graph *transport;
     DFA dfa;
     
@@ -127,6 +136,7 @@ public:
     Graph *forward_graph;
     
     BackwardGraph ( Graph *forward_graph );
+    virtual ~BackwardGraph() {} 
     
     /**
      * Returns the source node of an edge
@@ -240,6 +250,16 @@ private:
     inline void set_white(RLC::Vertice v) { status[v.second][v.first] = 0; }
     inline void set_gray(RLC::Vertice v) { status[v.second][v.first] = 1; }
     inline void set_black(RLC::Vertice v) { status[v.second][v.first] = 2; }
+    
+    
+    /**
+     * Number of vertices in the transport (resp. DFA) graph.
+     * 
+     * Those are here to make sure we don't need the graph in the destructor
+     * This is usefull since, the graph might be deleted before the Dijkstra instance
+     */
+    const int trans_num_vert;
+    const int dfa_num_vert;
 };
 
 

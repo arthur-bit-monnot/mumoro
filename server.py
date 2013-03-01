@@ -308,7 +308,7 @@ class Mumoro:
         dest = self.g.match( 'Street', float(dlon), float(dlat))
         date = self.analyse_date( time )
         print "Searching path from {0} to {1} at time {2} on day {3}".format(start, dest, date['seconds'], date['days'])
-        edges = self.reglc_dij_path( start, dest, date['seconds'], date['days'], self.g.graph )
+        edges = self.back_dij_path( start, dest, date['seconds'], date['days'], self.g.graph )
         return self.edgesToFeatures( edges )
     
     def regular_dij_path(self, start, dest, secs, day, graph ):
@@ -317,6 +317,13 @@ class Mumoro:
     def reglc_dij_path(self, start, dest, secs, day, graph ):
         rlc = mumoro.RLC_Graph(graph, mumoro.foot_subway_dfa())
         dij = mumoro.Dijkstra(rlc, start, dest, secs, day)
+        dij.run()
+        return dij.get_transport_path()
+    
+    def back_dij_path(self, start, dest, secs, day, graph ):
+        rlc = mumoro.RLC_Graph(graph, mumoro.foot_subway_dfa())
+        back_rlc = mumoro.BackwardGraph(rlc)
+        dij = mumoro.Dijkstra(back_rlc, start, dest, secs, day)
         dij.run()
         return dij.get_transport_path()
     

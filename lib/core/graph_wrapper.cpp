@@ -417,10 +417,9 @@ EdgeList Graph::listEdges(const EdgeMode type)
 
 /**
  * Return the edge descriptor corresponding to a an edge id
- * 
- * WARNING : this is done in O(n)
  */
-inline edge_t Graph::edge_descriptor(const int edge_id) {
+inline edge_t Graph::edge_descriptor(const int edge_id) 
+{    
     return edges_vec[edge_id];
 }
 
