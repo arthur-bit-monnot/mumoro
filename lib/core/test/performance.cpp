@@ -53,6 +53,10 @@ int main()
             total += end_run - start_run;
             ++num_tests;
         }
+        
+        RLC::BackwardGraph bg(&g);
+        RLC::Dijkstra bdij(&bg, target, source, dij.path_arrival, day);
+        bdij.run();
     }
     
     cout<< "Total time over "<< num_tests << " instances : "<<total;

@@ -69,7 +69,7 @@ void serialize(Archive &ar, Time &t, const unsigned int version)
 }
 } 
 
-
+typedef enum { NextDay = 1, PrevDay = 2 } AllowedLookup;
 
 class Duration
 {
@@ -81,8 +81,7 @@ public:
     Duration(float const_duration);
     void append(float start, float arrival, const std::string & services);
     void sort();
-    std::pair<bool, int> operator()(float start_time, int day, bool backward = false) const;
-    float seq_duration(float start, int day) const;
+    std::pair<bool, int> operator()(float start_time, int day, bool backward = false, int allowed_lookup = NextDay | PrevDay ) const;
 
     template<class Archive>
         void serialize(Archive& ar, const unsigned int version)

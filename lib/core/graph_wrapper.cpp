@@ -79,47 +79,10 @@ void Duration::sort()
     }
 }
 
-// TODO: remove when it won't be usefull for tests
-float Duration::seq_duration(float start, int day) const
-{ 
-    float next_day = 0;
-    if (const_duration >= 0) 
-        return start + const_duration;
-    else
-    {
-        std::vector<Time>::const_iterator it;
-        BOOST_FOREACH(Time t, timetable) {
-//         for(it = timetable.begin(); it != timetable.end(); it++)
-//         {
-            float tt_start, tt_arrival;
-            Services s;
-            boost::tie(tt_start, tt_arrival, s) = t;
-            if (tt_start >= start && s[day])
-            {
-                return tt_arrival;
-            }
-            if (next_day != 0 && s[day+1])
-            {
-                next_day = start + 24*3600;
-            }
-        }
-        if(next_day > 0)
-        {
-            //             std::cout << "Next day: " << next_day << std::endl;
-            return next_day;
-        }
-        else 
-        {
-            return -1;
-            throw No_traffic();
-        }
-    }
-} 
-
-
-std::pair<bool, int> Duration::operator()(float start, int day, bool backward) const
+std::pair<bool, int> Duration::operator()(float start, int day, bool backward, int allowed_lookups) const
 {
     bool has_traffic = false;
+    
     if(backward) {
         float ret = -1;
         
@@ -152,7 +115,7 @@ std::pair<bool, int> Duration::operator()(float start, int day, bool backward) c
                     {
                         break;
                     }
-                    else if(timetable[i+1].get<0>() > start)
+                    else if(timetable[i+1].get<1>() > start)
                     {
                         break;
                     }
@@ -185,20 +148,37 @@ std::pair<bool, int> Duration::operator()(float start, int day, bool backward) c
                 else 
                     ret = tt_start;
             }
-//             if(ret >= 0) {
-//                 float ret_seq = this->seq_duration(ret, day);
-//                 cerr << ret << " " << ret_seq << " " << start <<endl;
-//                 cerr << s[day] <<" "<< tt_start <<" "<<tt_arrival<< endl;
-//                 BOOST_ASSERT(ret <= start);
-//                 BOOST_ASSERT(this->seq_duration(ret, day) <= start);
-//                 BOOST_ASSERT(this->seq_duration(ret, day) == tt_arrival);
-//                 
-//                 BOOST_ASSERT(tt_arrival == ret_seq);
-//             }
+            
+            //there might be trips on the previous day for first few hours of the current day
+            if(start < 2*3600 && allowed_lookups & PrevDay)
+            {
+                std::pair<bool, int> prev_day;
+                prev_day = (*this)(start + 24*3600, day-1, backward, PrevDay);
+                prev_day.second -= 24*3600;
+                if((prev_day.first && !has_traffic) || (prev_day.first && prev_day.second > ret)) {
+//                     cout << "Prev day better\n";
+                    return prev_day;
+                }
+            }
+            
+            // Start is on the next day, we'd better lookup in this one too
+            if(start >= 24*3600 && allowed_lookups & NextDay)
+            {   
+                std::pair<bool, int> next_day;
+                next_day = (*this)(start - 24*3600, day+1, backward, NextDay);
+                next_day.second += 24*3600;
+                cerr<<"a  "<<next_day.first<<" "<<next_day.second<<" "<<has_traffic<<" "<<ret<<endl;
+                
+                if((next_day.first && !has_traffic) || (next_day.first && next_day.second > ret)) {
+//                     cout << "Next day better\n";    
+                    return next_day;
+                }
+            }
+
             return std::make_pair<bool, int>(has_traffic, ret);
         }
     }
-    else // forward
+    else /** forward **/
     {
         float ret = -1;
         
@@ -260,13 +240,30 @@ std::pair<bool, int> Duration::operator()(float start, int day, bool backward) c
                 else 
                     ret = tt_arrival;
             }
-            float ret_seq = this->seq_duration(start, day);
-                if(ret_seq != ret) {
-                    cerr << ret << " " << ret_seq << " " << start <<endl;
-                    cerr << s[day] <<" "<< tt_start <<" "<<tt_arrival<< endl;
+            
+            //there might be trips on the previous day for first few hours of the current day
+            if(start < 2*3600 && allowed_lookups & PrevDay)
+            {
+                std::pair<bool, int> prev_day;
+                prev_day = (*this)(start + 24*3600, day-1, backward, PrevDay);
+                prev_day.second -= 24*3600;
+                if((prev_day.first && !has_traffic) || (prev_day.first && prev_day.second < ret)) {
+                    return prev_day;
                 }
-//             BOOST_ASSERT(ret == this->seq_duration(start, day));
-//             (*this)(ret, day, true);
+            }
+            
+            // Start is on the next day, we'd better lookup in this one too
+            if(start >= 24*3600 && allowed_lookups & NextDay)
+            {   
+                std::pair<bool, int> next_day;
+                next_day = (*this)(start - 24*3600, day+1, backward, NextDay);
+                next_day.second += 24*3600;
+                
+                if((next_day.first && !has_traffic) || (next_day.first && next_day.second < ret)) {
+                    return next_day;
+                }
+            }
+
             return std::make_pair<bool, int>(has_traffic, ret);
         }
         

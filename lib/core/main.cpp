@@ -13,12 +13,12 @@ int main()
 //     Transport::Graph g("/home/arthur/LAAS/mumoro/976c9329c82da079f78be26dddcf1174.dump");
 //     Transport::Graph g("/home/arthur/LAAS/Data/Graphs/toulouse.dump");
     Transport::Graph g("/home/arthur/LAAS/Data/Graphs/midi-pyrennees.dump");
-    RLC::Graph rlc(&g, RLC::pt_foot_dfa());// RLC::foot_subway_dfa());
+    RLC::Graph rlc(&g, RLC::foot_subway_dfa());
     
     RLC::BackwardGraph back_rlc( &rlc );
     
 //     RLC::Dijkstra dij(&rlc, 382, 733, 50400, 233);
-    float start_secs = 33240.0f;
+    float start_secs = 12000.0f;
     float start_day = 20;
     RLC::Dijkstra dij(&rlc, 609, 87, start_secs, start_day);
     
