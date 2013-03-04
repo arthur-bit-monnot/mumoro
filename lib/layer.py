@@ -111,7 +111,7 @@ class BaseLayer(object):
         print "Trying to match {0}, {1}".format(ln, lt)
         nearest = None
         epsilon = 0.002
-        while not nearest:
+        while not nearest and epsilon < 0.008:
             nearest = self.match(ln, lt, epsilon)
             epsilon += 0.001
         return nearest
@@ -376,6 +376,9 @@ class MultimodalGraph(object):
         if property2 == None:
             property2 = property
         for n in layer1.nodes():
+            # Only connect nodes flaged as linkable
+            if not n.linkable:
+                continue
             nearest = layer2.nearest(n.lon, n.lat)
             if nearest:
                 print "Got a match"

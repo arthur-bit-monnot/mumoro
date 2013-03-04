@@ -111,8 +111,8 @@ typedef enum { NextDay = 1, PrevDay = 2 } AllowedLookup;
 class Duration
 {
 public:
-    DurationType dur_type;
     int const_duration;
+    DurationType dur_type;
     std::vector<Time> timetable;
     std::vector<Frequency> frequencies;
 public:

@@ -408,6 +408,7 @@ void Graph::sort()
     {
         g[e].duration.sort();
     }
+    initEdgeIndexes();
 }
 
 void Graph::load(const std::string & filename)
