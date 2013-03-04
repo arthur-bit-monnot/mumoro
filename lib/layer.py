@@ -307,6 +307,10 @@ class MultimodalGraph(object):
                                                             str(e['services']), e['type']):
                             count += 1
                 print "On layer {0}, {1} edges, {2} nodes".format(l.name, count, l.count)
+                
+                for n in l.nodes():
+                    self.graph.set_coord(n.id + l.offset, n.lon, n.lat)
+
             self.graph.sort()
             print "The multimodal graph has been built and has {0} nodes and {1} edges".format(nb_nodes, count)
  

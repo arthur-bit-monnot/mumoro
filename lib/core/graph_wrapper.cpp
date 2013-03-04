@@ -88,6 +88,12 @@ void Graph::add_edge(int source, int target, const Edge & e)
     boost::add_edge(source, target, e, g);
 }
 
+void Graph::set_coord(int node, float lon, float lat)
+{
+    g[node].lon = lon;
+    g[node].lat = lat;
+}
+
 bool Graph::public_transport_edge(int source, int target, DurationType dur_type, float start, float arrival, 
                                   int duration, const std::string & services, const EdgeMode type)
 {

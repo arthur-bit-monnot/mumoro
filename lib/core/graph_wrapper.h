@@ -176,6 +176,7 @@ struct Graph
     Graph(int nb_nodes);
     Graph(const std::string & filename);
     void add_edge(int source, int target, const Edge & e);
+    void set_coord(int node, float lon, float lat);
     bool public_transport_edge(int source, int target, DurationType dur_type, float start, float arrival, 
                                       int duration, const std::string & services, const EdgeMode type = UnknownEdgeType);
     bool dijkstra(int source, int target);
