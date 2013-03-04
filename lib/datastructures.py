@@ -35,13 +35,14 @@ class Node(object):
         self.the_geom = the_geom
 
 class PT_Node(object):
-    def __init__(self, id, lon, lat, route, stop_area, the_geom = ""):
+    def __init__(self, id, lon, lat, route, stop_area, linkable, the_geom = ""):
         self.original_id = id
         self.lon = lon
         self.lat = lat
         self.route = route
         self.the_geom = the_geom
         self.stop_area = stop_area
+        self.linkable = linkable
 
 class PT_Service(object):
     def __init__(self, id, services):
@@ -62,12 +63,16 @@ class Edge(object):
         self.the_geom = the_geom
 
 class PT_Edge(object):
-    def __init__(self, source, target, length, start_secs, arrival_secs, services, mode, line):
+    def __init__(self, source, target, length, duration_type, start_secs, arrival_secs, duration, services, mode, line):
         self.source = source
         self.target = target
         self.length = length
+        # If it is a frequency. In this case, start_secs (resp. arrival_secs) is the begining (resp. end) of the period.
+        # duration is the time of transit between two stations in this interval
+        self.duration_type = duration_type
         self.start_secs = start_secs
         self.arrival_secs = arrival_secs
+        self.duration = duration
         self.services = services
         self.mode = mode
         self.line = line
@@ -106,7 +111,8 @@ def create_pt_nodes_table(id, metadata, stop_areas_table):
             Column('lat', Float),
             Column('the_geom', String),
             Column('route', String),
-            Column('stop_area', Integer, ForeignKey(stop_areas_table + ".id"))
+            Column('stop_area', Integer, ForeignKey(stop_areas_table + ".id")),
+            Column('linkable', Boolean)
             )
     metadata.create_all()
     return table
@@ -141,8 +147,10 @@ def create_pt_edges_table(id, metadata, services_table, lines_table):
             Column('source', Integer, index = True),
             Column('target', Integer, index = True),
             Column('length', Float),
+            Column('duration_type', Integer),
             Column('start_secs', Integer),
             Column('arrival_secs', Integer),
+            Column('duration', Integer),
             Column('services', Integer,  ForeignKey(services_table + ".id")),
             Column('mode', Integer),
             Column('line', Integer, ForeignKey(lines_table + ".id"))

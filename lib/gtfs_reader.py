@@ -19,12 +19,15 @@
 #    © Tristram Gräbener 2011
 #    Author: Tristram Gräbener
 
+from lib.core.mumoro import *
 from datastructures import *
 import sys
 import transitfeed
 import datetime
 from optparse import OptionParser
 from sqlalchemy.orm import mapper, sessionmaker
+
+
 
 def distance(c1, c2):
     try:
@@ -40,121 +43,210 @@ def distance(c1, c2):
         return distance;
     except:
         return 0
-
-
-def convert(filename, session, start_date, end_date):
-    map = {}
-    services_map = {}
-    s = transitfeed.Schedule()
-    s.Load(filename)
     
-    start_date = datetime.datetime.strptime(start_date, "%Y%m%d")
-    end_date = datetime.datetime.strptime(end_date, "%Y%m%d")
-    
+def gtfsToMumoroMode(gtfs_mode):
+        if gtfs_mode == 0:
+            return TramEdge
+        elif gtfs_mode == 1: 
+            return SubwayEdge
+        elif gtfs_mode == 3:
+            return BusEdge
+        else: 
+            return UnknownEdgeType
 
-    #Start with mapping (route_id, stop_id) to an int
-    count = 1
-    routes_count = 0
-    routes_map = {}
+# Service string for a trip on every single day
+every_day = "1"*128
 
-    for route in s.GetRouteList():
-        session.add(PT_Line(route.route_id, route.route_short_name, route.route_long_name, route.route_color, route.route_text_color, route.route_desc))
-        routes_map[route.route_id] = routes_count
-        routes_count += 1
-
-    stop_areas_count = 0
-    stop_areas_map = {}
-    for stop in s.GetStopList():
-        if stop.parent_station == '':
-            session.add(PT_StopArea(stop.stop_id, stop.stop_name))
-            stop_areas_map[stop.stop_id] = stop_areas_count
-            stop_areas_count += 1
-
-    for trip in s.GetTripList():
-        route =  s.GetRoute(trip.route_id)
-        mode = route.route_type
-        service_period = s.GetServicePeriod(trip.service_id)
-        services = ""
-        delta = datetime.timedelta(days=1)
-        date = start_date
-        while date <= end_date:
-            if service_period.IsActiveOn(date.strftime("%Y%m%d"), date_object=date):
-                services = "1" + services
-            else:
-                services = "0" + services
-            date += delta
-            
-        if not services_map.has_key(services):
-            services_map[services] = len(services_map)
-        service = services_map[services]
-
-        if not map.has_key(trip.route_id):
-            map[trip.route_id] = {}
-
-        freqs = trip.GetFrequencyTuples()
+class GtfsConverter:
+    def __init__(self, filename, session, start_date, end_date):
+        self.filename = filename
+        self.session = session
+        self.start_date = datetime.datetime.strptime(start_date, "%Y%m%d")
+        self.end_date = datetime.datetime.strptime(end_date, "%Y%m%d")
         
-        # single trip
-        if not freqs: 
-            prev_time = None
-            prev_stop = None
-            current_stop = None
-            for stop in trip.GetStopTimes():
-                if not map[trip.route_id].has_key(stop.stop_id):
-                    map[trip.route_id][stop.stop_id] = count
-                    physStop = s.GetStop(stop.stop_id)
-                    if physStop.parent_station == '':
-                        session.add(PT_Node(stop.stop_id, stop.stop.stop_lon, stop.stop.stop_lat, trip.route_id, stop_areas_map[stop.stop_id]))
-                    else:
-                        session.add(PT_Node(stop.stop_id, stop.stop.stop_lon, stop.stop.stop_lat, trip.route_id, stop_areas_map[physStop.parent_station]))
-                    count +=1
-                current_stop = map[trip.route_id][stop.stop_id]
-                current_node = session.query(PT_Node).filter_by(original_id = stop.stop_id).first()
-                if prev_stop != None:
-                    length = distance( (current_node.lon, current_node.lat), (prev_node.lon, prev_node.lat))
-                    session.add(PT_Edge(prev_stop, current_stop, length * 1.1, prev_time, stop.arrival_secs, service, mode, routes_map[route.route_id]))
+        self.tt_map = {}
+        self.freq_map = {}
+        self.station_map = {}
+        self.services_map = {}
+        self.services_map[every_day] = len(self.services_map)
+        self.s = transitfeed.Schedule()
+        self.s.Load(filename)        
 
-                prev_node = current_node 
-                prev_stop = current_stop
-                prev_time = stop.departure_secs
-                
-                if count % 1000 == 0:
-                    session.flush()
-                if count % 10000 == 0:
-                    print "Added {0} timetable elements".format(self.count)
-                
-        # trip with frequencies
-        else:
-            for start in trip.GetFrequencyStartTimes():
-                delta = start - trip.GetStopTimes()[0].GetTimeSecs()
-                prev_time = None
-                prev_stop = None
-                current_stop = None
-                for stop in trip.GetStopTimes():
-                    if not map[trip.route_id].has_key(stop.stop_id):
-                        map[trip.route_id][stop.stop_id] = count
-                        physStop = s.GetStop(stop.stop_id)
-                        if physStop.parent_station == '':
-                            session.add(PT_Node(stop.stop_id, stop.stop.stop_lon, stop.stop.stop_lat, trip.route_id, stop_areas_map[stop.stop_id]))
-                        else:
-                            session.add(PT_Node(stop.stop_id, stop.stop.stop_lon, stop.stop.stop_lat, trip.route_id, stop_areas_map[physStop.parent_station]))
-                        count +=1
-                    current_stop = map[trip.route_id][stop.stop_id]
-                    current_node = session.query(PT_Node).filter_by(original_id = stop.stop_id).first()
-                    if prev_stop != None:
-                        length = distance( (current_node.lon, current_node.lat), (prev_node.lon, prev_node.lat))
-                        session.add(PT_Edge(prev_stop, current_stop, length * 1.1, prev_time + delta, stop.arrival_secs + delta, service, mode, routes_map[route.route_id]))
+        #Start with mapping (route_id, stop_id) to an int
+        self.count = 1
+        self.routes_count = 0
+        self.routes_map = {}
+        
+        self.stop_areas_count = 0
+        self.stop_areas_map = {}
+        
+    def insert_station_node(self, trip, stop):
+        if not self.station_map[trip.route_id].has_key(stop.stop_id):
+            self.station_map[trip.route_id][stop.stop_id] = self.count
+            physStop = self.s.GetStop(stop.stop_id)
+            if physStop.parent_station == '':
+                self.session.add(PT_Node(stop.stop_id, stop.stop.stop_lon, stop.stop.stop_lat, trip.route_id, self.stop_areas_map[stop.stop_id], True))
+            else:
+                self.session.add(PT_Node(stop.stop_id, stop.stop.stop_lon, stop.stop.stop_lat, trip.route_id, self.stop_areas_map[physStop.parent_station], True))
+            self.count +=1
+    
+    def insert_tt_node(self, trip, stop):
+        if not self.tt_map[trip.route_id].has_key(stop.stop_id):
+            self.tt_map[trip.route_id][stop.stop_id] = self.count
+            physStop = self.s.GetStop(stop.stop_id)
+            if physStop.parent_station == '':
+                self.session.add(PT_Node(stop.stop_id, stop.stop.stop_lon, stop.stop.stop_lat, trip.route_id, self.stop_areas_map[stop.stop_id], False))
+            else:
+                self.session.add(PT_Node(stop.stop_id, stop.stop.stop_lon, stop.stop.stop_lat, trip.route_id, self.stop_areas_map[physStop.parent_station], False))
+            self.count +=1
+            
+            self.insert_station_node(trip, stop)
+            station_id = self.station_map[trip.route_id][stop.stop_id]
+            cur_stop = self.tt_map[trip.route_id][stop.stop_id]
+            
+            # Transfer edges from station to timetable edge : available all day with cost 0
+            self.session.add(PT_Edge(station_id, cur_stop, 0, ConstDur, -1, -1, 0, self.services_map[every_day], TransferEdge, self.routes_map[trip.route_id]))
+            self.session.add(PT_Edge(cur_stop, station_id, 0, ConstDur, -1, -1, 0, self.services_map[every_day], TransferEdge, self.routes_map[trip.route_id]))
+        
+    
+    def insert_freq_node(self, trip, stop):
+        if not self.freq_map[trip.route_id].has_key(stop.stop_id):
+            self.freq_map[trip.route_id][stop.stop_id] = self.count
+            physStop = self.s.GetStop(stop.stop_id)
+            if physStop.parent_station == '':
+                self.session.add(PT_Node(stop.stop_id, stop.stop.stop_lon, stop.stop.stop_lat, trip.route_id, self.stop_areas_map[stop.stop_id], False))
+            else:
+                self.session.add(PT_Node(stop.stop_id, stop.stop.stop_lon, stop.stop.stop_lat, trip.route_id, self.stop_areas_map[physStop.parent_station], False))
+            self.count +=1
+            self.insert_station_node(trip, stop)
+            station_id = self.station_map[trip.route_id][stop.stop_id]
+            cur_stop = self.freq_map[trip.route_id][stop.stop_id]
+            
+            # Disambarking edge : available all day with cost 0
+            self.session.add(PT_Edge(cur_stop, station_id, 0, ConstDur, -1, -1, 0, self.services_map[every_day], TransferEdge, self.routes_map[trip.route_id]))
+    
+    # Import a trip, adding the given offset to all departure/arrival times
+    def load_trip(self, trip, service, mode, route, offset):
+        prev_time = None
+        prev_stop = None
+        current_stop = None
+        for stop in trip.GetStopTimes():
+            self.insert_tt_node(trip, stop)
+            current_stop = self.tt_map[trip.route_id][stop.stop_id]
+            current_node = self.session.query(PT_Node).filter_by(original_id = stop.stop_id).first()
+            if prev_stop != None:
+                length = distance( (current_node.lon, current_node.lat), (prev_node.lon, prev_node.lat))
+                self.session.add(PT_Edge(prev_stop, current_stop, length * 1.1, TimetableDur, prev_time+offset, stop.arrival_secs+offset, -1, service, mode, self.routes_map[route.route_id]))
 
-                    prev_node = current_node 
-                    prev_stop = current_stop
-                    prev_time = stop.departure_secs
+            prev_node = current_node 
+            prev_stop = current_stop
+            prev_time = stop.departure_secs
+            
+            if self.count % 1000 == 0:
+                self.session.flush()
+            if self.count % 10000 == 0:
+                print "Added {0} timetable elements".format(self.count)
+        
+    def convert(self):
+        for route in self.s.GetRouteList():
+            self.session.add(PT_Line(route.route_id, route.route_short_name, route.route_long_name, route.route_color, route.route_text_color, route.route_desc))
+            self.routes_map[route.route_id] = self.routes_count
+            self.routes_count += 1
+
+        for stop in self.s.GetStopList():
+            if stop.parent_station == '':
+                self.session.add(PT_StopArea(stop.stop_id, stop.stop_name))
+                self.stop_areas_map[stop.stop_id] = self.stop_areas_count
+                self.stop_areas_count += 1
+
+        for trip in self.s.GetTripList():
+            route =  self.s.GetRoute(trip.route_id)
+            mode = gtfsToMumoroMode( route.route_type )
+            service_period = self.s.GetServicePeriod(trip.service_id)
+            services = ""
+            delta = datetime.timedelta(days=1)
+            date = self.start_date
+            while date <= self.end_date:
+                if service_period.IsActiveOn(date.strftime("%Y%m%d"), date_object=date):
+                    services = "1" + services
+                else:
+                    services = "0" + services
+                date += delta
+            
+            # don't treat trips that are not active during this period
+            if not "1" in services:
+                continue
+            
+            if not self.services_map.has_key(services):
+                self.services_map[services] = len(self.services_map)
+            service = self.services_map[services]
+
+            if not self.tt_map.has_key(trip.route_id):
+                self.tt_map[trip.route_id] = {}
+                
+            if not self.freq_map.has_key(trip.route_id):
+                self.freq_map[trip.route_id] = {}
+                
+            if not self.station_map.has_key(trip.route_id):
+                self.station_map[trip.route_id] = {}
+
+            freqs = trip.GetFrequencyTuples()
+            
+            # single trip
+            if not freqs: 
+                self.load_trip(trip, service, mode, route, 0)
                     
-                    if count % 1000 == 0:
-                        session.flush()
-                    if count % 10000 == 0:
-                        print "Added {0} timetable elements".format(self.count)
+            # trip with frequencies
+            else:
+                trip_start = trip.GetStopTimes()[0].GetTimeSecs()
+                
+                for freq in freqs:
+                    self.load_trip(trip, service, mode, route, freq[0] - trip_start)
+                    self.load_trip(trip, service, mode, route, freq[1] - trip_start)
+                    period_start = freq[0]
+                    period_end = freq[1] - freq[2]  #fin de l'interval = fin gtfs - temps entre deux trips
+                    trip_freq = freq[2]    # temps entre deux départs
+                    
+                    prev_time = None
+                    prev_stop = None
+                    current_stop = None
+                    #prev_period_start = period_start
+                    #prev_period_end = period_end
+                    
+                    for stop in trip.GetStopTimes():
+                        cur_period_start = period_start + stop.arrival_secs - trip_start
+                        cur_period_end = period_end + stop.arrival_secs - trip_start
+                        
+                        self.insert_freq_node(trip, stop)
+                        current_stop = self.freq_map[trip.route_id][stop.stop_id]
+                        current_station = self.station_map[trip.route_id][stop.stop_id]
+                        current_node = self.session.query(PT_Node).filter_by(original_id = stop.stop_id).first()
+                        
+                        # insert frequency edge from previous to current node during the interval [prev_period_start, prev_period_end]
+                        # duration is the difference between departure from previous node and arrival in current
+                        if prev_stop != None:
+                            length = distance( (current_node.lon, current_node.lat), (prev_node.lon, prev_node.lat))
+                            self.session.add(PT_Edge(prev_stop, current_stop, length * 1.1, FrequencyDur, 
+                                                     prev_period_start, prev_period_end, stop.arrival_secs - prev_time, service, 
+                                                     mode, self.routes_map[route.route_id]))
 
-    for k, v in services_map.items():
-        session.add(PT_Service(v, k))
-    session.commit()
+                        self.session.add(PT_Edge(current_station, current_stop, 0, FrequencyDur,
+                                                 cur_period_start, cur_period_end, trip_freq, service,
+                                                 TransferEdge, self.routes_map[route.route_id]))
+                        prev_node = current_node 
+                        prev_stop = current_stop
+                        prev_time = stop.departure_secs
+                        
+                        prev_period_start = cur_period_start
+                        prev_period_end = cur_period_end
+                        
+                        if self.count % 1000 == 0:
+                            self.session.flush()
+                        if self.count % 10000 == 0:
+                            print "Added {0} timetable elements".format(self.count)
+
+        for k, v in self.services_map.items():
+            self.session.add(PT_Service(v, k))
+        self.session.commit()
 
 

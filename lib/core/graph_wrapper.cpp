@@ -56,14 +56,22 @@ Edge::Edge() : edge_index(-1), type(UnknownEdgeType)
 {
 }
 
-Duration::Duration(float d) : const_duration(d) { }
+Duration::Duration(float d) : const_duration(d), dur_type(ConstDur) { }
 
 Duration::Duration() : const_duration(-1) {}
 
-void Duration::append(float start, float arrival, const std::string & services)
+void Duration::append_timetable(float start, float arrival, const std::string & services)
 {
     BOOST_ASSERT(start < arrival);
+    BOOST_ASSERT(dur_type == TimetableDur);
     timetable.push_back(Time(start, arrival, Services(services)));
+}
+
+void Duration::append_frequency(int start, int end, int duration, const std::string & services)
+{
+    BOOST_ASSERT(start < end);
+    BOOST_ASSERT(dur_type == FrequencyDur);
+    frequencies.push_back(Frequency(start, end, duration, Services(services)));
 }
 
 bool compare_times(const Time & a, const Time & b)
@@ -71,11 +79,20 @@ bool compare_times(const Time & a, const Time & b)
     return get<0>(a) < get<0>(b);
 }
 
+bool compare_frequencies(const Frequency & a, const Frequency & b)
+{
+    return get<0>(a) < get<0>(b);
+}
+
 void Duration::sort()
 {
-    if(const_duration == -1)
+    if(dur_type == TimetableDur)
     {
         std::sort(timetable.begin(), timetable.end(), compare_times);
+    }
+    else if(dur_type == FrequencyDur)
+    {
+        std::sort(frequencies.begin(), frequencies.end(), compare_frequencies);
     }
 }
 
@@ -88,6 +105,8 @@ std::pair<bool, int> Duration::operator()(float start, int day, bool backward, i
         
         if (const_duration >= 0) 
             return std::make_pair<bool, int>(true, start - const_duration);
+        else if(dur_type == FrequencyDur)
+            return std::make_pair<bool, int>(false, start - const_duration);
         else 
         {
             int min = 0;
@@ -184,6 +203,8 @@ std::pair<bool, int> Duration::operator()(float start, int day, bool backward, i
         
         if (const_duration >= 0) 
             return std::make_pair<bool, int>(true, start + const_duration);
+        else if(dur_type == FrequencyDur)
+            return std::make_pair<bool, int>(false, start - const_duration);
         else 
         {
             uint min = 0;
@@ -300,7 +321,8 @@ void Graph::add_edge(int source, int target, const Edge & e)
     boost::add_edge(source, target, e, g);
 }
 
-bool Graph::public_transport_edge(int source, int target, float start, float arrival, const std::string & services, const EdgeMode type)
+bool Graph::public_transport_edge(int source, int target, DurationType dur_type, float start, float arrival, 
+                                  int duration, const std::string & services, const EdgeMode type)
 {
     edge_t e;
     bool b;
@@ -310,8 +332,16 @@ bool Graph::public_transport_edge(int source, int target, float start, float arr
         bool c;
         tie(e, c) = boost::add_edge(source, target, g);
         g[e].type = type;
+        g[e].duration.dur_type = dur_type;
     }
-    g[e].duration.append(start, arrival, services);
+    
+    if(dur_type == TimetableDur)
+        g[e].duration.append_timetable(start, arrival, services);
+    else if(dur_type == FrequencyDur)
+        g[e].duration.append_frequency(start, arrival, duration, services);
+    else if(dur_type == ConstDur)
+        g[e].duration.const_duration = duration;
+    
     return !b;
 }
     struct found_goal

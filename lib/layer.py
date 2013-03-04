@@ -245,16 +245,6 @@ class GTFSLayer(BaseLayer):
         super(GTFSLayer, self).__init__(name, data, metadata)
         self.services = Table(data['services'], metadata, autoload = True)
         self.mode = mumoro.PublicTransport
-        
-    def gtfsMode2EdgeType(self, mode):
-        if mode == 0:
-            return mumoro.TramEdge
-        elif mode == 1: 
-            return mumoro.SubwayEdge
-        elif mode == 3:
-            return mumoro.BusEdge
-        else: 
-            return mumoro.UnknownEdgeType
  
     def edges(self):
         for row in self.edges_table.select().execute():
@@ -262,10 +252,12 @@ class GTFSLayer(BaseLayer):
             yield {
                     'source': row.source + self.offset,
                     'target': row.target + self.offset,
+                    'duration_type': row.duration_type,
                     'departure': row.start_secs,
                     'arrival': row.arrival_secs,
+                    'duration': row.duration,
                     'services': services,
-                    'type': self.gtfsMode2EdgeType(row.mode)
+                    'type': row.mode
                     }
  
         # Connects every node corresponding to a same stop:
@@ -311,7 +303,8 @@ class MultimodalGraph(object):
                         self.graph.add_edge(e['source'], e['target'], e['properties'])
                         count += 1
                     else:
-                        if self.graph.public_transport_edge(e['source'], e['target'], e['departure'], e['arrival'], str(e['services']), e['type']):
+                        if self.graph.public_transport_edge(e['source'], e['target'], e['duration_type'], e['departure'], e['arrival'], e['duration'], 
+                                                            str(e['services']), e['type']):
                             count += 1
                 print "On layer {0}, {1} edges, {2} nodes".format(l.name, count, l.count)
             self.graph.sort()

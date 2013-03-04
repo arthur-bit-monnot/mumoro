@@ -125,8 +125,10 @@ class Importer():
         self.session.commit()
         mapper(PT_Edge, create_pt_edges_table(str(edges2.id), self.metadata, str(services.id), str(lines.id)))
         self.session.commit()
+        
+        gtfs_converter = gtfs_reader.GtfsConverter(filename, self.session, start_date, end_date)
+        gtfs_converter.convert()
 
-        gtfs_reader.convert(filename, self.session, start_date, end_date)
         self.init_mappers()
         print "Done importing municipal data from " + filename + " for network '" + network_name + "'"
         print "---------------------------------------------------------------------"
