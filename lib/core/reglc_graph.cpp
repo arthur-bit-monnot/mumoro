@@ -68,6 +68,25 @@ DFA pt_foot_dfa()
     return DFA(0, accepting, edges);
 }
 
+DFA bike_pt_dfa()
+{
+    DfaEdgeList edges;
+    edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(0, 1), FootEdge));
+    edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(0, 1), TransferEdge));
+    edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(0, 1), SubwayEdge));
+    edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(0, 1), BusEdge));
+    edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(1, 1), FootEdge));
+    edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(1, 1), SubwayEdge));
+    edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(1, 1), TransferEdge));
+    edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(1, 1), BusEdge));
+    edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(0, 2), BikeEdge));
+    edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(2, 2), BikeEdge));
+    set<int> accepting;
+    accepting.insert(1);
+    accepting.insert(2);
+    
+    return DFA(0, accepting, edges);
+}
 
 /**************************** Graph ***********************************/
 
@@ -267,6 +286,13 @@ dfa_num_vert( graph->num_dfa_vertices() )
             status[i][j] = 0;
     }
     
+    BOOST_FOREACH(int v_dfa, graph->dfa_start_states()) {
+        source_vertices.insert(Vertice(source, v_dfa));
+    }
+    BOOST_FOREACH(int v_dfa, graph->dfa_accepting_states()) {
+        dest_vertices.insert(Vertice(dest, v_dfa));
+    }
+    
     Dout(dc::notice, "Building Dijkstra object on graph with "<<g_num_vert<<" nodes in Graph & "<<dfa_num_vert<<" nodes in DFA");    
 }
 
@@ -288,17 +314,13 @@ bool Dijkstra::run()
 {
     Dout(dc::notice, "Running Dijkstra on RegLCGraph from node "<<source <<" to node "<<dest);
     std::cout << "Running Dijkstra on RegLCGraph from node "<<source <<" to node "<<dest<<"on time ("<<start_sec<<" "<<start_day<<")\n";
-    RLC::Vertice rlc_start, rlc_dest;
-    rlc_start.first = source;
-    rlc_start.second = *( graph->dfa_start_states().begin() );
-    rlc_dest.first = dest;
-    rlc_dest.second = *( graph->dfa_accepting_states().begin() );
     
-    set_arrival(rlc_start, start_sec);
-    set_gray(rlc_start);
+    BOOST_FOREACH(RLC::Vertice rlc_start, source_vertices) {
+        set_arrival(rlc_start, start_sec);
+        set_gray(rlc_start);
 
-    put_dij_node(rlc_start);
-
+        put_dij_node(rlc_start);
+    }
     
     while( !heap.empty() ) 
     {
@@ -308,7 +330,7 @@ bool Dijkstra::run()
         
         Dout(dc::notice, "Current node ("<<curr.v.first<<", "<<curr.v.second<<") "<<arrival(curr.v));
         
-        if( curr.v == rlc_dest)
+        if( dest_vertices.find(curr.v) != dest_vertices.end())
             break;
         
         list<RLC::Edge> n_out_edges = graph->out_edges(curr.v);
@@ -353,13 +375,19 @@ bool Dijkstra::run()
         }
     }
     
-    RLC::Vertice curr;
     
-    if(black(rlc_dest)) 
+    
+    std::set<Vertice>::iterator dest_cur = dest_vertices.begin();
+    while(dest_cur != dest_vertices.end() && !black(*dest_cur))
+        dest_cur++;
+    
+    if(dest_cur != dest_vertices.end()) 
     {
+        RLC::Vertice curr, rlc_dest;
+        rlc_dest = *dest_cur;
         path_found = true;
         path_arrival = arrival(rlc_dest);
-        for(curr = rlc_dest; curr != rlc_start; curr = graph->source(get_pred(curr))) 
+        for(curr = rlc_dest; source_vertices.find(curr) == source_vertices.end(); curr = graph->source(get_pred(curr))) 
             path.push_front(get_pred(curr));
         
         cout << "Path found : duration = " << path_arrival - start_sec << endl;

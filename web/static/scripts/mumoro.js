@@ -190,7 +190,7 @@ function init() {
     layers[ "Tram" ] = {strokeColor: '#FFFF00', strokeDashstyle: 'dashdot', strokeWidth: 2}
     layers[ "Foot" ] = {strokeColor: '#00FF00', strokeDashstyle: 'dashdot', strokeWidth: 2}
     layers[ "Car" ] = {strokeColor: '#800080', strokeDashstyle: 'dashdot', strokeWidth: 2}
-    layers[ "Bike" ] = {strokeColor: '008000', strokeDashstyle: 'dashdot', strokeWidth: 2}
+    layers[ "Bike" ] = {strokeColor: '#008000', strokeDashstyle: 'dashdot', strokeWidth: 2}
     layers[ "Transfer" ] = {strokeColor: '#0000FF', strokeDashstyle: 'dashdot', strokeWidth: 2}
     styleMap.addUniqueValueRules("default", "layer", layers);
     routeLayer = new OpenLayers.Layer.Vector("Route", {

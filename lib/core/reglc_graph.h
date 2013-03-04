@@ -27,6 +27,7 @@ public:
 DFA foot_subway_dfa();
 DFA all_dfa();
 DFA pt_foot_dfa();
+DFA bike_pt_dfa();
 
 typedef std::pair<int, int> Vertice;
 typedef std::pair<edge_t, edge_t> Edge;
@@ -222,6 +223,10 @@ public:
     int start_day;
     bool path_found;
     Heap heap;
+    
+    
+    std::set<Vertice> source_vertices;
+    std::set<Vertice> dest_vertices;
     
     std::list< int > touched_edges;
     float path_arrival;

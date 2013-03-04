@@ -321,7 +321,7 @@ class Mumoro:
         return dij.get_transport_path()
     
     def back_dij_path(self, start, dest, secs, day, graph ):
-        rlc = mumoro.RLC_Graph(graph, mumoro.foot_subway_dfa())
+        rlc = mumoro.RLC_Graph(graph, mumoro.bike_pt_dfa())
         back_rlc = mumoro.BackwardGraph(rlc)
         dij = mumoro.Dijkstra(back_rlc, start, dest, secs, day)
         dij.run()
@@ -567,8 +567,8 @@ class Mumoro:
 # FootEdge = 0, BikeEdge = 1, CarEdge = 2, SubwayEdge = 3, BusEdge = 4, TramEdge = 5, TransferEdge = 6, UnknownEdgeType = 
 EdgeTypesToString = [ 'Foot', 'Bike', 'Car', 'Subway', 'Bus', 'Tram', 'Transfer', 'Unknown', 'All' ]
 StringToEdgeType = { 'Foot': mumoro.FootEdge, 'Bike': mumoro.BikeEdge, 'Car': mumoro.CarEdge, 
-                     'Subway': mumoro.SubwayEdge, 'Bus':mumoro.BusEdge, 'Tram':mumoro.TramEdge, 
-                     'Transfer':mumoro.TransferEdge, 'Unknown':mumoro.UnknownEdgeType, 'All':mumoro.WhateverEdge }
+                     'Subway': mumoro.SubwayEdge, 'Bus': mumoro.BusEdge, 'Tram': mumoro.TramEdge, 
+                     'Transfer': mumoro.TransferEdge, 'Unknown': mumoro.UnknownEdgeType, 'All': mumoro.WhateverEdge }
 
 total = len( sys.argv )
 if total != 2:
@@ -585,13 +585,6 @@ cherrypy.config.update({
     'server.socket_port': listening_port,
     'server.socket_host': '0.0.0.0'
 })
-#mum = Mumoro(db_type + ":///" + db_params,sys.argv[1],admin_email,web_url)
-
-#e = mum.g.graph.mapEdge( 3983 )
-#print e.duration(375, 0)
-#print e.duration(376, 0)
-#print e.type
-#print e.duration.const_duration
 
 cherrypy.quickstart(Mumoro(db_type + ":///" + db_params,sys.argv[1],admin_email,web_url), '/', config={
     '/': {
