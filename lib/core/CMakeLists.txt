@@ -2,6 +2,7 @@ SET(core_SOURCES
     path_algo.cpp 
     graph_wrapper.cpp
     reglc_graph.cpp
+    duration.cpp
     debug/cwd_debug.cc
     debug/stack_trace.cpp
    )

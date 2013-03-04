@@ -121,7 +121,7 @@ public:
     void append_timetable(float start, float arrival, const std::string & services);
     void append_frequency(int start, int end, int duration, const std::string & services);
     void sort();
-    std::pair<bool, int> operator()(float start_time, int day, bool backward = false, int allowed_lookup = NextDay | PrevDay ) const;
+    std::pair<bool, int> operator()(float start_time, int day, bool backward = false) const;
 
     template<class Archive>
         void serialize(Archive& ar, const unsigned int version)
@@ -129,6 +129,11 @@ public:
             ar & dur_type & const_duration & timetable & frequencies;
         }
 
+private: 
+    std::pair<bool, int> freq_duration_forward(float start_time, int day, int allowed_lookup = NextDay | PrevDay ) const;
+    std::pair<bool, int> freq_duration_backward(float start_time, int day, int allowed_lookup = NextDay | PrevDay ) const;
+    std::pair<bool, int> tt_duration_forward(float start_time, int day, int allowed_lookup = NextDay | PrevDay ) const;
+    std::pair<bool, int> tt_duration_backward(float start_time, int day, int allowed_lookup = NextDay | PrevDay ) const;
 };
 
 struct Node

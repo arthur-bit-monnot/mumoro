@@ -33,7 +33,6 @@ int main()
         }
         
         std::cout << "\nBackward search\n\n";
-        
         RLC::Dijkstra back_dij(&back_rlc, 87, 609, dij.path_arrival, start_day);
         back_dij.run();
     } 
