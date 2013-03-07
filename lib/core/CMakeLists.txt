@@ -3,6 +3,8 @@ SET(core_SOURCES
     graph_wrapper.cpp
     reglc_graph.cpp
     duration.cpp
+    nodes_filter.cpp
+    muparo.cpp
     debug/cwd_debug.cc
     debug/stack_trace.cpp
    )

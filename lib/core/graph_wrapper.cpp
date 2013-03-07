@@ -219,27 +219,4 @@ EdgeList Graph::listEdges(const EdgeMode type)
 }
 
 
-/**
- * Return the edge descriptor corresponding to a an edge id
- */
-inline edge_t Graph::edge_descriptor(const int edge_id) 
-{    
-    return edges_vec[edge_id];
-}
-
-Edge Graph::mapEdge(const int edge)
-{
-    return g[this->edge_descriptor(edge)];
-}
-
-int Graph::sourceNode(const int edge)
-{
-    return source(this->edge_descriptor(edge), g);
-}
-
-int Graph::targetNode(const int edge)
-{
-    return target(this->edge_descriptor(edge), g);
-}
-
 } // end namespace Transport

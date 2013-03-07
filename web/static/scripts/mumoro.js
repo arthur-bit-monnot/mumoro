@@ -192,6 +192,9 @@ function init() {
     layers[ "Car" ] = {strokeColor: '#800080', strokeDashstyle: 'dashdot', strokeWidth: 2}
     layers[ "Bike" ] = {strokeColor: '#008000', strokeDashstyle: 'dashdot', strokeWidth: 2}
     layers[ "Transfer" ] = {strokeColor: '#0000FF', strokeDashstyle: 'dashdot', strokeWidth: 2}
+    layers[ "PointA" ] = { 'pointRadius': 5, fillColor: "green", fillOpacity: 0.8}
+    layers[ "PointB" ] = { 'pointRadius': 5, fillColor: "blue", fillOpacity: 0.8}
+    layers[ "PointC" ] = { 'pointRadius': 5, fillColor: "red", fillOpacity: 0.8}
     styleMap.addUniqueValueRules("default", "layer", layers);
     routeLayer = new OpenLayers.Layer.Vector("Route", {
                     styleMap: styleMap

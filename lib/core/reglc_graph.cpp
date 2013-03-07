@@ -47,8 +47,6 @@ DFA all_dfa()
 {
     DfaEdgeList edges;
     edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(0, 0), FootEdge));
-    edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(0, 0), TransferEdge));
-    edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(0, 0), SubwayEdge));
     set<int> accepting;
     accepting.insert(0);
     
@@ -86,6 +84,21 @@ DFA bike_pt_dfa()
     accepting.insert(2);
     
     return DFA(0, accepting, edges);
+}
+
+DFA pt_dfa()
+{
+    DfaEdgeList edges;
+    edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(0, 0), FootEdge));
+    edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(0, 0), TransferEdge));
+    edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(0, 0), SubwayEdge));
+    edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(0, 0), BusEdge));
+    edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(0, 1), TransferEdge));
+    set<int> accepting;
+    accepting.insert(1);
+    
+    return DFA(0, accepting, edges);
+    
 }
 
 /**************************** Graph ***********************************/
@@ -227,8 +240,6 @@ int BackwardGraph::num_dfa_vertices()
 
 void show_edges(Graph *rlc, RLC::Vertice v)
 {   
-    try {
-    
     Graph_t::out_edge_iterator ei, end;
     tie(ei,end) = out_edges(v.first, rlc->transport->g);
     
@@ -253,9 +264,6 @@ void show_edges(Graph *rlc, RLC::Vertice v)
              << rlc->target(*it).first <<"-"<< rlc->target(*it).second <<", "<<rlc->duration(*it, 0,0).second<<")   ";
     }
     cout <<endl;
-                
-    
-} catch(No_traffic) {}
 }
 
 
@@ -275,25 +283,41 @@ dfa_num_vert( graph->num_dfa_vertices() )
     arr_times = new float*[dfa_num_vert];
     references = new Heap::handle_type*[dfa_num_vert];
     status = new uint*[dfa_num_vert];
-    predecessors = new RLC::Edge*[dfa_num_vert];
+    predecessors = new Predecessor*[dfa_num_vert];
     for(int i=0 ; i<dfa_num_vert ; ++i) {
         arr_times[i] = new float[trans_num_vert];
         references[i] = new Heap::handle_type[trans_num_vert];
         status[i] = new uint[trans_num_vert];
-        predecessors[i] = new RLC::Edge[trans_num_vert];
-        //TODO: use a memset, possibly merge all those arrays
-        for(int j=0 ; j<trans_num_vert ; ++j)
-            status[i][j] = 0;
+        predecessors[i] = new Predecessor[trans_num_vert];
+        
+        // all vertices are white
+        memset(status[i], 0, trans_num_vert * sizeof(status[0][0]));
     }
     
-    BOOST_FOREACH(int v_dfa, graph->dfa_start_states()) {
-        source_vertices.insert(Vertice(source, v_dfa));
-    }
-    BOOST_FOREACH(int v_dfa, graph->dfa_accepting_states()) {
-        dest_vertices.insert(Vertice(dest, v_dfa));
+    // in some case, sources might be added while running
+    if(source != -1) {
+        BOOST_FOREACH(int v_dfa, graph->dfa_start_states()) {
+            cerr << "Insert " <<source <<" "<<v_dfa<<endl;
+            source_vertices.insert(Vertice(source, v_dfa));
+        }
     }
     
-    Dout(dc::notice, "Building Dijkstra object on graph with "<<g_num_vert<<" nodes in Graph & "<<dfa_num_vert<<" nodes in DFA");    
+    // if dest == -1 there is no goals, the set is empty
+    if(dest != -1) {
+        BOOST_FOREACH(int v_dfa, graph->dfa_accepting_states()) {
+            dest_vertices.insert(Vertice(dest, v_dfa));
+        }
+    }
+    
+    // insert start vertices in heap
+    BOOST_FOREACH(RLC::Vertice rlc_start, source_vertices) {
+        set_arrival(rlc_start, start_sec);
+        set_gray(rlc_start);
+
+        put_dij_node(rlc_start);
+    }
+    
+    Dout(dc::notice, "Building Dijkstra object on graph with "<<trans_num_vert<<" nodes in Graph & "<<dfa_num_vert<<" nodes in DFA");    
 }
 
 Dijkstra::~Dijkstra()
@@ -315,67 +339,10 @@ bool Dijkstra::run()
     Dout(dc::notice, "Running Dijkstra on RegLCGraph from node "<<source <<" to node "<<dest);
     std::cout << "Running Dijkstra on RegLCGraph from node "<<source <<" to node "<<dest<<"on time ("<<start_sec<<" "<<start_day<<")\n";
     
-    BOOST_FOREACH(RLC::Vertice rlc_start, source_vertices) {
-        set_arrival(rlc_start, start_sec);
-        set_gray(rlc_start);
-
-        put_dij_node(rlc_start);
-    }
-    
-    while( !heap.empty() ) 
+    while( !heap.empty() && !path_found ) 
     {
-        Dij_node curr = heap.top();
-        heap.pop();
-        set_black(curr.v);
-        
-        Dout(dc::notice, "Current node ("<<curr.v.first<<", "<<curr.v.second<<") "<<arrival(curr.v));
-        
-        if( dest_vertices.find(curr.v) != dest_vertices.end())
-            break;
-        
-        list<RLC::Edge> n_out_edges = graph->out_edges(curr.v);
-        BOOST_FOREACH(RLC::Edge e, n_out_edges) 
-        {
-            RLC::Vertice target = graph->target(e);
-            
-            bool has_traffic;
-            int target_arr;
-            boost::tie(has_traffic, target_arr) = graph->duration(e, arrival(curr.v), start_day);
-            
-            Dout(dc::notice, " - edge {target: ("<<target.first<<", "<<target.second<<") }");
-            
-            //TODO: Only useful for debugging 
-            //touched_edges.push_back( graph->g.g[e.first].edge_index );
-            
-            if(has_traffic && white(target))
-            {
-                Dout(dc::notice, " -- Inserting target into heap : ("<< target.first<<", "<<target.second<<")");
-                set_arrival(target, target_arr);
-                set_pred(target, e);
-                put_dij_node(target);
-                set_gray(target);
-            }
-            else if(has_traffic && ( ( graph->forward && (target_arr < arrival(target)) ) 
-                                           || ( (!graph->forward) && (target_arr > arrival(target)) )))
-            {
-                Dout(dc::notice, " -- Updating target in heap : ("<< target.first<<", "<<target.second<<") new: "<<target_arr
-                                  << " old: "<<arrival(target)                );
-                BOOST_ASSERT(!black(target));
-                
-                set_arrival(target, target_arr);
-                set_pred(target, e);
-                heap.update(handle(target));
-            } else if(target_arr < 0.0f) {
-                Dout(dc::notice, " -- No traffic on this edge");
-            }
-            else
-            {
-                Dout(dc::notice, " -- Edge not interesting");
-            }
-        }
+       treat_next();
     }
-    
-    
     
     std::set<Vertice>::iterator dest_cur = dest_vertices.begin();
     while(dest_cur != dest_vertices.end() && !black(*dest_cur))
@@ -387,7 +354,7 @@ bool Dijkstra::run()
         rlc_dest = *dest_cur;
         path_found = true;
         path_arrival = arrival(rlc_dest);
-        for(curr = rlc_dest; source_vertices.find(curr) == source_vertices.end(); curr = graph->source(get_pred(curr))) 
+        for(curr = rlc_dest ; has_pred(curr) ; curr = graph->source(get_pred(curr))) 
             path.push_front(get_pred(curr));
         
         cout << "Path found : duration = " << path_arrival - start_sec << endl;
@@ -398,6 +365,75 @@ bool Dijkstra::run()
     }
     
     return path_found;
+}
+
+Vertice Dijkstra::treat_next() 
+{
+    Dij_node curr = heap.top();
+    heap.pop();
+    set_black(curr.v);
+    
+    Dout(dc::notice, "Current node ("<<curr.v.first<<", "<<curr.v.second<<") "<<arrival(curr.v));
+    
+    if( dest_vertices.find(curr.v) != dest_vertices.end()) {
+        path_found = true;
+        return curr.v;
+    }
+    
+    list<RLC::Edge> n_out_edges = graph->out_edges(curr.v);
+    BOOST_FOREACH(RLC::Edge e, n_out_edges) 
+    {
+        RLC::Vertice target = graph->target(e);
+        
+        bool has_traffic;
+        int target_arr;
+        boost::tie(has_traffic, target_arr) = graph->duration(e, arrival(curr.v), start_day);
+        
+        Dout(dc::notice, " - edge {target: ("<<target.first<<", "<<target.second<<") }");
+        
+        //TODO: Only useful for debugging 
+        //touched_edges.push_back( graph->g.g[e.first].edge_index );
+        
+        if(has_traffic && white(target))
+        {
+            Dout(dc::notice, " -- Inserting target into heap : ("<< target.first<<", "<<target.second<<")");
+            set_arrival(target, target_arr);
+            set_pred(target, e);
+            put_dij_node(target);
+            set_gray(target);
+        }
+        else if(has_traffic && ( ( graph->forward && (target_arr < arrival(target)) ) 
+                                        || ( (!graph->forward) && (target_arr > arrival(target)) )))
+        {
+            Dout(dc::notice, " -- Updating target in heap : ("<< target.first<<", "<<target.second<<") new: "<<target_arr
+                                << " old: "<<arrival(target)                );
+            BOOST_ASSERT(!black(target));
+            
+            set_arrival(target, target_arr);
+            set_pred(target, e);
+            heap.update(handle(target));
+        } else if(target_arr < 0.0f) {
+            Dout(dc::notice, " -- No traffic on this edge");
+        }
+        else
+        {
+            Dout(dc::notice, " -- Edge not interesting");
+        }
+    }
+    return curr.v;
+}
+
+
+VisualResult Dijkstra::get_result()
+{
+    VisualResult res(*(graph->transport)) ;
+    BOOST_FOREACH(RLC::Edge e, path) 
+    {
+        res.edges.push_back(graph->transport->g[e.first].edge_index);
+    }
+    res.a_nodes.push_back(source);
+    res.b_nodes.push_back(dest);
+    return res;
 }
 
 EdgeList Dijkstra::get_transport_path()

@@ -48,9 +48,6 @@ typedef boost::tuple<int, int, int, Services> Frequency;
 const char* edgeTypeToString(EdgeMode type);
 
 
-
-struct No_traffic{};
-
 namespace boost { namespace serialization {
 template <class Archive>
 void save(Archive &ar, const Time &t, const unsigned int version)
@@ -165,6 +162,7 @@ struct Edge
 typedef boost::adjacency_list<boost::listS, boost::vecS, boost::bidirectionalS, Node, Edge > Graph_t;
 typedef boost::graph_traits<Graph_t>::edge_descriptor edge_t;
 typedef std::list<int> EdgeList;
+typedef std::list<int> NodeList;
 
 void print_edge(edge_t e, Graph_t g);
 
@@ -184,19 +182,51 @@ struct Graph
     void load(const std::string & filename);
     void sort();
     
+    /**
+     * List all edges with type `type`
+     */
     EdgeList listEdges(const EdgeMode type = WhateverEdge);
-    Edge mapEdge(const int edge);
-    int sourceNode(const int edge);
-    int targetNode(const int edge);
+    
+    /**
+     * Return the Edge instance associated with the edge index passed
+     */
+    inline Edge mapEdge(const int edge_id) const { return g[this->edge_descriptor(edge_id)]; }
+    
+    inline int edgeIndex(const edge_t edge) const { return g[edge].edge_index; }
+    
+    /**
+     * Return the Node instance associated with the node index passed
+     */
+    inline Node mapNode(const int node_id) const { return g[node_id]; }
+    
+    /**
+     * Returns the origin (node index) of an edge
+     */
+    inline int sourceNode(const int edge_id) const { return source(this->edge_descriptor(edge_id), g); }
+    
+    /**
+     * Returns the target (node index) of an edge
+     */
+    inline int targetNode(const int edge_id) const { return target(this->edge_descriptor(edge_id), g); }
   
 private:
     std::vector<edge_t> edges_vec;
-    edge_t edge_descriptor(const int edge_id);
+    inline edge_t edge_descriptor(const int edge_id) const { return edges_vec[edge_id]; }
     void initEdgeIndexes();
 };
 
 const int invalid_node = -1;
 
 } // end namespace Transport
+
+struct VisualResult
+{
+    VisualResult(Transport::Graph & g) : g(g) {}
+    Transport::Graph &g;
+    EdgeList edges;
+    NodeList a_nodes;
+    NodeList b_nodes;
+    NodeList c_nodes;
+};
 
 #endif

@@ -308,8 +308,8 @@ class Mumoro:
         dest = self.g.match( 'Street', float(dlon), float(dlat))
         date = self.analyse_date( time )
         print "Searching path from {0} to {1} at time {2} on day {3}".format(start, dest, date['seconds'], date['days'])
-        edges = self.back_dij_path( start, dest, date['seconds'], date['days'], self.g.graph )
-        return self.edgesToFeatures( edges )
+        res = self.shared_path( start, dest, date['seconds'], date['days'], self.g.graph )
+        return self.resultToGeoJson( res )
     
     def regular_dij_path(self, start, dest, secs, day, graph ):
         return mumoro.dijkstra( start, dest, secs, day, graph )
@@ -318,14 +318,24 @@ class Mumoro:
         rlc = mumoro.RLC_Graph(graph, mumoro.foot_subway_dfa())
         dij = mumoro.Dijkstra(rlc, start, dest, secs, day)
         dij.run()
-        return dij.get_transport_path()
+        return dij.get_result()
     
     def back_dij_path(self, start, dest, secs, day, graph ):
-        rlc = mumoro.RLC_Graph(graph, mumoro.bike_pt_dfa())
+        rlc = mumoro.RLC_Graph(graph, mumoro.pt_foot_dfa())
         back_rlc = mumoro.BackwardGraph(rlc)
         dij = mumoro.Dijkstra(back_rlc, start, dest, secs, day)
         dij.run()
-        return dij.get_transport_path()
+        return dij.get_result()
+    
+    def meet_points(self, start, dest, secs, day, graph ):
+        mp = mumoro.MeetPoint(start, dest, secs, day, graph)
+        mp.run()
+        return mp.get_result()
+    
+    def shared_path(self, start, dest, secs, day, graph ):
+        sp = mumoro.SharedPath(start, dest, -1, secs, day, graph)
+        sp.run()
+        return sp.get_result()
     
     @cherrypy.expose
     def bikes(self):
@@ -560,9 +570,77 @@ class Mumoro:
                     'properties': { 'layer': EdgeTypesToString[self.g.graph.mapEdge(edge_id).type] }
                     }
             features.append(connection);
+        
+        point = {
+            'type': 'feature',
+            'geometry': {
+                'type': 'Point',
+                'coordinates': [1.28873327891, 43.6730240687]
+                },
+            'properties': { 'layer': 'MeetingPt' }
+        }
+                
+        features.append(point)
         p_str['features'] = features
         ret['paths'].append(p_str)
-        return json.dumps(ret)        
+        print ret
+        return json.dumps(ret)    
+    
+    def resultToGeoJson(self, res):
+        ret = {
+                'objectives': '',
+                'paths': []
+                }
+        p_str = {
+                'cost': [],
+                'type': 'FeatureCollection',
+                'crs': {
+                    'type': 'EPSG',
+                    'properties': {
+                        'code': 4326,
+                        'coordinate_order': [1,0]
+                        }
+                    }
+                }
+        features = []
+        feature = {'type': 'feature'}
+        geometry = {'type': 'Linestring'}
+        coordinates = []
+        for edge_id in res.edges:
+            src_coord = self.g.coordinates(self.g.graph.sourceNode(edge_id))
+            target_coord = self.g.coordinates(self.g.graph.targetNode(edge_id))
+            feature = {'type': 'feature'}
+            geometry = {'type': 'Linestring'}
+            coordinates = []
+
+            connection = {
+                    'type': 'feature',
+                    'geometry': {
+                        'type': 'Linestring',
+                        'coordinates': [[src_coord[0], src_coord[1]], [target_coord[0], target_coord[1]]]
+                        },
+                    'properties': { 'layer': EdgeTypesToString[self.g.graph.mapEdge(edge_id).type] }
+                    }
+            features.append(connection);
+        
+        for (nodes, layer) in ((res.a_nodes, 'PointA'), (res.b_nodes, 'PointB'), (res.c_nodes, 'PointC')):
+            for node_id in nodes:
+                node = res.g.mapNode(node_id)
+                feature = {
+                    'type': 'feature',
+                    'geometry': {
+                        'type': 'Point',
+                        'coordinates': [node.lon, node.lat]
+                        },
+                    'properties': { 'layer': layer }
+                    }
+                features.append(feature)
+                    
+
+        p_str['features'] = features
+        ret['paths'].append(p_str)
+        print ret
+        return json.dumps(ret)    
 
 # FootEdge = 0, BikeEdge = 1, CarEdge = 2, SubwayEdge = 3, BusEdge = 4, TramEdge = 5, TransferEdge = 6, UnknownEdgeType = 
 EdgeTypesToString = [ 'Foot', 'Bike', 'Car', 'Subway', 'Bus', 'Tram', 'Transfer', 'Unknown', 'All' ]

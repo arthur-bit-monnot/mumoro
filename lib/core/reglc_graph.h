@@ -28,6 +28,7 @@ DFA foot_subway_dfa();
 DFA all_dfa();
 DFA pt_foot_dfa();
 DFA bike_pt_dfa();
+DFA pt_dfa();
 
 typedef std::pair<int, int> Vertice;
 typedef std::pair<edge_t, edge_t> Edge;
@@ -73,6 +74,8 @@ public:
     virtual std::set<int> dfa_accepting_states() = 0;
     virtual int num_transport_vertices() = 0;
     virtual int num_dfa_vertices() = 0;
+    
+    inline bool is_accepting(RLC::Vertice v) { return dfa_accepting_states().find(v.second) != dfa_accepting_states().end(); }
 };
 
 class Graph : public AbstractGraph
@@ -185,6 +188,12 @@ struct Dij_node
     RLC::Vertice v;
 };
 
+struct Predecessor
+{
+    bool has_pred = false;
+    RLC::Edge pred;
+};
+
 struct Compare
 {
     float ***vec;
@@ -208,13 +217,15 @@ class Dijkstra
     AbstractGraph *graph;
 public:
     Dijkstra(AbstractGraph *graph, int source, int dest, float start_sec, int start_day);
+    Dijkstra() : trans_num_vert(0), dfa_num_vert(0) {}
     ~Dijkstra();
     
     bool run();
+    Vertice treat_next();
     
     float **arr_times;
     Heap::handle_type **references;
-    RLC::Edge **predecessors;
+    Predecessor **predecessors;
     uint **status; //TODO : very big for only two bits ...
     
     int source;
@@ -233,8 +244,9 @@ public:
     std::list< RLC::Edge > path;
     
     EdgeList get_transport_path();
+    VisualResult get_result();
     
-private:
+
     inline float arrival(RLC::Vertice v) { return arr_times[v.second][v.first]; }
     inline void set_arrival(RLC::Vertice v, float time) { arr_times[v.second][v.first] = time; }
     
@@ -244,8 +256,13 @@ private:
         n.v = v;
         references[v.second][v.first] = heap.push(n); //PB
     }
-    inline void set_pred(RLC::Vertice v, RLC::Edge pred) { predecessors[v.second][v.first] = pred; }
-    inline RLC::Edge get_pred(RLC::Vertice v) { return predecessors[v.second][v.first]; }
+    inline void clear_pred(const RLC::Vertice v) { predecessors[v.second][v.first].has_pred = false; }
+    inline void set_pred(const RLC::Vertice v, const RLC::Edge pred) { 
+        predecessors[v.second][v.first].has_pred = true;
+        predecessors[v.second][v.first].pred = pred; 
+    }
+    inline RLC::Edge get_pred(const RLC::Vertice v) const { return predecessors[v.second][v.first].pred; }
+    inline bool has_pred(const RLC::Vertice v) const { return predecessors[v.second][v.first].has_pred; }
     
     inline Heap::handle_type handle(RLC::Vertice v) { return references[v.second][v.first]; }
     
@@ -256,7 +273,7 @@ private:
     inline void set_gray(RLC::Vertice v) { status[v.second][v.first] = 1; }
     inline void set_black(RLC::Vertice v) { status[v.second][v.first] = 2; }
     
-    
+private:
     /**
      * Number of vertices in the transport (resp. DFA) graph.
      * 

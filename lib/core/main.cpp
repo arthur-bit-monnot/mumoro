@@ -4,6 +4,7 @@
 
 
 #include "reglc_graph.h"
+#include "path_algo.h"
 
 int main() 
 {
@@ -13,6 +14,8 @@ int main()
 //     Transport::Graph g("/home/arthur/LAAS/mumoro/976c9329c82da079f78be26dddcf1174.dump");
 //     Transport::Graph g("/home/arthur/LAAS/Data/Graphs/toulouse.dump");
     Transport::Graph g("/home/arthur/LAAS/Data/Graphs/midi-pyrennees.dump");
+    
+    /*
     RLC::Graph rlc(&g, RLC::foot_subway_dfa());
     
     RLC::BackwardGraph back_rlc( &rlc );
@@ -41,4 +44,12 @@ int main()
         std::cout << "No path found\n";
     }
     return 0;
+    */
+    
+//      134532 to node 319179o
+     
+     //MeetPoint mp(312348, 295483, 5000, 10, &g);  mp.run();
+     // A = 109256  B = 109246   C = 259542
+     SharedPath sp(109256, 109246, 259542, 40080, 27, &g);
+     sp.run();
 }
