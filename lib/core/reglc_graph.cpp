@@ -426,7 +426,7 @@ Vertice Dijkstra::treat_next()
 
 VisualResult Dijkstra::get_result()
 {
-    VisualResult res(*(graph->transport)) ;
+    VisualResult res(graph->transport) ;
     BOOST_FOREACH(RLC::Edge e, path) 
     {
         res.edges.push_back(graph->transport->g[e.first].edge_index);

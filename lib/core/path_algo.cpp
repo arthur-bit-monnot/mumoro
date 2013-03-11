@@ -114,7 +114,7 @@ rlcA(RLC::Graph(g, dfaA)), rlcB(RLC::Graph(g, dfaB)),
 dijA(RLC::Dijkstra(&rlcA, startA, -1, (float) dep_sec, dep_day)),
 dijB(RLC::Dijkstra(&rlcB, startB, -1, (float) dep_sec, dep_day)),
 nf(cap_jj_nf(g->g)),
-vres(*g)
+vres(g)
 {
 }
 
@@ -187,7 +187,7 @@ dijA(RLC::Dijkstra(&rlcA, this->startA, -1, (float) dep_sec, dep_day)),
 dijB(RLC::Dijkstra(&rlcB, this->startB, -1, (float) dep_sec, dep_day)),
 dijC(RLC::Dijkstra(&rlcC, -1, this->dest, (float) dep_sec, dep_day)),
 nf(cap_jj_nf(g->g)),
-vres(*g)
+vres(g)
 {
     states = new VerticeState* [3];
     for(int i=0; i<3 ; ++i) {
@@ -222,7 +222,7 @@ bool SharedPath::run()
             current_layer = 2; // C
         }
                 
-        if(current_layer == 0) 
+        if(current_layer == 0)
         {
             curr_node = dijA.treat_next();
             if(rlcA.is_accepting(curr_node) && !states[current_layer][curr_node.first].set_and_accepting) {

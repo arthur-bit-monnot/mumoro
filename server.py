@@ -308,7 +308,7 @@ class Mumoro:
         dest = self.g.match( 'Street', float(dlon), float(dlat))
         date = self.analyse_date( time )
         print "Searching path from {0} to {1} at time {2} on day {3}".format(start, dest, date['seconds'], date['days'])
-        res = self.shared_path( start, dest, date['seconds'], date['days'], self.g.graph )
+        res = self.muparo( start, dest, date['seconds'], date['days'], self.g.graph )
         return self.resultToGeoJson( res )
     
     def regular_dij_path(self, start, dest, secs, day, graph ):
@@ -336,6 +336,11 @@ class Mumoro:
         sp = mumoro.SharedPath(start, dest, -1, secs, day, graph)
         sp.run()
         return sp.get_result()
+    
+    def muparo(self, start, dest, secs, day, graph ):
+        mpr = mumoro.Muparo(graph, start, dest)
+        mpr.run()
+        return mpr.get_result()
     
     @cherrypy.expose
     def bikes(self):
@@ -639,10 +644,8 @@ class Mumoro:
 
         p_str['features'] = features
         ret['paths'].append(p_str)
-        print ret
         return json.dumps(ret)    
 
-# FootEdge = 0, BikeEdge = 1, CarEdge = 2, SubwayEdge = 3, BusEdge = 4, TramEdge = 5, TransferEdge = 6, UnknownEdgeType = 
 EdgeTypesToString = [ 'Foot', 'Bike', 'Car', 'Subway', 'Bus', 'Tram', 'Transfer', 'Unknown', 'All' ]
 StringToEdgeType = { 'Foot': mumoro.FootEdge, 'Bike': mumoro.BikeEdge, 'Car': mumoro.CarEdge, 
                      'Subway': mumoro.SubwayEdge, 'Bus': mumoro.BusEdge, 'Tram': mumoro.TramEdge, 

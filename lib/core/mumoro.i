@@ -9,6 +9,7 @@
  #include "graph_wrapper.h"
  #include "path_algo.h"
  #include "reglc_graph.h"
+ #include "muparo.h"
   %}
   
   %template(EdgeList) std::list<int>;
@@ -22,3 +23,4 @@
  %include "graph_wrapper.h" 
  %include "path_algo.h"
  %include "reglc_graph.h"
+ %include "muparo.h"

@@ -5,6 +5,7 @@
 
 #include "reglc_graph.h"
 #include "path_algo.h"
+#include "muparo.h"
 
 int main() 
 {
@@ -50,6 +51,10 @@ int main()
      
      //MeetPoint mp(312348, 295483, 5000, 10, &g);  mp.run();
      // A = 109256  B = 109246   C = 259542
-     SharedPath sp(109256, 109246, 259542, 40080, 27, &g);
-     sp.run();
+     
+//      SharedPath sp(109256, 109246, 259542, 40080, 27, &g);
+//      sp.run();
+
+    MuPaRo::Muparo mpr(&g, 12000, 20000);
+    mpr.run();
 }

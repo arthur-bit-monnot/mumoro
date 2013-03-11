@@ -221,8 +221,8 @@ const int invalid_node = -1;
 
 struct VisualResult
 {
-    VisualResult(Transport::Graph & g) : g(g) {}
-    Transport::Graph &g;
+    VisualResult(Transport::Graph * g) : g(g) {}
+    Transport::Graph *g;
     EdgeList edges;
     NodeList a_nodes;
     NodeList b_nodes;
