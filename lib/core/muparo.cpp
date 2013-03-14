@@ -43,8 +43,8 @@ Muparo * bi_point_to_point(Transport::Graph * trans, int source, int dest)
     Muparo * mup = new Muparo(trans, 2, mup_params);
     int day = 10;
     
-    mup->dfas.push_back(RLC::all_dfa());
-    mup->dfas.push_back(RLC::all_dfa());
+    mup->dfas.push_back(RLC::foot_dfa());
+    mup->dfas.push_back(RLC::foot_dfa());
     
     RLC::DijkstraParameters param;
     param.save_touched_nodes = true;
@@ -60,7 +60,7 @@ Muparo * bi_point_to_point(Transport::Graph * trans, int source, int dest)
     return mup;
 }
 
-Muparo * covoiturage(Transport::Graph * trans, int source1, int source2, int dest1, int dest2)
+Muparo * covoiturage(Transport::Graph * trans, int source1, int source2, int dest1, int dest2, RLC::DFA dfa_pass, RLC::DFA dfa_car, int limit)
 {
     MuparoParameters mup_params;
     mup_params.bidirectional = true;
@@ -69,30 +69,38 @@ Muparo * covoiturage(Transport::Graph * trans, int source1, int source2, int des
     Muparo * mup = new Muparo(trans, 6, mup_params);
     int day = 10;
     
-    mup->dfas.push_back(RLC::all_dfa());
-    mup->dfas.push_back(RLC::all_dfa());
-    mup->dfas.push_back(RLC::all_dfa());
-    mup->dfas.push_back(RLC::all_dfa());
-    mup->dfas.push_back(RLC::all_dfa());
-    mup->dfas.push_back(RLC::all_dfa());
+    mup->dfas.push_back(dfa_pass);
+    mup->dfas.push_back(dfa_car);
+    mup->dfas.push_back(dfa_car);
+    mup->dfas.push_back(dfa_pass);
+    mup->dfas.push_back(dfa_car);
+    mup->dfas.push_back(dfa_car);
     
-    RLC::DijkstraParameters param;
-    param.save_touched_nodes = true;
+    RLC::DijkstraParameters param_car;
+    
+    RLC::DijkstraParameters param_car_bi;
+    param_car_bi.save_touched_nodes = true;
+    
+    RLC::DijkstraParameters param_passenger;
+    param_passenger.cost_limit = limit > 0;
+    param_passenger.cost_limit_value = limit;
+    
+    
     RLC::Graph *g1 = new RLC::Graph(mup->transport, mup->dfas[0] );
-    RLC::Graph *g2 = new RLC::Graph(mup->transport, mup->dfas[0] );
-    RLC::Graph *g3 = new RLC::Graph(mup->transport, mup->dfas[0] );
+    RLC::Graph *g2 = new RLC::Graph(mup->transport, mup->dfas[1] );
+    RLC::Graph *g3 = new RLC::Graph(mup->transport, mup->dfas[2] );
     mup->graphs.push_back( g1 );
     mup->graphs.push_back( g2 );
     mup->graphs.push_back( g3 );
     mup->graphs.push_back( new RLC::BackwardGraph(g1));
     mup->graphs.push_back( new RLC::BackwardGraph(g2));
     mup->graphs.push_back( new RLC::BackwardGraph(g3));
-    mup->dij.push_back( new RLC::Dijkstra(mup->graphs[0], -1, -1, -1, day, param) );
-    mup->dij.push_back( new RLC::Dijkstra(mup->graphs[1], -1, -1, -1, day, param) );
-    mup->dij.push_back( new RLC::Dijkstra(mup->graphs[2], -1, -1, -1, day, param) );
-    mup->dij.push_back( new RLC::Dijkstra(mup->graphs[3], -1, -1, -1, day, param) );
-    mup->dij.push_back( new RLC::Dijkstra(mup->graphs[4], -1, -1, -1, day, param) );
-    mup->dij.push_back( new RLC::Dijkstra(mup->graphs[5], -1, -1, -1, day, param) );
+    mup->dij.push_back( new RLC::Dijkstra(mup->graphs[0], -1, -1, -1, day, param_passenger) );
+    mup->dij.push_back( new RLC::Dijkstra(mup->graphs[1], -1, -1, -1, day, param_car) );
+    mup->dij.push_back( new RLC::Dijkstra(mup->graphs[2], -1, -1, -1, day, param_car_bi) );
+    mup->dij.push_back( new RLC::Dijkstra(mup->graphs[3], -1, -1, -1, day, param_passenger) );
+    mup->dij.push_back( new RLC::Dijkstra(mup->graphs[4], -1, -1, -1, day, param_car) );
+    mup->dij.push_back( new RLC::Dijkstra(mup->graphs[5], -1, -1, -1, day, param_car_bi) );
     
     mup->start_nodes.push_back( StartNode( StateFreeNode(0, source1), 50000) );
     mup->start_nodes.push_back( StartNode( StateFreeNode(1, source2), 0) );
@@ -102,11 +110,11 @@ Muparo * covoiturage(Transport::Graph * trans, int source1, int source2, int des
     ConnectionRule cr;
     cr.conditions.push_back(0);
     cr.conditions.push_back(1);
-    cr.insertions.push_back(2);
+    cr.insertion = 2;
     ConnectionRule cr2;
     cr2.conditions.push_back(3);
     cr2.conditions.push_back(4);
-    cr2.insertions.push_back(5);
+    cr2.insertion = 5;
     mup->rules.push_back(cr);
     mup->rules.push_back(cr2);
     
@@ -117,7 +125,7 @@ Muparo::Muparo(Transport::Graph * trans, int num_layers, MuparoParameters params
 params(params),
 num_layers(num_layers),
 transport(trans),
-best_cost(99999999),
+connection_found(false),
 vres(transport)
 {
     flags = new Flag* [num_layers];
@@ -129,12 +137,13 @@ vres(transport)
 Muparo::Muparo(Transport::Graph * trans, int start1, int start2, MuparoParameters params) :
 params(params),
 transport(trans),
+connection_found(false),
 vres(transport)
 {
     num_layers = 3;
     int day = 10;
     
-    dfas.push_back(RLC::all_dfa());
+    dfas.push_back(RLC::foot_dfa());
     dfas.push_back(RLC::bike_pt_dfa());
     dfas.push_back(RLC::bike_pt_dfa());
     
@@ -147,7 +156,7 @@ vres(transport)
     ConnectionRule cr;
     cr.conditions.push_back(0);
     cr.conditions.push_back(1);
-    cr.insertions.push_back(2);
+    cr.insertion = 2;
     rules.push_back(cr);
     
     start_nodes.push_back( StartNode( StateFreeNode(0, start1), 50000) );
@@ -223,7 +232,12 @@ bool Muparo::finished()
             }
         }
     } else {
-        goals_reached = false;
+        if(connection_found) {
+            if(best_cost <= min_cost(params.bidir_layers.first) + min_cost(params.bidir_layers.second))
+                goals_reached = true;
+        } else {
+            goals_reached = false;
+        }
     }
     
     return heap_empties || goals_reached;
@@ -268,12 +282,11 @@ void Muparo::apply_rules ( int node )
                 }
             }
 
-            BOOST_FOREACH( int layer, rule.insertions ) {
-                if( insert( StateFreeNode(layer, node), arr, cost ) ) {
-                    clear_pred_layers( StateFreeNode(layer, node) );
-                    BOOST_FOREACH( int cond_layer, rule.conditions ) 
-                        add_pred_layer( StateFreeNode(layer, node), cond_layer);
-                }
+            int layer = rule.insertion;
+            if( insert( StateFreeNode(layer, node), arr, cost ) ) {
+                clear_pred_layers( StateFreeNode(layer, node) );
+                BOOST_FOREACH( int cond_layer, rule.conditions ) 
+                    add_pred_layer( StateFreeNode(layer, node), cond_layer);
             }
         }   
     }
@@ -353,7 +366,8 @@ void Muparo::check_connections ( const int modified_layer )
         
         if(!dij[l]->white(v)) {
             int cost = dij[l]->cost(v) + dij[modified_layer]->cost(v);
-            if(cost < best_cost) {
+            if(!connection_found || cost < best_cost) {
+                connection_found = true;
                 best_cost = cost;
                 best_connection = v;
             }
@@ -361,5 +375,40 @@ void Muparo::check_connections ( const int modified_layer )
     }
 }
 
+int Muparo::min_cost ( const int layer ) const
+{
+    cerr << "Min cost for layer "<<layer<<endl;
+    int min = 99999999;
+    if( ! dij[layer]->heap.empty() ) {
+        
+        min = dij[layer]->cost( dij[layer]->heap.top().v );
+        cerr << " - heap "<<min<<endl;
+    }
+    
+    BOOST_FOREACH(ConnectionRule rule, rules) {
+        if( !(layer == rule.insertion) )
+            continue;
+        
+        int tmp_cost = 0;
+        BOOST_FOREACH(int l_cond, rule.conditions) {
+            int tmptmp = min_cost(l_cond);
+            cerr << " - sub "<<l_cond<<" : "<<tmptmp<<endl;
+            tmp_cost = rule.combine_costs( tmp_cost, tmptmp );
+        }
+        cerr << " - comb : "<< tmp_cost<<endl;
+        if(tmp_cost < min)
+            min = tmp_cost;
+    }
+    
+    cerr<<" - "<<min<<endl;
+    
+    return min;
+    
+}
+
+void free(Muparo * mup)
+{
+    delete mup;
+}
 
 }

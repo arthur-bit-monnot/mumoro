@@ -340,9 +340,11 @@ class Mumoro:
     def muparo(self, start, dest, secs, day, graph ):
         #mpr = mumoro.Muparo(graph, start, dest)
         #mpr = mumoro.point_to_point(graph, 277967, 284756)
-        mpr = mumoro.covoiturage(graph, start, dest, 323542, 303655)
+        mpr = mumoro.covoiturage(graph, start, dest, 59919, 225530, mumoro.foot_dfa(), mumoro.bike_dfa(), 30000)
         mpr.run()
-        return mpr.get_result()
+        res = mpr.get_result()
+        mumoro.free(mpr)
+        return res
     
     @cherrypy.expose
     def bikes(self):

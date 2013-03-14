@@ -43,10 +43,20 @@ DFA foot_subway_dfa()
     return DFA(0, accepting, edges);
 }
 
-DFA all_dfa()
+DFA foot_dfa()
 {
     DfaEdgeList edges;
     edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(0, 0), FootEdge));
+    set<int> accepting;
+    accepting.insert(0);
+    
+    return DFA(0, accepting, edges);
+}
+
+DFA bike_dfa()
+{
+    DfaEdgeList edges;
+    edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(0, 0), BikeEdge));
     set<int> accepting;
     accepting.insert(0);
     
@@ -324,7 +334,7 @@ dfa_num_vert( graph->num_dfa_vertices() )
 }
 
 Dijkstra::~Dijkstra()
-{    
+{
     for(int i=0 ; i<dfa_num_vert ; ++i) {
         delete[] arr_times[i];
         delete[] costs[i];

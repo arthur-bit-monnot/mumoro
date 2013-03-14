@@ -58,6 +58,6 @@ int main()
 //     MuPaRo::Muparo mpr(&g, 50, 600);
 //     mpr.run();
 //     MuPaRo::Muparo * mup = MuPaRo::bi_point_to_point(&g, 223, 3);
-    MuPaRo::Muparo * mup = MuPaRo::covoiturage(&g, 277967, 284756, 323542, 303655);
+    MuPaRo::Muparo * mup = MuPaRo::covoiturage(&g, 277967, 284756, 323542, 303655, RLC::foot_dfa(), RLC::bike_dfa());
     mup->run();
 }

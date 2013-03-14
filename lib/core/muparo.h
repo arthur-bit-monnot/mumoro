@@ -22,7 +22,7 @@ struct ConnectionRule
     ConnectionRule() : comb(Max) {}
     CostCombination comb;
     list<int> conditions;
-    list<int> insertions;
+    int insertion;
     inline int combine_costs(const int old, const int add) const {
         if(comb == Sum)
             return old + add;
@@ -95,6 +95,7 @@ public:
     list<StartNode> start_nodes;
     list<StateFreeNode> goal_nodes;
     
+    bool connection_found;
     int best_cost;
     RLC::Vertice best_connection;
     
@@ -138,8 +139,13 @@ public:
     
     /**
      * Returns True if there is nothing left to do :
-     * etheir all heaps are empties
-     * or all goals are set
+     * When looking for goals :
+     *  - etheir all heaps are empties
+     *  - or all goals are set
+     * 
+     * When running a bidirectional search:
+     *  - either all heaps are empties
+     *  - or the connection point was found such as no shorter path can be found
      */
     bool finished();
     
@@ -163,6 +169,14 @@ public:
      */
     void apply_rules(int node);
     
+    /**
+     * Returns the minimal cost that might appear in a layer.
+     * Whith no rules this is simply the minimal cost in heap.
+     * 
+     * This is more tricky than it sounds since, nodes might be insert in this layer when rules are applied.
+     */
+    int min_cost(const int layer) const;
+    
     
     /** Results **/
     VisualResult vres;
@@ -172,7 +186,10 @@ public:
 
 Muparo * point_to_point(Transport::Graph * trans, int source, int dest);
 Muparo * bi_point_to_point(Transport::Graph * trans, int source, int dest);
-Muparo * covoiturage(Transport::Graph * trans, int source1, int source2, int dest1, int dest2);
+Muparo * covoiturage(Transport::Graph * trans, int source1, int source2, int dest1, int dest2,
+                     RLC::DFA dfa1, RLC::DFA dfa2, int limit = -1);
+
+void free(Muparo * mup);
 }
 
 

@@ -181,7 +181,7 @@ SharedPath::SharedPath ( int startA, int startB, int dest, int dep_sec, int dep_
 startA(startA), startB(startB), //dest(dest), startA(109256), startB(109246), 
 dest(172807), 
 dep_sec(dep_sec), dep_day(dep_day), g(g),
-dfaA(RLC::all_dfa()), dfaB(RLC::bike_pt_dfa()), dfaC(RLC::bike_pt_dfa()),
+dfaA(RLC::foot_dfa()), dfaB(RLC::bike_pt_dfa()), dfaC(RLC::bike_pt_dfa()),
 rlcA(RLC::Graph(g, dfaA)), rlcB(RLC::Graph(g, dfaB)), rlcC(RLC::Graph(g, dfaC)),
 dijA(RLC::Dijkstra(&rlcA, this->startA, -1, (float) dep_sec, dep_day)),
 dijB(RLC::Dijkstra(&rlcB, this->startB, -1, (float) dep_sec, dep_day)),

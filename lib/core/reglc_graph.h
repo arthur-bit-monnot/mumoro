@@ -25,7 +25,8 @@ public:
 };
 
 DFA foot_subway_dfa();
-DFA all_dfa();
+DFA bike_dfa();
+DFA foot_dfa();
 DFA pt_foot_dfa();
 DFA bike_pt_dfa();
 DFA pt_dfa();
