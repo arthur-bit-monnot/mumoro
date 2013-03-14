@@ -190,25 +190,33 @@ struct Dij_node
 
 struct Predecessor
 {
-    bool has_pred = false;
+    Predecessor() : has_pred(false) {}
+    Predecessor(RLC::Edge e) : has_pred(true), pred(e) {}
+    bool has_pred;
     RLC::Edge pred;
 };
 
 struct Compare
 {
-    float ***vec;
-    bool forward;
+    int ***costs;
     Compare() {}
-    Compare(bool forward, float *** dist) : forward(forward) { vec = dist; }
+    Compare( int *** dist ) { costs = dist; }
     bool operator()(Dij_node a, Dij_node b) const
     {
-        if(forward)
-            return (*vec)[a.v.second][a.v.first] > (*vec)[b.v.second][b.v.first];
-        else 
-            return (*vec)[a.v.second][a.v.first] < (*vec)[b.v.second][b.v.first];
+        return (*costs)[a.v.second][a.v.first] > (*costs)[b.v.second][b.v.first];
     }
     
 };
+
+
+struct DijkstraParameters
+{
+    DijkstraParameters() : save_touched_nodes(false), cost_limit(false) {}
+    bool save_touched_nodes;
+    bool cost_limit;
+    int  cost_limit_value;
+};
+
 
 typedef boost::heap::fibonacci_heap<Dij_node, boost::heap::compare<Compare> > Heap;
 
@@ -216,23 +224,59 @@ class Dijkstra
 {
     AbstractGraph *graph;
 public:
-    Dijkstra(AbstractGraph *graph, int source, int dest, float start_sec, int start_day);
+    Dijkstra(AbstractGraph *graph, int source, int dest, float start_sec, int start_day, DijkstraParameters params = DijkstraParameters());
     Dijkstra() : trans_num_vert(0), dfa_num_vert(0) {}
     ~Dijkstra();
     
+    /**
+     * Run the dijkstra algorithm until a stop condition is met
+     */
     bool run();
+    
+    /**
+     * Pop the vertice with minimum cost in heap and expand its outgoing edges.
+     */
     Vertice treat_next();
     
+    /**
+     * Insert/update a node in the heap.
+     * Return True if the node was updated, false otherwise.
+     */
+    bool insert_node(Vertice node, int arrival, int cost, Predecessor pred);
+    
+    DijkstraParameters params;
+    
     float **arr_times;
+    int **costs;
     Heap::handle_type **references;
     Predecessor **predecessors;
     uint **status; //TODO : very big for only two bits ...
-    
+
+    /**
+     * Source (resp. destination) nodes in the transport graph.
+     * Sources (with corresponding dfa start states) will be insert in heap.
+     * Dest (with corresponding accepting dfa states) will be used as a stop condition.
+     * 
+     * A value of -1 means that there is no known source (resp. destination) at the beginning of the algorithm.
+     */
     int source;
     int dest;
+    
+    /**
+     * Departure time from source nodes
+     */
     float start_sec;
     int start_day;
+    
+    /**
+     * Set to true when a path has been found.
+     * False otherwise.
+     */
     bool path_found;
+    
+    /**
+     * Heap in which the Vertices will be stored
+     */
     Heap heap;
     
     
@@ -240,6 +284,8 @@ public:
     std::set<Vertice> dest_vertices;
     
     std::list< int > touched_edges;
+    std::list< Vertice > touched_nodes;
+    
     float path_arrival;
     std::list< RLC::Edge > path;
     
@@ -247,31 +293,36 @@ public:
     VisualResult get_result();
     
 
-    inline float arrival(RLC::Vertice v) { return arr_times[v.second][v.first]; }
-    inline void set_arrival(RLC::Vertice v, float time) { arr_times[v.second][v.first] = time; }
+    inline float arrival(const RLC::Vertice v) { return arr_times[v.second][v.first]; }
+    inline void set_arrival(const RLC::Vertice v, float time) { arr_times[v.second][v.first] = time; }
+    inline float cost(const RLC::Vertice v) const { return costs[v.second][v.first]; }
+    inline void set_cost(const RLC::Vertice v, const int cost) { costs[v.second][v.first] = cost; }
     
-    inline Heap::handle_type dij_node(RLC::Vertice v) { return references[v.second][v.first]; }
-    inline void put_dij_node(RLC::Vertice v) { 
+    inline Heap::handle_type dij_node(const RLC::Vertice v) const { return references[v.second][v.first]; }
+    inline void put_dij_node(const RLC::Vertice v) { 
         Dij_node n;
         n.v = v;
-        references[v.second][v.first] = heap.push(n); //PB
+        references[v.second][v.first] = heap.push(n);
     }
     inline void clear_pred(const RLC::Vertice v) { predecessors[v.second][v.first].has_pred = false; }
     inline void set_pred(const RLC::Vertice v, const RLC::Edge pred) { 
         predecessors[v.second][v.first].has_pred = true;
         predecessors[v.second][v.first].pred = pred; 
     }
+    inline void set_pred(const RLC::Vertice v, const Predecessor pred) { 
+        predecessors[v.second][v.first] = pred;
+    }
     inline RLC::Edge get_pred(const RLC::Vertice v) const { return predecessors[v.second][v.first].pred; }
     inline bool has_pred(const RLC::Vertice v) const { return predecessors[v.second][v.first].has_pred; }
     
-    inline Heap::handle_type handle(RLC::Vertice v) { return references[v.second][v.first]; }
+    inline Heap::handle_type handle(const RLC::Vertice v) const { return references[v.second][v.first]; }
     
-    inline bool white(RLC::Vertice v) { return status[v.second][v.first] == 0; }
-    inline bool gray(RLC::Vertice v) { return status[v.second][v.first] == 1; }
-    inline bool black(RLC::Vertice v) { return status[v.second][v.first] == 2; }
-    inline void set_white(RLC::Vertice v) { status[v.second][v.first] = 0; }
-    inline void set_gray(RLC::Vertice v) { status[v.second][v.first] = 1; }
-    inline void set_black(RLC::Vertice v) { status[v.second][v.first] = 2; }
+    inline bool white(const RLC::Vertice v) const { return status[v.second][v.first] == 0; }
+    inline bool gray(const RLC::Vertice v) const { return status[v.second][v.first] == 1; }
+    inline bool black(const RLC::Vertice v) const { return status[v.second][v.first] == 2; }
+    inline void set_white(const RLC::Vertice v) { status[v.second][v.first] = 0; }
+    inline void set_gray(const RLC::Vertice v) { status[v.second][v.first] = 1; }
+    inline void set_black(const RLC::Vertice v) { status[v.second][v.first] = 2; }
     
 private:
     /**

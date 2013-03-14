@@ -315,7 +315,7 @@ class Mumoro:
         return mumoro.dijkstra( start, dest, secs, day, graph )
     
     def reglc_dij_path(self, start, dest, secs, day, graph ):
-        rlc = mumoro.RLC_Graph(graph, mumoro.foot_subway_dfa())
+        rlc = mumoro.RLC_Graph(graph, mumoro.pt_foot_dfa())
         dij = mumoro.Dijkstra(rlc, start, dest, secs, day)
         dij.run()
         return dij.get_result()
@@ -338,7 +338,9 @@ class Mumoro:
         return sp.get_result()
     
     def muparo(self, start, dest, secs, day, graph ):
-        mpr = mumoro.Muparo(graph, start, dest)
+        #mpr = mumoro.Muparo(graph, start, dest)
+        #mpr = mumoro.point_to_point(graph, 277967, 284756)
+        mpr = mumoro.covoiturage(graph, start, dest, 323542, 303655)
         mpr.run()
         return mpr.get_result()
     

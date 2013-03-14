@@ -13,7 +13,7 @@ int main()
     Debug( libcw_do.on() );               // Turn on the default Debug Object.
   
 //     Transport::Graph g("/home/arthur/LAAS/mumoro/976c9329c82da079f78be26dddcf1174.dump");
-//     Transport::Graph g("/home/arthur/LAAS/Data/Graphs/toulouse.dump");
+//     Transport::Graph g("/home/arthur/LAAS/Data/Graphs/toulouse-mixed.dump");
     Transport::Graph g("/home/arthur/LAAS/Data/Graphs/midi-pyrennees.dump");
     
     /*
@@ -24,10 +24,10 @@ int main()
 //     RLC::Dijkstra dij(&rlc, 382, 733, 50400, 233);
     float start_secs = 12000.0f;
     float start_day = 20;
-    RLC::Dijkstra dij(&rlc, 609, 87, start_secs, start_day);
+    RLC::Dijkstra dij(&rlc, 299943, 232902, start_secs, start_day);
     
     // Forward search
-    if( dij.run() ) 
+    if( dij.run() ) ;
     {
         EdgeList edges = dij.get_transport_path();
         EdgeList::iterator it;
@@ -55,6 +55,9 @@ int main()
 //      SharedPath sp(109256, 109246, 259542, 40080, 27, &g);
 //      sp.run();
 
-    MuPaRo::Muparo mpr(&g, 12000, 20000);
-    mpr.run();
+//     MuPaRo::Muparo mpr(&g, 50, 600);
+//     mpr.run();
+//     MuPaRo::Muparo * mup = MuPaRo::bi_point_to_point(&g, 223, 3);
+    MuPaRo::Muparo * mup = MuPaRo::covoiturage(&g, 277967, 284756, 323542, 303655);
+    mup->run();
 }

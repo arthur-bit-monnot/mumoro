@@ -270,22 +270,24 @@ void show_edges(Graph *rlc, RLC::Vertice v)
 
 
 
-Dijkstra::Dijkstra( AbstractGraph* graph, int source, int dest, float start_sec, int start_day ) :
-source( source ), dest( dest ), 
+Dijkstra::Dijkstra( AbstractGraph* graph, int source, int dest, float start_sec, int start_day, DijkstraParameters params ) :
+params(params), source( source ), dest( dest ), 
 start_sec( start_sec ), start_day( start_day ), 
 path_found( false ),
-heap( Compare(graph->forward, &(this->arr_times)) ),
+heap( Compare(&(this->costs)) ),
 trans_num_vert( graph->num_transport_vertices() ),
 dfa_num_vert( graph->num_dfa_vertices() )
 {
     this->graph = graph;
     
     arr_times = new float*[dfa_num_vert];
+    costs = new int*[dfa_num_vert];
     references = new Heap::handle_type*[dfa_num_vert];
     status = new uint*[dfa_num_vert];
     predecessors = new Predecessor*[dfa_num_vert];
     for(int i=0 ; i<dfa_num_vert ; ++i) {
         arr_times[i] = new float[trans_num_vert];
+        costs[i] = new int[trans_num_vert];
         references[i] = new Heap::handle_type[trans_num_vert];
         status[i] = new uint[trans_num_vert];
         predecessors[i] = new Predecessor[trans_num_vert];
@@ -312,6 +314,7 @@ dfa_num_vert( graph->num_dfa_vertices() )
     // insert start vertices in heap
     BOOST_FOREACH(RLC::Vertice rlc_start, source_vertices) {
         set_arrival(rlc_start, start_sec);
+        set_cost(rlc_start, 0);
         set_gray(rlc_start);
 
         put_dij_node(rlc_start);
@@ -324,11 +327,13 @@ Dijkstra::~Dijkstra()
 {    
     for(int i=0 ; i<dfa_num_vert ; ++i) {
         delete[] arr_times[i];
+        delete[] costs[i];
         delete[] references[i];
         delete[] status[i];
         delete[] predecessors[i];
     }
     delete[] arr_times;
+    delete[] costs;
     delete[] references;
     delete[] status;
     delete[] predecessors;
@@ -386,42 +391,71 @@ Vertice Dijkstra::treat_next()
         RLC::Vertice target = graph->target(e);
         
         bool has_traffic;
-        int target_arr;
-        boost::tie(has_traffic, target_arr) = graph->duration(e, arrival(curr.v), start_day);
+        int edge_cost;
+        boost::tie(has_traffic, edge_cost) = graph->duration(e, arrival(curr.v), start_day);
+        int target_cost = cost(curr.v) + edge_cost;
+        float target_arr;
+        if(graph->forward)
+            target_arr = arrival(curr.v) + edge_cost;
+        else 
+            target_arr = arrival(curr.v) - edge_cost;
         
-        Dout(dc::notice, " - edge {target: ("<<target.first<<", "<<target.second<<") }");
+        Dout(dc::notice, " - edge {target: ("<<target.first<<", "<<target.second<<") }");   
         
-        //TODO: Only useful for debugging 
-        //touched_edges.push_back( graph->g.g[e.first].edge_index );
+        if(has_traffic) {
+            BOOST_ASSERT(edge_cost >= 0);
+            insert_node(target, target_arr, target_cost, Predecessor(e));
+        }
         
-        if(has_traffic && white(target))
-        {
-            Dout(dc::notice, " -- Inserting target into heap : ("<< target.first<<", "<<target.second<<")");
-            set_arrival(target, target_arr);
-            set_pred(target, e);
-            put_dij_node(target);
-            set_gray(target);
-        }
-        else if(has_traffic && ( ( graph->forward && (target_arr < arrival(target)) ) 
-                                        || ( (!graph->forward) && (target_arr > arrival(target)) )))
-        {
-            Dout(dc::notice, " -- Updating target in heap : ("<< target.first<<", "<<target.second<<") new: "<<target_arr
-                                << " old: "<<arrival(target)                );
-            BOOST_ASSERT(!black(target));
-            
-            set_arrival(target, target_arr);
-            set_pred(target, e);
-            heap.update(handle(target));
-        } else if(target_arr < 0.0f) {
-            Dout(dc::notice, " -- No traffic on this edge");
-        }
-        else
-        {
-            Dout(dc::notice, " -- Edge not interesting");
-        }
+        
     }
     return curr.v;
 }
+
+bool Dijkstra::insert_node ( Vertice vert, int arr, int vert_cost, Predecessor pred )
+{
+    // check if we are above the cost limit
+    if( params.cost_limit && vert_cost > params.cost_limit_value )
+        return false;
+    
+    if( white(vert) )
+    {
+        Dout(dc::notice, " -- Inserting target into heap : ("<< vert.first<<", "<<vert.second<<")");
+        set_arrival(vert, arr);
+        set_cost(vert, vert_cost);
+        set_pred(vert, pred);
+        put_dij_node(vert);
+        set_gray(vert);
+        
+        if( params.save_touched_nodes )
+            touched_nodes.push_back(vert);
+        
+        return true;
+    }
+    else if( vert_cost < cost(vert) )
+    {
+        Dout(dc::notice, " -- Updating target in heap : ("<< vert.first<<", "<<vert.second<<") new: "<<arr
+                            << " old: "<<arrival(vert)                );
+
+        BOOST_ASSERT(!black(vert));
+        
+        set_arrival(vert, arr);
+        set_cost(vert, vert_cost);
+        set_pred(vert, pred);
+        heap.update(handle(vert));
+        
+        if( params.save_touched_nodes )
+            touched_nodes.push_back(vert);
+        
+        return true;
+    }
+    else
+    {
+        Dout(dc::notice, " -- Edge not interesting");
+        return false;
+    }
+}
+
 
 
 VisualResult Dijkstra::get_result()
