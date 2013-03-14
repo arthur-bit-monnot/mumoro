@@ -10,9 +10,6 @@ using namespace boost;
 
 
 namespace RLC {
-    
-void show_edges(Graph *rlc, RLC::Vertice v);
-
 
 /*************************** DFA ************************/
 
@@ -244,36 +241,6 @@ int BackwardGraph::num_transport_vertices()
 int BackwardGraph::num_dfa_vertices()
 {
     return forward_graph->num_dfa_vertices();
-}
-
-
-
-void show_edges(Graph *rlc, RLC::Vertice v)
-{   
-    Graph_t::out_edge_iterator ei, end;
-    tie(ei,end) = out_edges(v.first, rlc->transport->g);
-    
-    cout << "Street edges : ";
-    for(; ei != end; ei++) {
-        ::Edge e = rlc->transport->g[*ei];
-        cout << "("<< source(*ei, rlc->transport->g) <<", "<< target(*ei, rlc->transport->g) <<", "<<e.type<<", "<<e.duration(0,0).second<<")   ";
-    }
-    
-    cout << "\n DFA edges : ";
-    tie(ei,end) = out_edges(v.second, rlc->dfa.graph);
-    for(; ei != end; ei++) {
-        ::Edge e = rlc->transport->g[*ei];
-        cout << "("<< source(*ei, rlc->transport->g) <<", "<< target(*ei, rlc->transport->g) <<", "<<e.type<<", "<<e.duration(0,0).second<<")   ";
-    }    
-    
-    cout << "\nRLC Edges : ";
-    std::list<RLC::Edge>::iterator it;
-    std::list<RLC::Edge> edges = rlc->out_edges(v);
-    for(it = edges.begin() ; it != edges.end() ; ++it) {
-        cout << "( "<< rlc->source(*it).first <<"-"<< rlc->source(*it).second <<", "
-             << rlc->target(*it).first <<"-"<< rlc->target(*it).second <<", "<<rlc->duration(*it, 0,0).second<<")   ";
-    }
-    cout <<endl;
 }
 
 

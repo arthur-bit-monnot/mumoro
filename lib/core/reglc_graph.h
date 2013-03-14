@@ -213,7 +213,18 @@ struct Compare
 struct DijkstraParameters
 {
     DijkstraParameters() : save_touched_nodes(false), cost_limit(false) {}
+    
+    /**
+     * If set to True, every time a node is touched (inserted or modified in heap)
+     * ti is added to the `touched_nodes` list.
+     * 
+     * This is mainly useful to run a bidirectional Dijkstra
+     */
     bool save_touched_nodes;
+    
+    /**
+     * If set to true, nodes with cost above `cost_limit_value` won't be inserted in heap.
+     */
     bool cost_limit;
     int  cost_limit_value;
 };
@@ -221,6 +232,11 @@ struct DijkstraParameters
 
 typedef boost::heap::fibonacci_heap<Dij_node, boost::heap::compare<Compare> > Heap;
 
+
+
+/**
+ * Implementation of DRegLC defined by Barret & al.
+ */
 class Dijkstra
 {
     AbstractGraph *graph;
@@ -337,13 +353,6 @@ private:
 };
 
 
-
-
 }
-
-/********** Test and temporary functions *********/
-
-
-
 
 #endif
