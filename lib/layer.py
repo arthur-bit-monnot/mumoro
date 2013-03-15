@@ -311,7 +311,7 @@ class MultimodalGraph(object):
                 for n in l.nodes():
                     self.graph.set_coord(n.id + l.offset, n.lon, n.lat)
 
-            self.graph.sort()
+            self.graph.preprocess()
             print "The multimodal graph has been built and has {0} nodes and {1} edges".format(nb_nodes, count)
  
     def save(self, filename):

@@ -50,7 +50,6 @@ typedef pair<int, RLC::Vertice> CompleteNode;
  * Defines a start node :
  * - The node (layer + node)
  * - departure time (seconds)
- * - departure day
  */
 typedef pair<StateFreeNode, int> StartNode;
 

@@ -118,7 +118,15 @@ public:
     void append_timetable(float start, float arrival, const std::string & services);
     void append_frequency(int start, int end, int duration, const std::string & services);
     void sort();
+    void set_min();
     std::pair<bool, int> operator()(float start_time, int day, bool backward = false) const;
+    
+    /**
+     * Returns the minimum cost that might be appear on this edge.
+     * This is tipically useful for backward search when no arrival time is known
+     */
+    std::pair<bool, int> min_duration() const;
+    
 
     template<class Archive>
         void serialize(Archive& ar, const unsigned int version)
@@ -180,7 +188,15 @@ struct Graph
     bool dijkstra(int source, int target);
     void save(const std::string & filename) const;
     void load(const std::string & filename);
-    void sort();
+    
+    /**
+     * Performs operations that need to be done once all information is in the graph :
+     * 
+     * - sorting timetables
+     * - build an edge index
+     * - compute min duration for each edge
+     */
+    void preprocess();
     
     /**
      * List all edges with type `type`
@@ -212,6 +228,9 @@ struct Graph
 private:
     std::vector<edge_t> edges_vec;
     inline edge_t edge_descriptor(const int edge_id) const { return edges_vec[edge_id]; }
+    
+    void compute_min_durations();
+    void sort();
     void initEdgeIndexes();
 };
 

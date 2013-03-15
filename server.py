@@ -308,7 +308,7 @@ class Mumoro:
         dest = self.g.match( 'Street', float(dlon), float(dlat))
         date = self.analyse_date( time )
         print "Searching path from {0} to {1} at time {2} on day {3}".format(start, dest, date['seconds'], date['days'])
-        res = self.muparo( start, dest, date['seconds'], date['days'], self.g.graph )
+        res = self.reglc_dij_path( start, dest, date['seconds'], date['days'], self.g.graph )
         return self.resultToGeoJson( res )
     
     def regular_dij_path(self, start, dest, secs, day, graph ):

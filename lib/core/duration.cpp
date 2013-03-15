@@ -64,6 +64,14 @@ std::pair<bool, int> Duration::operator()(float start, int day, bool backward) c
     }
 }
 
+std::pair<bool, int> Duration::min_duration() const
+{
+    BOOST_ASSERT(const_duration >= 0);
+    return std::make_pair<bool, int>(true, const_duration);
+}
+
+
+
 std::pair<bool, int> Duration::freq_duration_forward(float start_time, int day, int allowed_lookups) const
 {
     bool has_traffic = false;
@@ -321,5 +329,41 @@ std::pair<bool, int> Duration::tt_duration_backward(float start, int day, int al
     }
 
     return std::make_pair<bool, int>(has_traffic, cost);
+}
+
+void Duration::set_min()
+{
+    if(dur_type == ConstDur) {
+        return;
+    } else if(dur_type == FrequencyDur) {
+        int min_dur = 999999;
+        int f_start, f_arrival, f_duration;
+        Services s;
+        
+        for(uint i=0 ; i< frequencies.size() ; ++i)
+        {
+            boost::tie(f_start, f_arrival, f_duration, s) = frequencies[i];
+            if(f_duration < min_dur)
+                min_dur = f_duration;
+        }
+        
+        const_duration = min_dur;
+        std::cout<<"Frequency min dur "<<min_dur<<std::endl;
+        
+    } else if(dur_type == TimetableDur) {
+        float tt_start, tt_arrival;
+        Services s;
+        float min_dur = 99999999;
+        
+        for(uint i=0 ; i < timetable.size() ; ++i) {
+            boost::tie(tt_start, tt_arrival, s) = timetable[i];
+            if(tt_arrival - tt_start < min_dur)
+                min_dur = tt_arrival - tt_start;
+        }
+        
+        const_duration = min_dur;
+        std::cout<<"Timetable min dur "<<min_dur<<std::endl;
+    }
+    
 }
 

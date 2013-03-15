@@ -66,10 +66,15 @@ public:
     virtual std::list<RLC::Edge> out_edges(RLC::Vertice) = 0;
     
     /**
-     * Returns the arrival time of trip starting at the source node of the edge at time
+     * Returns the cost (duration) of trip starting at the source node of the edge at time
      * start_sec on day day
      */
     virtual std::pair<bool, int> duration(RLC::Edge edge, float start_sec, int day) = 0;
+    
+    /**
+     * Returns the minimal cost (duration) of this edge
+     */
+    virtual std::pair<bool, int> min_duration(const RLC::Edge edge) const = 0;
     
     virtual std::set<int> dfa_start_states() = 0;
     virtual std::set<int> dfa_accepting_states() = 0;
@@ -109,6 +114,11 @@ public:
      * start_sec on day day
      */
     std::pair<bool, int> duration(RLC::Edge edge, float start_sec, int day);
+    
+    /**
+     * Returns the minimal cost (duration) of this edge
+     */
+    std::pair<bool, int> min_duration(const RLC::Edge edge) const;
     
     /**
      * Start states in the DFA.
@@ -165,6 +175,11 @@ public:
     std::pair<bool, int> duration(RLC::Edge edge, float start_sec, int day);
     
     /**
+     * Returns the minimal cost (duration) of this edge
+     */
+    std::pair<bool, int> min_duration(const RLC::Edge edge) const;
+    
+    /**
      * Start states in the DFA.
      * 
      * For backward graphs, this is the set of accepting states.
@@ -212,7 +227,7 @@ struct Compare
 
 struct DijkstraParameters
 {
-    DijkstraParameters() : save_touched_nodes(false), cost_limit(false) {}
+    DijkstraParameters() : save_touched_nodes(false), use_cost_lower_bounds(false) , cost_limit(false){}
     
     /**
      * If set to True, every time a node is touched (inserted or modified in heap)
@@ -221,6 +236,14 @@ struct DijkstraParameters
      * This is mainly useful to run a bidirectional Dijkstra
      */
     bool save_touched_nodes;
+    
+    /**
+     * IF set to true, the algorithm wont use the arrival/departure times but systematicaly
+     * use the lower bound of the edges cost.
+     * 
+     * This is mainly useful when searching bacvkward with no known departure times.
+     */
+    bool use_cost_lower_bounds;
     
     /**
      * If set to true, nodes with cost above `cost_limit_value` won't be inserted in heap.

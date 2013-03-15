@@ -155,6 +155,11 @@ std::pair<bool, int> Graph::duration(RLC::Edge edge, float start_sec, int day)
     return transport->g[edge.first].duration(start_sec, day);
 }
 
+std::pair<bool, int> Graph::min_duration (const Edge edge ) const
+{
+    return transport->g[edge.first].duration.min_duration();
+}
+
 std::set<int> Graph::dfa_start_states()
 {
     std::set<int> states;
@@ -222,6 +227,10 @@ std::pair<bool, int> BackwardGraph::duration ( Edge edge, float start_sec, int d
     return forward_graph->transport->g[edge.first].duration(start_sec, day, true);
 }
 
+std::pair<bool, int> BackwardGraph::min_duration ( const Edge edge ) const
+{
+    return forward_graph->transport->g[edge.first].duration.min_duration();
+}
 
 std::set< int > BackwardGraph::dfa_start_states()
 {
@@ -369,7 +378,11 @@ Vertice Dijkstra::treat_next()
         
         bool has_traffic;
         int edge_cost;
-        boost::tie(has_traffic, edge_cost) = graph->duration(e, arrival(curr.v), start_day);
+        if(params.use_cost_lower_bounds) {
+            boost::tie(has_traffic, edge_cost) = graph->duration.min_duration();
+        } else {
+            boost::tie(has_traffic, edge_cost) = graph->duration(e, arrival(curr.v), start_day);
+        }
         int target_cost = cost(curr.v) + edge_cost;
         float target_arr;
         if(graph->forward)

@@ -174,15 +174,30 @@ bool Graph::dijkstra(int source, int target)
     }
 
 }
-    
+
+void Graph::preprocess()
+{
+    sort();
+    initEdgeIndexes();
+    compute_min_durations();
+}
+   
 void Graph::sort()
 {
     BOOST_FOREACH(edge_t e, boost::edges(g))
     {
         g[e].duration.sort();
     }
-    initEdgeIndexes();
 }
+
+void Graph::compute_min_durations()
+{
+    BOOST_FOREACH(edge_t e, boost::edges(g))
+    {
+        g[e].duration.set_min();
+    }
+}
+
 
 void Graph::load(const std::string & filename)
 {
