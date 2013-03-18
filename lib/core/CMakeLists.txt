@@ -1,12 +1,8 @@
-SET(core_SOURCES 
-    path_algo.cpp 
-    graph_wrapper.cpp
-    reglc_graph.cpp
-    duration.cpp
-    nodes_filter.cpp
-    muparo.cpp
-    debug/cwd_debug.cc
-    debug/stack_trace.cpp
+SET(mumoro_SOURCES ${mumoro_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/path_algo.cpp 
+    ${CMAKE_CURRENT_SOURCE_DIR}/graph_wrapper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/duration.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/nodes_filter.cpp
    )
    
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
@@ -17,11 +13,7 @@ IF(VERBOSE)
 ENDIF(VERBOSE)
 
 
-add_executable(path-exe ${core_SOURCES} main.cpp)
-target_link_libraries( path-exe boost_serialization)
-IF(VERBOSE)
-  target_link_libraries( path-exe debug cwd)
-ENDIF(VERBOSE)
+
 
 # Build a library containing core for tests
 IF(TESTS)

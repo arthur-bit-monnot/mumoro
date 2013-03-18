@@ -1,7 +1,7 @@
 #ifndef NODES_FILTER_H
 #define NODES_FILTER_H
 
-#include "reglc_graph.h"
+#include "graph_wrapper.h"
 
 class NodeFilter
 {

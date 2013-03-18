@@ -377,12 +377,10 @@ void Muparo::check_connections ( const int modified_layer )
 
 int Muparo::min_cost ( const int layer ) const
 {
-    cerr << "Min cost for layer "<<layer<<endl;
     int min = 99999999;
     if( ! dij[layer]->heap.empty() ) {
         
         min = dij[layer]->cost( dij[layer]->heap.top().v );
-        cerr << " - heap "<<min<<endl;
     }
     
     BOOST_FOREACH(ConnectionRule rule, rules) {
@@ -391,19 +389,14 @@ int Muparo::min_cost ( const int layer ) const
         
         int tmp_cost = 0;
         BOOST_FOREACH(int l_cond, rule.conditions) {
-            int tmptmp = min_cost(l_cond);
-            cerr << " - sub "<<l_cond<<" : "<<tmptmp<<endl;
-            tmp_cost = rule.combine_costs( tmp_cost, tmptmp );
+            tmp_cost = rule.combine_costs( tmp_cost, min_cost(l_cond) );
         }
-        cerr << " - comb : "<< tmp_cost<<endl;
+        
         if(tmp_cost < min)
             min = tmp_cost;
     }
     
-    cerr<<" - "<<min<<endl;
-    
     return min;
-    
 }
 
 void free(Muparo * mup)

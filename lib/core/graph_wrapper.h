@@ -240,6 +240,7 @@ const int invalid_node = -1;
 
 struct VisualResult
 {
+    VisualResult() : g(NULL) {}
     VisualResult(Transport::Graph * g) : g(g) {}
     Transport::Graph *g;
     EdgeList edges;

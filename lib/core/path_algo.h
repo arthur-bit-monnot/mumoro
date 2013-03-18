@@ -2,7 +2,6 @@
 #define PATH_ALGO_H
 
 #include "graph_wrapper.h"
-#include "reglc_graph.h"
 #include "nodes_filter.h"
 
 struct Compare;

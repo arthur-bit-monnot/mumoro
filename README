@@ -25,25 +25,10 @@ For Debug output, you need the following the developpment version of :
 For Unit-testing :
 * Boost Testing (libboost-test-dev on Debian-based distributions)
 
-== How to install ==
-# Just run the following command
-sudo python setup.py install
 
-# Alternative:
-# If you don't have the rights to install it system-wide, or don't want to, use virtualenv:
-# Create a virtual environment and activate it
-python virtualenv.py env
-source env/bin/activate
-python setup.py install
+== Building with CMake ==
 
 
-== How to run it ==
-* grab an osm database either
-  * on http://www.openstreetmap.org
-      * center on your favorite town
-      * clic on the export tab an select OpenStreetMap XML Data
-      * if it's gray'ed out, try zooming on a smaller part of the town
-  * on http://download.geofabrik.de/osm/
-  * on http://downloads.cloudmade.com/ 
+
 
 Comments at tristramg (a) gmail (dot) com
