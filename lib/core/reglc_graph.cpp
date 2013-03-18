@@ -379,7 +379,7 @@ Vertice Dijkstra::treat_next()
         bool has_traffic;
         int edge_cost;
         if(params.use_cost_lower_bounds) {
-            boost::tie(has_traffic, edge_cost) = graph->duration.min_duration();
+            boost::tie(has_traffic, edge_cost) = graph->min_duration(e);
         } else {
             boost::tie(has_traffic, edge_cost) = graph->duration(e, arrival(curr.v), start_day);
         }
