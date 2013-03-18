@@ -9,7 +9,6 @@ IF(TESTS)
 ENDIF(TESTS)
 
 
-add_subdirectory ( lib )
 add_subdirectory ( algorithms )
 
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall" )
@@ -64,5 +63,13 @@ SWIG_LINK_LIBRARIES(mumoro ${PYTHON_LIBRARIES} boost_serialization)
 set_target_properties(_mumoro PROPERTIES EXCLUDE_FROM_ALL ON)
 add_custom_target( swig )
 add_dependencies( swig _mumoro )
+
+add_custom_command(TARGET swig POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                       ${CMAKE_BINARY_DIR}/_mumoro.so ${CMAKE_SOURCE_DIR}/lib/core/_mumoro.so)
+                       
+add_custom_command(TARGET swig POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                       ${CMAKE_BINARY_DIR}/mumoro.py ${CMAKE_SOURCE_DIR}/lib/core/mumoro.py)
 
 

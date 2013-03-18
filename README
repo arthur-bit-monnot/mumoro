@@ -19,16 +19,60 @@ On ubuntu or debian, please install the developpment versions
 * Python
 * Swig: for interfacing python
 
-== Optional Dependencies ==
+=== Optional Dependencies ===
 For Debug output, you need the following the developpment version of :
 * cwd (libcwd-dev on Debian-based distributions)
 For Unit-testing :
 * Boost Testing (libboost-test-dev on Debian-based distributions)
 
+=== Installing Python Dependencies ===
+
+Python dependencies can be install by running `sudo python setup.py install`
+
+
+
+
+== Project layout ==
+
+MuMoRo is composed of three parts
+
+- Core : A C++ core that contains mainly the graph structure. This part is in lib/core
+- Algorithms : C++ implementation of various routing algorithms
+- Frontend : A python part that is mainly used to import data and run a web service to have a basic UI. It uses SWIG to interface with the C++ code
+
 
 == Building with CMake ==
 
+The C++ code can be built with a standard CMake build : 
+
+```
+mkdir build
+cd build/
+cmake ..
+make
+```
+
+The default target is an executable based on algorithms/main.cpp. To build the swig interface, run `make swig`. 
+This will generate a shared library (_mumoro.so) and a python interface (mumoro.py) that will automatically copied in lib/core/
 
 
+== Running ==
 
-Comments at tristramg (a) gmail (dot) com
+Running MuMoro requires a configuration (aka scenario). Some example are present in the `scenarios/` folder. 
+Before running make sure you already built the SWIG interface.
+
+=== Importing data ===
+
+First step is to load data into your database. This is done by running: `python data_import.py {your_scenario.py}`
+
+
+=== Running the server ===
+
+Once the data is imported, next step is to run the server.
+If ran for the first time the graph will be generated from database and serilalized in a .dump file. 
+This file will be used for subsequent loading as long as the scenario is not changed.
+
+`python server.py {scenario.py}`
+
+Interface is then accessible on http://localhost:3001/ (or whatever url defined in the configuration).
+

@@ -13,19 +13,19 @@ setup(name='Mumoro',
 
       install_requires = ['cherrypy', 'genshi', 'simplejson', 'transitfeed', 'setuptools-git', 'osm4routing', "iso8601"],
       py_modules = ['server', 'data_import', 'web', 'lib'],
-      ext_modules = [
-          Extension("lib.core._mumoro",
-              sources=["lib/core/graph_wrapper.cpp", 
-                       "lib/core/path_algo.cpp", 
-                       "lib/core/reglc_graph.cpp",
-                       "lib/core/duration.cpp",
-                       "lib/core/nodes_filter.cpp",
-                       "lib/core/muparo.cpp",
-                       "lib/core/mumoro.i"],
-              swig_opts=['-c++'],
-              include_dirs=['lib/core/'],
-              libraries = ["boost_serialization"])
-          ],
+      #ext_modules = [
+          #Extension("lib.core._mumoro",
+              #sources=["lib/core/graph_wrapper.cpp", 
+                       #"lib/core/path_algo.cpp", 
+                       #"lib/core/reglc_graph.cpp",
+                       #"lib/core/duration.cpp",
+                       #"lib/core/nodes_filter.cpp",
+                       #"lib/core/muparo.cpp",
+                       #"lib/core/mumoro.i"],
+              #swig_opts=['-c++'],
+              #include_dirs=['lib/core/'],
+              #libraries = ["boost_serialization"])
+          #],
       entry_points = {
           'console_scripts': ['mumoro_import_data = data_import:main', 'mumoro_server = server:main'],
         }

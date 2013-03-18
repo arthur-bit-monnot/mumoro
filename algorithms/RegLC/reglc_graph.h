@@ -7,11 +7,10 @@
 #include "graph_wrapper.h"
 
 
-// TODO : this type def should be a tuple and the third part shoul be a EdgeMode.
-// It is done this way to workaround problems with SWIG
-
 namespace RLC {
 
+// TODO : this type def should be a tuple and the third part shoul be a EdgeMode.
+// It is done this way to workaround problems with SWIG
 typedef std::pair<std::pair<int, int>, int> DfaEdge;
 typedef std::vector<DfaEdge> DfaEdgeList;
 
