@@ -308,7 +308,8 @@ class Mumoro:
         dest = self.g.match( 'Street', float(dlon), float(dlat))
         date = self.analyse_date( time )
         print "Searching path from {0} to {1} at time {2} on day {3}".format(start, dest, date['seconds'], date['days'])
-        res = self.reglc_dij_path( start, dest, date['seconds'], date['days'], self.g.graph )
+        res = self.muparo( start, dest, date['seconds'], date['days'], self.g.graph )
+        print res
         return self.resultToGeoJson( res )
     
     def regular_dij_path(self, start, dest, secs, day, graph ):
@@ -326,16 +327,6 @@ class Mumoro:
         dij = mumoro.Dijkstra(back_rlc, start, dest, secs, day)
         dij.run()
         return dij.get_result()
-    
-    def meet_points(self, start, dest, secs, day, graph ):
-        mp = mumoro.MeetPoint(start, dest, secs, day, graph)
-        mp.run()
-        return mp.get_result()
-    
-    def shared_path(self, start, dest, secs, day, graph ):
-        sp = mumoro.SharedPath(start, dest, -1, secs, day, graph)
-        sp.run()
-        return sp.get_result()
     
     def muparo(self, start, dest, secs, day, graph ):
         #mpr = mumoro.Muparo(graph, start, dest)

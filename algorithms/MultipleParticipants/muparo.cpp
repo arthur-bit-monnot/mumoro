@@ -14,6 +14,37 @@ double get_run_time_sec() {
 
 namespace MuPaRo
 {
+
+bool PropagationRule::applicable(int node) const
+{
+
+    BOOST_FOREACH( int layer, conditions ) {
+        if( !mup->is_set( StateFreeNode(layer, node) ) ) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void PropagationRule::apply(int node) 
+{
+    if( applicable(node) ) {
+        int arr = -99999999;
+        int cost = 0;
+        BOOST_FOREACH( int layer, conditions ) {
+            cost = combine_costs(cost, mup->get_cost( StateFreeNode(layer, node) ));
+            if( mup->arrival( StateFreeNode(layer, node) ) > arr ) {
+                arr = mup->arrival( StateFreeNode(layer, node) );
+            }
+        }
+
+        if( mup->insert( StateFreeNode(insertion, node), arr, cost ) ) {
+            mup->clear_pred_layers( StateFreeNode(insertion, node) );
+            BOOST_FOREACH( int cond_layer, conditions ) 
+                mup->add_pred_layer( StateFreeNode(insertion, node), cond_layer);
+        }
+    }   
+}
     
 Muparo * point_to_point(Transport::Graph * trans, int source, int dest)
 {
@@ -107,16 +138,16 @@ Muparo * covoiturage(Transport::Graph * trans, int source1, int source2, int des
     mup->start_nodes.push_back( StartNode( StateFreeNode(3, dest1), 0) );
     mup->start_nodes.push_back( StartNode( StateFreeNode(4, dest2), 0) );
     
-    ConnectionRule cr;
+    PropagationRule cr(mup);
     cr.conditions.push_back(0);
     cr.conditions.push_back(1);
     cr.insertion = 2;
-    ConnectionRule cr2;
+    PropagationRule cr2(mup);
     cr2.conditions.push_back(3);
     cr2.conditions.push_back(4);
     cr2.insertion = 5;
-    mup->rules.push_back(cr);
-    mup->rules.push_back(cr2);
+    mup->propagation_rules.push_back(cr);
+    mup->propagation_rules.push_back(cr2);
     
     return mup;
 }
@@ -153,11 +184,11 @@ vres(transport)
         dij.push_back( new RLC::Dijkstra(graphs[i], -1, -1, -1, day) );
     }
     
-    ConnectionRule cr;
+    PropagationRule cr(this);
     cr.conditions.push_back(0);
     cr.conditions.push_back(1);
     cr.insertion = 2;
-    rules.push_back(cr);
+    propagation_rules.push_back(cr);
     
     start_nodes.push_back( StartNode( StateFreeNode(0, start1), 50000) );
     start_nodes.push_back( StartNode( StateFreeNode(1, start2), 50000) );
@@ -262,34 +293,9 @@ int Muparo::select_layer()
 
 void Muparo::apply_rules ( int node )
 {
-    BOOST_FOREACH( ConnectionRule rule, rules )
-    {
-        bool applicable = true;
-        BOOST_FOREACH( int layer, rule.conditions ) {
-            if( !is_set( StateFreeNode(layer, node) ) ) {
-                applicable = false;
-                break;
-            }
-        }
-        
-        if( applicable ) {
-            int arr = -99999999;
-            int cost = 0;
-            BOOST_FOREACH( int layer, rule.conditions ) {
-                cost = rule.combine_costs(cost, get_cost( StateFreeNode(layer, node) ));
-                if( arrival( StateFreeNode(layer, node) ) > arr ) {
-                    arr = arrival( StateFreeNode(layer, node) );
-                }
-            }
-
-            int layer = rule.insertion;
-            if( insert( StateFreeNode(layer, node), arr, cost ) ) {
-                clear_pred_layers( StateFreeNode(layer, node) );
-                BOOST_FOREACH( int cond_layer, rule.conditions ) 
-                    add_pred_layer( StateFreeNode(layer, node), cond_layer);
-            }
-        }   
-    }
+    BOOST_FOREACH( PropagationRule rule, propagation_rules )
+        rule.apply( node );
+    
 }
 
 bool Muparo::insert ( StateFreeNode n, int arrival, int cost )
@@ -379,11 +385,10 @@ int Muparo::min_cost ( const int layer ) const
 {
     int min = 99999999;
     if( ! dij[layer]->heap.empty() ) {
-        
         min = dij[layer]->cost( dij[layer]->heap.top().v );
     }
     
-    BOOST_FOREACH(ConnectionRule rule, rules) {
+    BOOST_FOREACH(PropagationRule rule, propagation_rules) {
         if( !(layer == rule.insertion) )
             continue;
         

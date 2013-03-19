@@ -10,6 +10,8 @@ namespace MuPaRo
 
 typedef enum { Sum, Max } CostCombination;
 
+class Muparo;
+
 /**
  * Used to propagate results from one or several layers to another one.
  * 
@@ -17,9 +19,10 @@ typedef enum { Sum, Max } CostCombination;
  * if nodes (l, n) are set for every layer l in conditions
  * then insert (l2, n) for every layer l2 in insertions
  */
-struct ConnectionRule
+struct PropagationRule
 {
-    ConnectionRule() : comb(Max) {}
+    PropagationRule(Muparo * mup) : mup(mup), comb(Max) {}
+    Muparo * mup;
     CostCombination comb;
     list<int> conditions;
     int insertion;
@@ -31,6 +34,8 @@ struct ConnectionRule
         
         return -1;
     }
+    bool applicable(const int node) const;
+    void apply(const int node);
 };
 
 /**
@@ -88,7 +93,7 @@ public:
     vector<RLC::DFA> dfas;
     vector<RLC::AbstractGraph*> graphs;
     vector<RLC::Dijkstra*> dij;
-    vector<ConnectionRule> rules;
+    vector<PropagationRule> propagation_rules;
     Flag **flags;
     
     list<StartNode> start_nodes;
@@ -170,9 +175,9 @@ public:
     
     /**
      * Returns the minimal cost that might appear in a layer.
-     * Whith no rules this is simply the minimal cost in heap.
+     * Whith no propagation_rules this is simply the minimal cost in heap.
      * 
-     * This is more tricky than it sounds since, nodes might be insert in this layer when rules are applied.
+     * This is more tricky than it sounds since, nodes might be insert in this layer when propagation_rules are applied.
      */
     int min_cost(const int layer) const;
     

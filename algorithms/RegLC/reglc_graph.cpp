@@ -1,6 +1,9 @@
 #include "debug/cwd_sys.h"
 #include "debug/cwd_debug.h"
 
+#include <boost/heap/fibonacci_heap.hpp>
+#include <boost/foreach.hpp> 
+
 #include "reglc_graph.h"
 
 

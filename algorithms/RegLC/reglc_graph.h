@@ -2,7 +2,7 @@
 #define REGLC_GRAPH_H
 
 #include <boost/heap/fibonacci_heap.hpp>
-#include <boost/foreach.hpp> //TODO : remove when not used
+#include <boost/foreach.hpp> 
 
 #include "graph_wrapper.h"
 

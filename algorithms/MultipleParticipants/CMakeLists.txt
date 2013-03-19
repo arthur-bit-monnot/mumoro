@@ -1,6 +1,4 @@
-
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}../RegLC/)
-
+include_directories(../RegLC)
 
 SET(LOCAL_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/muparo.cpp
