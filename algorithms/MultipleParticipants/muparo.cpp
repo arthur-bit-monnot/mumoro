@@ -28,14 +28,8 @@ bool PropagationRule::applicable(int node) const
 void PropagationRule::apply(int node) 
 {
     if( applicable(node) ) {
-        int arr = -99999999;
-        int cost = 0;
-        BOOST_FOREACH( int layer, conditions ) {
-            cost = combine_costs(cost, mup->get_cost( StateFreeNode(layer, node) ));
-            if( mup->arrival( StateFreeNode(layer, node) ) > arr ) {
-                arr = mup->arrival( StateFreeNode(layer, node) );
-            }
-        }
+        int arr = arrival_in_insertion_layer( node );
+        int cost = cost_in_insertion_layer( node );
 
         if( mup->insert( StateFreeNode(insertion, node), arr, cost ) ) {
             mup->clear_pred_layers( StateFreeNode(insertion, node) );
@@ -44,6 +38,35 @@ void PropagationRule::apply(int node)
         }
     }   
 }
+
+int PropagationRule::arrival_in_insertion_layer ( const int node ) const
+{
+    if(arr_comb == MaxArrival) {
+        int arr = -99999999;
+        BOOST_FOREACH( int layer, conditions ) {
+            if( mup->arrival( StateFreeNode(layer, node) ) > arr )
+                arr = mup->arrival( StateFreeNode(layer, node) );
+        }
+        return arr;
+    } else if(arr_comb == FirstLayerArrival) {
+        return mup->arrival( StateFreeNode(conditions[0], node) );
+    } else if(arr_comb == SecondLayerArrival) {
+        return mup->arrival( StateFreeNode(conditions[1], node) );
+    }
+    
+    BOOST_ASSERT(false); // This should never be reached;
+    return -1;
+}
+
+int PropagationRule::cost_in_insertion_layer ( const int node ) const
+{
+    int cost = 0;
+    BOOST_FOREACH( int layer, conditions ) {
+        cost = combine_costs(cost, mup->get_cost( StateFreeNode(layer, node) ));
+    }
+    return cost;
+}
+
 
 bool ConnectionRule::applicable ( const int node ) const
 {
@@ -93,10 +116,6 @@ void ConnectionRule::apply ( const int node )
             return;
         
         int total_cost = get_cost( node, true );
-        
-        
-        
-        cout << total_cost <<" "<<mup->best_cost<<endl;
 
         if(!mup->connection_found || total_cost < mup->best_cost) {
             mup->connection_found = true;
@@ -115,41 +134,6 @@ transport(trans),
 connection_found(false),
 vres(transport)
 {
-    flags = new Flag* [num_layers];
-    for(int i=0; i<num_layers ; ++i) {
-        flags[i] = new Flag[boost::num_vertices(transport->g)];
-    }
-}
-    
-Muparo::Muparo(Transport::Graph * trans, int start1, int start2, MuparoParameters params) :
-params(params),
-transport(trans),
-connection_found(false),
-vres(transport)
-{
-    num_layers = 3;
-    int day = 10;
-    
-    dfas.push_back(RLC::foot_dfa());
-    dfas.push_back(RLC::bike_pt_dfa());
-    dfas.push_back(RLC::bike_pt_dfa());
-    
-    for(int i=0; i<num_layers ; ++i)
-    {
-        graphs.push_back( new RLC::Graph(this->transport, dfas[i] ));
-        dij.push_back( new RLC::Dijkstra(graphs[i], -1, -1, -1, day) );
-    }
-    
-    PropagationRule cr(this);
-    cr.conditions.push_back(0);
-    cr.conditions.push_back(1);
-    cr.insertion = 2;
-    propagation_rules.push_back(cr);
-    
-    start_nodes.push_back( StartNode( StateFreeNode(0, start1), 50000) );
-    start_nodes.push_back( StartNode( StateFreeNode(1, start2), 50000) );
-    goal_nodes.push_back( StateFreeNode(2, 400) );
-    
     flags = new Flag* [num_layers];
     for(int i=0; i<num_layers ; ++i) {
         flags[i] = new Flag[boost::num_vertices(transport->g)];
@@ -293,7 +277,7 @@ void Muparo::build_result()
     } else if(params.search_type == DestNodes) {
         BOOST_FOREACH(StateFreeNode n, goal_nodes) {
             queue.push_back( CompleteNode(n.first, RLC::Vertice(n.second, flags[n.first][n.second].dfa_state )));
-            vres.a_nodes.push_back(n.second);
+//             vres.a_nodes.push_back(n.second);
         }
     } else {
         RLC::Vertice v;
@@ -315,7 +299,6 @@ void Muparo::build_result()
     }
     
     while( !queue.empty() ) {
-        
         CompleteNode curr = queue.back();
         queue.pop_back();
         
@@ -328,7 +311,6 @@ void Muparo::build_result()
         }
         else if( flags[l][vert.first].pred_layers.empty() )
         {
-            vres.b_nodes.push_back(vert.first);
         }
         else
         {

@@ -329,9 +329,12 @@ class Mumoro:
         return dij.get_result()
     
     def muparo(self, start, dest, secs, day, graph ):
-        #mpr = mumoro.Muparo(graph, start, dest)
         #mpr = mumoro.point_to_point(graph, 277967, 284756)
-        mpr = mumoro.time_dep_covoiturage(graph, 313889, 265278, start, dest, mumoro.pt_foot_dfa(), mumoro.bike_dfa(), 30000)
+        mpr = mumoro.conv_time_dep_covoiturage(graph, 313889, 265278, start, dest, mumoro.pt_foot_dfa(), mumoro.car_dfa())
+        ## Intéressant pour les cout max : 
+        #mpr = mumoro.conv_time_dep_covoiturage(graph, 313889, 265278, 319962, 99363, mumoro.pt_foot_dfa(), mumoro.car_dfa())
+        
+        #mpr = mumoro.conv_time_dep_covoiturage(graph, 713, 425, 306, 298,  mumoro.foot_dfa(), mumoro.foot_dfa())
         mpr.run()
         res = mpr.get_result()
         mumoro.free(mpr)

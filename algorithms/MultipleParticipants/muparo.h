@@ -9,6 +9,7 @@ namespace MuPaRo
 {
 
 typedef enum { Sum, Max } CostCombination;
+typedef enum { MaxArrival, FirstLayerArrival, SecondLayerArrival } ArrivalCombination;
 
 class Muparo;
 
@@ -21,19 +22,22 @@ class Muparo;
  */
 struct PropagationRule
 {
-    PropagationRule(Muparo * mup) : mup(mup), comb(Max) {}
+    PropagationRule(Muparo * mup) : mup(mup), cost_comb(Max), arr_comb(MaxArrival) {}
     Muparo * mup;
-    CostCombination comb;
-    list<int> conditions;
+    CostCombination cost_comb;
+    ArrivalCombination arr_comb;
+    vector<int> conditions;
     int insertion;
     inline int combine_costs(const int old, const int add) const {
-        if(comb == Sum)
+        if(cost_comb == Sum)
             return old + add;
-        else if(comb == Max)
+        else if(cost_comb == Max)
             return old > add ? old : add;
         
         return -1;
     }
+    int arrival_in_insertion_layer( const int node ) const;
+    int cost_in_insertion_layer( const int node ) const;
     bool applicable(const int node) const;
     void apply(const int node);
 };
@@ -98,7 +102,6 @@ class Muparo
 {
 public:
     Muparo(Transport::Graph * transport, int num_layers, MuparoParameters p = MuparoParameters());
-    Muparo(Transport::Graph * transport, int start1, int start2, MuparoParameters p = MuparoParameters());
     ~Muparo();
     
     MuparoParameters params;

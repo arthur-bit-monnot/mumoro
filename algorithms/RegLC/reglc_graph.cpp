@@ -63,6 +63,16 @@ DFA bike_dfa()
     return DFA(0, accepting, edges);
 }
 
+DFA car_dfa()
+{
+    DfaEdgeList edges;
+    edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(0, 0), CarEdge));
+    set<int> accepting;
+    accepting.insert(0);
+    
+    return DFA(0, accepting, edges);
+}
+
 DFA pt_foot_dfa()
 {
     DfaEdgeList edges;
@@ -392,8 +402,10 @@ Vertice Dijkstra::treat_next()
         Dout(dc::notice, " - edge {target: ("<<target.first<<", "<<target.second<<") }");   
         
         if(has_traffic) {
-            BOOST_ASSERT(edge_cost >= 0);
-            insert_node(target, target_arr, target_cost, Predecessor(e));
+//             BOOST_ASSERT(edge_cost >= 0);
+            //TODO remove inconsistent data from generated graph
+            if(edge_cost >= 0)
+                insert_node(target, target_arr, target_cost, Predecessor(e));
         }
         
         

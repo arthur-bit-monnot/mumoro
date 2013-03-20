@@ -12,6 +12,8 @@ Muparo * covoiturage(Transport::Graph * trans, int source1, int source2, int des
 Muparo * time_dep_covoiturage(Transport::Graph * trans, int source1, int source2, int dest1, int dest2,
                               RLC::DFA dfa_pass, RLC::DFA dfa_car, int limit = -1);
 
+Muparo * conv_time_dep_covoiturage(Transport::Graph * trans, int source1, int source2, int dest1, int dest2,
+                              RLC::DFA dfa_pass, RLC::DFA dfa_car);
 }
 
 
