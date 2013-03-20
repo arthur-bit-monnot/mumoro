@@ -108,7 +108,6 @@ DFA pt_dfa()
     accepting.insert(1);
     
     return DFA(0, accepting, edges);
-    
 }
 
 /**************************** Graph ***********************************/
@@ -288,7 +287,6 @@ dfa_num_vert( graph->num_dfa_vertices() )
     // in some case, sources might be added while running
     if(source != -1) {
         BOOST_FOREACH(int v_dfa, graph->dfa_start_states()) {
-            cerr << "Insert " <<source <<" "<<v_dfa<<endl;
             source_vertices.insert(Vertice(source, v_dfa));
         }
     }
@@ -331,7 +329,6 @@ using namespace std;
 bool Dijkstra::run()
 {
     Dout(dc::notice, "Running Dijkstra on RegLCGraph from node "<<source <<" to node "<<dest);
-    std::cout << "Running Dijkstra on RegLCGraph from node "<<source <<" to node "<<dest<<"on time ("<<start_sec<<" "<<start_day<<")\n";
     
     while( !heap.empty() && !path_found ) 
     {
@@ -348,10 +345,9 @@ bool Dijkstra::run()
         rlc_dest = *dest_cur;
         path_found = true;
         path_arrival = arrival(rlc_dest);
+        path_cost = cost(rlc_dest);
         for(curr = rlc_dest ; has_pred(curr) ; curr = graph->source(get_pred(curr))) 
             path.push_front(get_pred(curr));
-        
-        cout << "Path found : duration = " << path_arrival - start_sec << endl;
     } 
     else  // target wasn't reached
     { 

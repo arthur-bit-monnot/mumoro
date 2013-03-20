@@ -325,7 +325,12 @@ public:
     std::list< int > touched_edges;
     std::list< Vertice > touched_nodes;
     
+    /**
+     * When a path is found, those store the arrival time and the cost of the destination node
+     */
     float path_arrival;
+    int path_cost;
+    
     std::list< RLC::Edge > path;
     
     EdgeList get_transport_path();

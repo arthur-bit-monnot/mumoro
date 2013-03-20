@@ -17,7 +17,6 @@ namespace MuPaRo
 
 bool PropagationRule::applicable(int node) const
 {
-
     BOOST_FOREACH( int layer, conditions ) {
         if( !mup->is_set( StateFreeNode(layer, node) ) ) {
             return false;
@@ -45,112 +44,69 @@ void PropagationRule::apply(int node)
         }
     }   
 }
-    
-Muparo * point_to_point(Transport::Graph * trans, int source, int dest)
+
+bool ConnectionRule::applicable ( const int node ) const
 {
-    Muparo * mup = new Muparo(trans, 1);
-    int day = 10;
-    
-    mup->dfas.push_back(RLC::bike_pt_dfa());
-    
-    for(int i=0; i<mup->num_layers ; ++i)
-    {
-        mup->graphs.push_back( new RLC::Graph(mup->transport, mup->dfas[i] ));
-        mup->dij.push_back( new RLC::Dijkstra(mup->graphs[i], -1, -1, -1, day) );
+    BOOST_FOREACH( int layer, conditions ) {
+        if( !mup->is_set( StateFreeNode(layer, node) ) ) {
+            return false;
+        }
     }
-    
-    mup->start_nodes.push_back( StartNode( StateFreeNode(0, source), 50000) );
-    mup->goal_nodes.push_back( StateFreeNode(0, dest) );
-    
-    return mup;
+    return true;
 }
 
-Muparo * bi_point_to_point(Transport::Graph * trans, int source, int dest)
-{
-    MuparoParameters mup_params;
-    mup_params.bidirectional = true;
-    mup_params.bidir_layers = make_pair<int, int>(0, 1);
-    
-    Muparo * mup = new Muparo(trans, 2, mup_params);
-    int day = 10;
-    
-    mup->dfas.push_back(RLC::foot_dfa());
-    mup->dfas.push_back(RLC::foot_dfa());
-    
-    RLC::DijkstraParameters param;
-    param.save_touched_nodes = true;
-    RLC::Graph *g = new RLC::Graph(mup->transport, mup->dfas[0] );
-    mup->graphs.push_back( g );
-    mup->graphs.push_back( new RLC::BackwardGraph(g));
-    mup->dij.push_back( new RLC::Dijkstra(mup->graphs[0], -1, -1, -1, day, param) );
-    mup->dij.push_back( new RLC::Dijkstra(mup->graphs[1], -1, -1, -1, day, param) );
-    
-    mup->start_nodes.push_back( StartNode( StateFreeNode(0, source), 50000) );
-    mup->start_nodes.push_back( StartNode( StateFreeNode(1, dest), 0) );
-    
-    return mup;
-}
+int ConnectionRule::get_cost( const int node, bool real_cost ) const {
+        int c2 = mup->get_cost( StateFreeNode(2, node) );
+        
+        int c4 = mup->get_cost( StateFreeNode(4, node) );
+        
+        int c3;
+        if(!real_cost)
+            c3 = mup->get_cost( StateFreeNode(3, node) );
+        else {
+            RLC::BackwardGraph * g = dynamic_cast<RLC::BackwardGraph*>(mup->graphs[3]);
+            RLC::Dijkstra dij(g->forward_graph, node, l3_dest, mup->arrival( StateFreeNode(2, node) ), 10);
+            dij.run();
+            if(dij.path_found) {
+                c3 = dij.path_cost;                
+                BOOST_ASSERT( mup->get_cost( StateFreeNode(3, node) ) <= c3 );
+            } else {
+                c3 = 99999999;
+            }
+            
+        }
+        
+        if(c3 > c4)
+            return c2 + c3;
+        else
+            return c2 + c4;
+    }
 
-Muparo * covoiturage(Transport::Graph * trans, int source1, int source2, int dest1, int dest2, RLC::DFA dfa_pass, RLC::DFA dfa_car, int limit)
+
+
+void ConnectionRule::apply ( const int node )
 {
-    MuparoParameters mup_params;
-    mup_params.bidirectional = true;
-    mup_params.bidir_layers = make_pair<int, int>(2, 5);
-    
-    Muparo * mup = new Muparo(trans, 6, mup_params);
-    int day = 10;
-    
-    mup->dfas.push_back(dfa_pass);
-    mup->dfas.push_back(dfa_car);
-    mup->dfas.push_back(dfa_car);
-    mup->dfas.push_back(dfa_pass);
-    mup->dfas.push_back(dfa_car);
-    mup->dfas.push_back(dfa_car);
-    
-    RLC::DijkstraParameters param_car;
-    
-    RLC::DijkstraParameters param_car_bi;
-    param_car_bi.save_touched_nodes = true;
-    
-    RLC::DijkstraParameters param_passenger;
-    param_passenger.cost_limit = limit > 0;
-    param_passenger.cost_limit_value = limit;
-    
-    
-    RLC::Graph *g1 = new RLC::Graph(mup->transport, mup->dfas[0] );
-    RLC::Graph *g2 = new RLC::Graph(mup->transport, mup->dfas[1] );
-    RLC::Graph *g3 = new RLC::Graph(mup->transport, mup->dfas[2] );
-    mup->graphs.push_back( g1 );
-    mup->graphs.push_back( g2 );
-    mup->graphs.push_back( g3 );
-    mup->graphs.push_back( new RLC::BackwardGraph(g1));
-    mup->graphs.push_back( new RLC::BackwardGraph(g2));
-    mup->graphs.push_back( new RLC::BackwardGraph(g3));
-    mup->dij.push_back( new RLC::Dijkstra(mup->graphs[0], -1, -1, -1, day, param_passenger) );
-    mup->dij.push_back( new RLC::Dijkstra(mup->graphs[1], -1, -1, -1, day, param_car) );
-    mup->dij.push_back( new RLC::Dijkstra(mup->graphs[2], -1, -1, -1, day, param_car_bi) );
-    mup->dij.push_back( new RLC::Dijkstra(mup->graphs[3], -1, -1, -1, day, param_passenger) );
-    mup->dij.push_back( new RLC::Dijkstra(mup->graphs[4], -1, -1, -1, day, param_car) );
-    mup->dij.push_back( new RLC::Dijkstra(mup->graphs[5], -1, -1, -1, day, param_car_bi) );
-    
-    mup->start_nodes.push_back( StartNode( StateFreeNode(0, source1), 50000) );
-    mup->start_nodes.push_back( StartNode( StateFreeNode(1, source2), 0) );
-    mup->start_nodes.push_back( StartNode( StateFreeNode(3, dest1), 0) );
-    mup->start_nodes.push_back( StartNode( StateFreeNode(4, dest2), 0) );
-    
-    PropagationRule cr(mup);
-    cr.conditions.push_back(0);
-    cr.conditions.push_back(1);
-    cr.insertion = 2;
-    PropagationRule cr2(mup);
-    cr2.conditions.push_back(3);
-    cr2.conditions.push_back(4);
-    cr2.insertion = 5;
-    mup->propagation_rules.push_back(cr);
-    mup->propagation_rules.push_back(cr2);
-    
-    return mup;
+    if( applicable( node ) ) {
+        
+        // Make sure this path can be interesting before going any further
+        if(mup->connection_found && get_cost( node, false) >= mup->best_cost)
+            return;
+        
+        int total_cost = get_cost( node, true );
+        
+        
+        
+        cout << total_cost <<" "<<mup->best_cost<<endl;
+
+        if(!mup->connection_found || total_cost < mup->best_cost) {
+            mup->connection_found = true;
+            mup->best_cost = total_cost;
+            mup->best_connection_node = node;
+        }
+    }
 }
+    
+
     
 Muparo::Muparo(Transport::Graph * trans, int num_layers, MuparoParameters params) :
 params(params),
@@ -225,7 +181,7 @@ bool Muparo::run()
         RLC::Vertice vert = dij[layer]->treat_next();
         StateFreeNode node(layer, vert.first);
         
-        if(params.bidirectional && (layer == params.bidir_layers.first || layer == params.bidir_layers.second)) {
+        if(params.search_type == Bidirectional && (layer == params.bidir_layers.first || layer == params.bidir_layers.second)) {
             check_connections( layer );
         }
         
@@ -255,19 +211,27 @@ bool Muparo::finished()
         }
     }
     
-    if(!params.bidirectional) {
+    if(params.search_type == DestNodes) {
+        goals_reached = true;
         BOOST_FOREACH(StateFreeNode n, goal_nodes) {
             if(!is_set(n)) {
                 goals_reached = false;
                 break;
             }
         }
-    } else {
+    } else if(params.search_type == Bidirectional) {
+        goals_reached = false;
         if(connection_found) {
             if(best_cost <= min_cost(params.bidir_layers.first) + min_cost(params.bidir_layers.second))
                 goals_reached = true;
-        } else {
-            goals_reached = false;
+        }
+    } else if(params.search_type == Connection) {
+        goals_reached = false;
+        if(connection_found) {
+            if( best_cost <= min_cost(2) 
+                && best_cost <= min_cost(3)
+                && best_cost <= min_cost(4) )
+                goals_reached = true;
         }
     }
     
@@ -296,6 +260,8 @@ void Muparo::apply_rules ( int node )
     BOOST_FOREACH( PropagationRule rule, propagation_rules )
         rule.apply( node );
     
+    BOOST_FOREACH( ConnectionRule rule, connection_rules )
+        rule.apply( node );
 }
 
 bool Muparo::insert ( StateFreeNode n, int arrival, int cost )
@@ -320,15 +286,32 @@ void Muparo::build_result()
 {
     std::list< CompleteNode > queue;
     
-    if(params.bidirectional) {
-        queue.push_back(CompleteNode(params.bidir_layers.first, best_connection));
-        queue.push_back(CompleteNode(params.bidir_layers.second, best_connection));
-        vres.c_nodes.push_back(best_connection.first);
-    }
-    
-    BOOST_FOREACH(StateFreeNode n, goal_nodes) {
-        queue.push_back( CompleteNode(n.first, RLC::Vertice(n.second, flags[n.first][n.second].dfa_state )));
-        vres.a_nodes.push_back(n.second);
+    if(params.search_type == Bidirectional) {
+        queue.push_back(CompleteNode(params.bidir_layers.first, best_bidir_connection));
+        queue.push_back(CompleteNode(params.bidir_layers.second, best_bidir_connection));
+        vres.c_nodes.push_back(best_bidir_connection.first);
+    } else if(params.search_type == DestNodes) {
+        BOOST_FOREACH(StateFreeNode n, goal_nodes) {
+            queue.push_back( CompleteNode(n.first, RLC::Vertice(n.second, flags[n.first][n.second].dfa_state )));
+            vres.a_nodes.push_back(n.second);
+        }
+    } else {
+        RLC::Vertice v;
+        v.first = best_connection_node;
+        v.second = flags[2][best_connection_node].dfa_state;
+        queue.push_back(CompleteNode(2, v));
+        v.first = best_connection_node;
+        v.second = flags[4][best_connection_node].dfa_state;
+        queue.push_back(CompleteNode(4, v));
+        vres.c_nodes.push_back(best_connection_node);
+        
+        int node = v.first;
+        RLC::BackwardGraph * g = dynamic_cast<RLC::BackwardGraph*>(graphs[3]);
+        RLC::Dijkstra dij(g->forward_graph, node, connection_rules[0].l3_dest, arrival( StateFreeNode(2, node) ), 10);
+        dij.run();
+        BOOST_FOREACH( int edge, dij.get_transport_path() ) {
+            vres.edges.push_back( edge );
+        }
     }
     
     while( !queue.empty() ) {
@@ -359,7 +342,7 @@ void Muparo::build_result()
 
 void Muparo::check_connections ( const int modified_layer )
 {
-    BOOST_ASSERT(params.bidirectional);
+    BOOST_ASSERT(params.search_type == Bidirectional);
     int l;
     if(modified_layer == params.bidir_layers.first)
         l = params.bidir_layers.second;
@@ -375,7 +358,7 @@ void Muparo::check_connections ( const int modified_layer )
             if(!connection_found || cost < best_cost) {
                 connection_found = true;
                 best_cost = cost;
-                best_connection = v;
+                best_bidir_connection = v;
             }
         }
     }

@@ -331,7 +331,7 @@ class Mumoro:
     def muparo(self, start, dest, secs, day, graph ):
         #mpr = mumoro.Muparo(graph, start, dest)
         #mpr = mumoro.point_to_point(graph, 277967, 284756)
-        mpr = mumoro.covoiturage(graph, start, dest, 59919, 225530, mumoro.foot_dfa(), mumoro.bike_dfa(), 30000)
+        mpr = mumoro.time_dep_covoiturage(graph, 313889, 265278, start, dest, mumoro.pt_foot_dfa(), mumoro.bike_dfa(), 30000)
         mpr.run()
         res = mpr.get_result()
         mumoro.free(mpr)

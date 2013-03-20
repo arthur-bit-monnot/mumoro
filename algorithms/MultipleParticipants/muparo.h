@@ -38,6 +38,19 @@ struct PropagationRule
     void apply(const int node);
 };
 
+struct ConnectionRule
+{
+    ConnectionRule(Muparo * mup) : mup(mup), comb(Sum) {}
+    Muparo * mup;
+    CostCombination comb;
+    list<int> conditions;
+    int get_cost( const int node, bool real_cost = false ) const;
+    bool applicable(const int node) const;
+    void apply(const int node);
+    
+    int l3_dest;
+};
+
 /**
  * First : id of the layer the node belongs to
  * Second : id of the node in transport graph
@@ -72,10 +85,12 @@ struct Flag
     std::list< int > pred_layers;
 };
 
+typedef enum { DestNodes, Bidirectional, Connection } SearchType;
+
 struct MuparoParameters
 {
-    MuparoParameters() : bidirectional(false) {}
-    bool bidirectional;
+    MuparoParameters() : search_type(DestNodes) {}
+    SearchType search_type;
     std::pair<int, int> bidir_layers;
 };
 
@@ -94,14 +109,18 @@ public:
     vector<RLC::AbstractGraph*> graphs;
     vector<RLC::Dijkstra*> dij;
     vector<PropagationRule> propagation_rules;
+    vector<ConnectionRule> connection_rules;
     Flag **flags;
     
     list<StartNode> start_nodes;
     list<StateFreeNode> goal_nodes;
     
+    /** Bidirectional variables */
     bool connection_found;
     int best_cost;
-    RLC::Vertice best_connection;
+    RLC::Vertice best_bidir_connection;
+    int best_connection_node;
+    
     
 public:
     bool run();
@@ -188,13 +207,11 @@ public:
     VisualResult get_result() { return vres; }
 };
 
-Muparo * point_to_point(Transport::Graph * trans, int source, int dest);
-Muparo * bi_point_to_point(Transport::Graph * trans, int source, int dest);
-Muparo * covoiturage(Transport::Graph * trans, int source1, int source2, int dest1, int dest2,
-                     RLC::DFA dfa1, RLC::DFA dfa2, int limit = -1);
+
 
 void free(Muparo * mup);
-}
+
+} // end namespace MuPaRo
 
 
 #endif
