@@ -61,8 +61,23 @@ int PropagationRule::arrival_in_insertion_layer ( const int node ) const
 int PropagationRule::cost_in_insertion_layer ( const int node ) const
 {
     int cost = 0;
-    BOOST_FOREACH( int layer, conditions ) {
-        cost = combine_costs(cost, mup->get_cost( StateFreeNode(layer, node) ));
+    if(cost_comb == SumCost || cost_comb == MaxCost) {
+        BOOST_FOREACH( int layer, conditions ) {
+            cost = combine_costs(cost, mup->get_cost( StateFreeNode(layer, node) ));
+        }
+    } else if(cost_comb == SumPlusWaitCost) {
+        const int last_arr = arrival_in_insertion_layer( node );
+        int max_wait = 0;
+        
+        BOOST_FOREACH( int layer, conditions ) {
+            cost += mup->get_cost( StateFreeNode(layer, node) );
+            if(last_arr - mup->arrival( StateFreeNode(layer, node) ) > max_wait)
+                max_wait = last_arr - mup->arrival( StateFreeNode(layer, node) );
+        }
+        
+        cost += max_wait;
+    } else {
+        throw Invalid_Operation();
     }
     return cost;
 }
@@ -359,6 +374,7 @@ int Muparo::min_cost ( const int layer ) const
         
         int tmp_cost = 0;
         BOOST_FOREACH(int l_cond, rule.conditions) {
+            //TODO : false, should be the min of all layers
             tmp_cost = rule.combine_costs( tmp_cost, min_cost(l_cond) );
         }
         

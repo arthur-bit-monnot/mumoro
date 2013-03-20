@@ -96,12 +96,12 @@ Muparo * covoiturage(Transport::Graph * trans, int source1, int source2, int des
     mup->start_nodes.push_back( StartNode( StateFreeNode(4, dest2), 0) );
     
     PropagationRule cr(mup);
-    cr.cost_comb = Sum;
+    cr.cost_comb = SumCost;
     cr.conditions.push_back(0);
     cr.conditions.push_back(1);
     cr.insertion = 2;
     PropagationRule cr2(mup);
-    cr2.cost_comb = Sum;
+    cr2.cost_comb = SumCost;
     cr2.conditions.push_back(3);
     cr2.conditions.push_back(4);
     cr2.insertion = 5;
@@ -222,17 +222,17 @@ Muparo* conv_time_dep_covoiturage ( Transport::Graph* trans, int source1, int so
     mup->start_nodes.push_back( StartNode( StateFreeNode(1, source2), 50000) );
     mup->start_nodes.push_back( StartNode( StateFreeNode(3, dest2), 0) );
     
-    mup->goal_nodes.push_back( StateFreeNode(4, dest1));
+    mup->goal_nodes.push_back( StateFreeNode(4, dest1)) ;
     
     PropagationRule pr(mup);
-    pr.cost_comb = Sum;
+    pr.cost_comb = SumPlusWait;
     pr.conditions.push_back(0);
     pr.conditions.push_back(1);
     pr.insertion = 2;
     mup->propagation_rules.push_back(pr);
     
     PropagationRule pr2(mup);
-    pr2.cost_comb = Sum;
+    pr2.cost_comb = SumCost;
     pr2.arr_comb = FirstLayerArrival;
     pr2.conditions.push_back(2);
     pr2.conditions.push_back(3);

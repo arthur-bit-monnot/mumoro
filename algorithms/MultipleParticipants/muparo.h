@@ -5,10 +5,12 @@
 
 using namespace std;
 
+struct Invalid_Operation {};
+
 namespace MuPaRo
 {
 
-typedef enum { Sum, Max } CostCombination;
+typedef enum { SumCost, MaxCost, SumPlusWaitCost } CostCombination;
 typedef enum { MaxArrival, FirstLayerArrival, SecondLayerArrival } ArrivalCombination;
 
 class Muparo;
@@ -22,17 +24,19 @@ class Muparo;
  */
 struct PropagationRule
 {
-    PropagationRule(Muparo * mup) : mup(mup), cost_comb(Max), arr_comb(MaxArrival) {}
+    PropagationRule(Muparo * mup) : mup(mup), cost_comb(MaxCost), arr_comb(MaxArrival) {}
     Muparo * mup;
     CostCombination cost_comb;
     ArrivalCombination arr_comb;
     vector<int> conditions;
     int insertion;
     inline int combine_costs(const int old, const int add) const {
-        if(cost_comb == Sum)
+        if(cost_comb == SumCost)
             return old + add;
-        else if(cost_comb == Max)
+        else if(cost_comb == MaxCost)
             return old > add ? old : add;
+        else
+            throw Invalid_Operation();
         
         return -1;
     }
@@ -44,7 +48,7 @@ struct PropagationRule
 
 struct ConnectionRule
 {
-    ConnectionRule(Muparo * mup) : mup(mup), comb(Sum) {}
+    ConnectionRule(Muparo * mup) : mup(mup), comb(SumCost) {}
     Muparo * mup;
     CostCombination comb;
     list<int> conditions;
