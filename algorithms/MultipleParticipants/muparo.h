@@ -2,6 +2,7 @@
 #define MUPARO_H
 
 #include "reglc_graph.h"
+#include "reglc_dijkstra.h"
 
 using namespace std;
 

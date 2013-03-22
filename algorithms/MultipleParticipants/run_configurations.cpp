@@ -225,7 +225,7 @@ Muparo* conv_time_dep_covoiturage ( Transport::Graph* trans, int source1, int so
     mup->goal_nodes.push_back( StateFreeNode(4, dest1)) ;
     
     PropagationRule pr(mup);
-    pr.cost_comb = SumPlusWait;
+    pr.cost_comb = SumPlusWaitCost;
     pr.conditions.push_back(0);
     pr.conditions.push_back(1);
     pr.insertion = 2;

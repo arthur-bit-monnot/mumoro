@@ -1,5 +1,7 @@
 #include <sys/times.h>
 
+#include <boost/foreach.hpp> 
+
 #include "muparo.h"
 
 double get_run_time_sec() {

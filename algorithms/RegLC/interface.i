@@ -3,6 +3,7 @@
 
 %{
  #include "reglc_graph.h"
+ #include "reglc_dijkstra.h"
 %}
 
 %rename(RLC_Compare) RLC::Compare;
@@ -12,3 +13,4 @@
 
 // Parse the original header file
 %include "reglc_graph.h"
+%include "reglc_dijkstra.h"
