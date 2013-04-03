@@ -1,26 +1,56 @@
 #include "nodes_filter.h"
 
+VisualResult NodeFilter::visualization() const
+{
+    VisualResult vres(g);
+    
+    Graph_t::vertex_iterator curr, end;
+    boost::tie(curr, end) = boost::vertices( g->g );
+    
+    while(curr != end) {
+        if( isIn( *curr ) ) {
+            vres.a_nodes.push_back(*curr);
+        }
+        curr++;
+    }
+    
+    return vres;
+}
 
 
-BBNodeFilter::BBNodeFilter ( Graph_t & g, float max_lon, float min_lon, float max_lat, float min_lat ) :
-g(g), max_lon(max_lon), min_lon(min_lon), max_lat(max_lat), min_lat(min_lat)
+BBNodeFilter::BBNodeFilter ( Transport::Graph * g, float max_lon, float min_lon, float max_lat, float min_lat ) :
+NodeFilter( g ),
+max_lon(max_lon), min_lon(min_lon), max_lat(max_lat), min_lat(min_lat)
 {
 }
 
 bool BBNodeFilter::isIn ( int node ) const
 {
-    bool in = g[node].lon < max_lon 
-        && g[node].lon > min_lon
-        && g[node].lat < max_lat
-        && g[node].lat > min_lat;
-    if(in)
-        std::cout << "Yes " <<g[node].lon << " " << g[node].lat <<std::endl;
-    else
-        std::cout << "No  " <<g[node].lon << " " << g[node].lat <<std::endl;
+    bool in = g->g[node].lon < max_lon 
+        && g->g[node].lon > min_lon
+        && g->g[node].lat < max_lat
+        && g->g[node].lat > min_lat;
     return in;
 }
 
-BBNodeFilter cap_jj_nf(Graph_t & g)
+BBNodeFilter * cap_jj_nf(Transport::Graph * g)
 {
-    return BBNodeFilter(g, 1.44940832773, 1.44468763987, 43.6059589047, 43.6040632995);
+    return new BBNodeFilter(g, 1.44940832773, 1.44468763987, 43.6059589047, 43.6040632995);
 }
+
+NodeSet::NodeSet ( Transport::Graph * g ) :
+NodeFilter( g ),
+bitset(boost::num_vertices(g->g))
+{
+}
+
+void NodeSet::addNode ( const int node )
+{
+    bitset[node] = 1;
+}
+
+bool NodeSet::isIn ( const int node ) const
+{
+    return bitset[node];
+}
+

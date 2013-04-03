@@ -8,14 +8,18 @@
 
 namespace RLC {
 
-Dijkstra::Dijkstra( AbstractGraph* graph, int source, int dest, float start_sec, int start_day, DijkstraParameters params ) :
+Dijkstra::Dijkstra( AbstractGraph* graph, int source, int dest, float start_sec, int start_day, DijkstraParameters * params ) :
 params(params), source( source ), dest( dest ), 
 start_sec( start_sec ), start_day( start_day ), 
 path_found( false ),
+visited_nodes( 0 ),
 heap( Compare(&(this->costs)) ),
 trans_num_vert( graph->num_transport_vertices() ),
 dfa_num_vert( graph->num_dfa_vertices() )
 {
+    if(params == NULL)
+        this->params = new DijkstraParameters();
+    
     this->graph = graph;
     
     arr_times = new float*[dfa_num_vert];
@@ -50,11 +54,7 @@ dfa_num_vert( graph->num_dfa_vertices() )
     
     // insert start vertices in heap
     BOOST_FOREACH(RLC::Vertice rlc_start, source_vertices) {
-        set_arrival(rlc_start, start_sec);
-        set_cost(rlc_start, 0);
-        set_gray(rlc_start);
-
-        put_dij_node(rlc_start);
+        insert_node(rlc_start, start_sec, 0, Predecessor());
     }
     
     Dout(dc::notice, "Building Dijkstra object on graph with "<<trans_num_vert<<" nodes in Graph & "<<dfa_num_vert<<" nodes in DFA");    
@@ -118,6 +118,8 @@ Vertice Dijkstra::treat_next()
     if( dest_vertices.find(curr.v) != dest_vertices.end()) {
         path_found = true;
         return curr.v;
+    } else {
+        visited_nodes += 1;
     }
     
     list<RLC::Edge> n_out_edges = graph->out_edges(curr.v);
@@ -127,12 +129,12 @@ Vertice Dijkstra::treat_next()
         
         bool has_traffic;
         int edge_cost;
-        if(params.use_cost_lower_bounds) {
+        if(params->use_cost_lower_bounds) {
             boost::tie(has_traffic, edge_cost) = graph->min_duration(e);
         } else {
             boost::tie(has_traffic, edge_cost) = graph->duration(e, arrival(curr.v), start_day);
         }
-        int target_cost = cost(curr.v) + edge_cost;
+        int target_cost = cost(curr.v) + edge_cost * params->cost_factor;
         float target_arr;
         if(graph->forward)
             target_arr = arrival(curr.v) + edge_cost;
@@ -156,7 +158,11 @@ Vertice Dijkstra::treat_next()
 bool Dijkstra::insert_node ( Vertice vert, int arr, int vert_cost, Predecessor pred )
 {
     // check if we are above the cost limit
-    if( params.cost_limit && vert_cost > params.cost_limit_value )
+    if( params->cost_limit && vert_cost > params->cost_limit_value )
+        return false;
+    
+    // Check if the node is in the restricted graph
+    if( params->filter_nodes && !params->filter->isIn( vert.first ) )
         return false;
     
     if( white(vert) )
@@ -168,7 +174,7 @@ bool Dijkstra::insert_node ( Vertice vert, int arr, int vert_cost, Predecessor p
         put_dij_node(vert);
         set_gray(vert);
         
-        if( params.save_touched_nodes )
+        if( params->save_touched_nodes )
             touched_nodes.push_back(vert);
         
         return true;
@@ -185,7 +191,7 @@ bool Dijkstra::insert_node ( Vertice vert, int arr, int vert_cost, Predecessor p
         set_pred(vert, pred);
         heap.update(handle(vert));
         
-        if( params.save_touched_nodes )
+        if( params->save_touched_nodes )
             touched_nodes.push_back(vert);
         
         return true;

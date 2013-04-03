@@ -1,4 +1,5 @@
 
+add_subdirectory( utils )
 add_subdirectory( RegLC )
 add_subdirectory( MultipleParticipants )
 
@@ -20,3 +21,4 @@ add_subdirectory( MultipleParticipants )
 set(SWIG_SOURCES ${SWIG_SOURCES} PARENT_SCOPE)
 set(MAIN_EXE_SOURCES ${MAIN_EXE_SOURCES} ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp PARENT_SCOPE)
 set(ALGO_INC_DIRS ${ALGO_INC_DIRS} PARENT_SCOPE)
+

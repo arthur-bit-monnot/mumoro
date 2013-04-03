@@ -19,6 +19,11 @@ namespace MuPaRo
 
 bool PropagationRule::applicable(int node) const
 {
+    if(filter != NULL) {
+        if( !filter->isIn( node ) )
+            return false;
+    }
+    
     BOOST_FOREACH( int layer, conditions ) {
         if( !mup->is_set( StateFreeNode(layer, node) ) ) {
             return false;
@@ -166,6 +171,10 @@ Muparo::~Muparo()
         delete[] flags[i];
     }
     delete[] flags;
+    
+    for(uint i=0 ; i<propagation_rules.size() ; ++i) {
+        delete propagation_rules[i];
+    }
 }
 
 
@@ -258,8 +267,8 @@ int Muparo::select_layer()
 
 void Muparo::apply_rules ( int node )
 {
-    BOOST_FOREACH( PropagationRule rule, propagation_rules )
-        rule.apply( node );
+    BOOST_FOREACH( PropagationRule * rule, propagation_rules )
+        rule->apply( node );
     
     BOOST_FOREACH( ConnectionRule rule, connection_rules )
         rule.apply( node );
@@ -296,7 +305,7 @@ void Muparo::build_result()
             queue.push_back( CompleteNode(n.first, RLC::Vertice(n.second, flags[n.first][n.second].dfa_state )));
 //             vres.a_nodes.push_back(n.second);
         }
-    } else {
+    } else { // ConnectionRule, not really used right now
         RLC::Vertice v;
         v.first = best_connection_node;
         v.second = flags[2][best_connection_node].dfa_state;
@@ -339,6 +348,21 @@ void Muparo::build_result()
     }
 }
 
+VisualResult Muparo::get_result() const
+{
+    return vres;
+}
+
+
+int Muparo::visited_nodes() const
+{
+    int total = 0;
+    BOOST_FOREACH( RLC::Dijkstra * d, dij ) {
+        total += d->visited_nodes;
+    }
+    return total;
+}
+
 void Muparo::check_connections ( const int modified_layer )
 {
     BOOST_ASSERT(params.search_type == Bidirectional);
@@ -370,14 +394,14 @@ int Muparo::min_cost ( const int layer ) const
         min = dij[layer]->cost( dij[layer]->heap.top().v );
     }
     
-    BOOST_FOREACH(PropagationRule rule, propagation_rules) {
-        if( !(layer == rule.insertion) )
+    BOOST_FOREACH(PropagationRule * rule, propagation_rules) {
+        if( !(layer == rule->insertion) )
             continue;
         
         int tmp_cost = 0;
-        BOOST_FOREACH(int l_cond, rule.conditions) {
+        BOOST_FOREACH(int l_cond, rule->conditions) {
             //TODO : false, should be the min of all layers
-            tmp_cost = rule.combine_costs( tmp_cost, min_cost(l_cond) );
+            tmp_cost = rule->combine_costs( tmp_cost, min_cost(l_cond) );
         }
         
         if(tmp_cost < min)

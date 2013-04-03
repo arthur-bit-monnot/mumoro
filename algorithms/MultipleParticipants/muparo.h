@@ -3,6 +3,7 @@
 
 #include "reglc_graph.h"
 #include "reglc_dijkstra.h"
+#include "nodes_filter.h"
 
 using namespace std;
 
@@ -25,7 +26,8 @@ class Muparo;
  */
 struct PropagationRule
 {
-    PropagationRule(Muparo * mup) : mup(mup), cost_comb(MaxCost), arr_comb(MaxArrival) {}
+    PropagationRule(Muparo * mup) : mup(mup), cost_comb(MaxCost), arr_comb(MaxArrival), filter(NULL) {}
+    ~PropagationRule() { if(filter != NULL) delete filter; }
     Muparo * mup;
     CostCombination cost_comb;
     ArrivalCombination arr_comb;
@@ -45,6 +47,8 @@ struct PropagationRule
     int cost_in_insertion_layer( const int node ) const;
     bool applicable(const int node) const;
     void apply(const int node);
+    
+    NodeFilter * filter;
 };
 
 struct ConnectionRule
@@ -116,7 +120,7 @@ public:
     vector<RLC::DFA> dfas;
     vector<RLC::AbstractGraph*> graphs;
     vector<RLC::Dijkstra*> dij;
-    vector<PropagationRule> propagation_rules;
+    vector<PropagationRule*> propagation_rules;
     vector<ConnectionRule> connection_rules;
     Flag **flags;
     
@@ -212,7 +216,8 @@ public:
     /** Results **/
     VisualResult vres;
     void build_result();
-    VisualResult get_result() { return vres; }
+    VisualResult get_result() const;
+    int visited_nodes() const;
 };
 
 

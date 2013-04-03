@@ -308,8 +308,14 @@ class Mumoro:
         dest = self.g.match( 'Street', float(dlon), float(dlat))
         date = self.analyse_date( time )
         print "Searching path from {0} to {1} at time {2} on day {3}".format(start, dest, date['seconds'], date['days'])
+        #res = mumoro.cap_jj_nf( self.g.graph ).visualization()
+        #iso = mumoro.isochrone( self.g.graph, mumoro.foot_subway_dfa(), start, 1200 )
+        #res = iso.visualization()
+        
+        #res = mumoro.rectangle_containing( self.g.graph, start, dest, 0.015 ).visualization()
+        
         res = self.muparo( start, dest, date['seconds'], date['days'], self.g.graph )
-        print res
+        print res.a_nodes.size()
         return self.resultToGeoJson( res )
     
     def regular_dij_path(self, start, dest, secs, day, graph ):
@@ -330,12 +336,15 @@ class Mumoro:
     
     def muparo(self, start, dest, secs, day, graph ):
         #mpr = mumoro.point_to_point(graph, 277967, 284756)
-        mpr = mumoro.conv_time_dep_covoiturage(graph, 313889, 265278, start, dest, mumoro.pt_foot_dfa(), mumoro.car_dfa())
+        #mpr = mumoro.conv_time_dep_covoiturage(graph, 313889, 265278, start, dest, mumoro.pt_foot_dfa(), mumoro.car_dfa())
         ## Intéressant pour les cout max : 
         #mpr = mumoro.conv_time_dep_covoiturage(graph, 313889, 265278, 319962, 99363, mumoro.pt_foot_dfa(), mumoro.car_dfa())
         
         #mpr = mumoro.conv_time_dep_covoiturage(graph, 713, 425, 306, 298,  mumoro.foot_dfa(), mumoro.foot_dfa())
+        mpr = mumoro.restricted_covoiturage(graph, 313889, 265278, start, dest, mumoro.pt_foot_dfa(), mumoro.car_dfa())
+        #mpr = mumoro.restricted_covoiturage(graph, 713, 425, 306, 298,  mumoro.foot_dfa(), mumoro.foot_dfa())
         mpr.run()
+        print mpr.visited_nodes()
         res = mpr.get_result()
         mumoro.free(mpr)
         return res

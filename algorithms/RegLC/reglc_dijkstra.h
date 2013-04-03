@@ -4,7 +4,7 @@
 #include <boost/heap/fibonacci_heap.hpp>
 
 #include "reglc_graph.h"
-
+#include "nodes_filter.h"
 
 namespace RLC {
 
@@ -37,7 +37,16 @@ struct Compare
 
 struct DijkstraParameters
 {
-    DijkstraParameters() : save_touched_nodes(false), use_cost_lower_bounds(false) , cost_limit(false){}
+    DijkstraParameters() : 
+    save_touched_nodes(false), 
+    use_cost_lower_bounds(false) , 
+    cost_limit(false), 
+    cost_factor(1),
+    filter_nodes(false),
+    filter(NULL)
+    {}
+    
+    ~DijkstraParameters() { if(filter != NULL) delete filter; }
     
     /**
      * If set to True, every time a node is touched (inserted or modified in heap)
@@ -60,6 +69,14 @@ struct DijkstraParameters
      */
     bool cost_limit;
     int  cost_limit_value;
+    
+    /**
+     * A factor to apply to the edge cost before adding it
+     */
+    int cost_factor;
+    
+    bool filter_nodes;
+    NodeFilter * filter;
 };
 
 
@@ -74,7 +91,7 @@ class Dijkstra
 {
     AbstractGraph *graph;
 public:
-    Dijkstra(AbstractGraph *graph, int source, int dest, float start_sec, int start_day, DijkstraParameters params = DijkstraParameters());
+    Dijkstra(AbstractGraph *graph, int source, int dest, float start_sec, int start_day, DijkstraParameters * params = NULL);
     Dijkstra() : trans_num_vert(0), dfa_num_vert(0) {}
     ~Dijkstra();
     
@@ -94,7 +111,7 @@ public:
      */
     bool insert_node(Vertice node, int arrival, int cost, Predecessor pred);
     
-    DijkstraParameters params;
+    DijkstraParameters * params;
     
     float **arr_times;
     int **costs;
@@ -123,6 +140,11 @@ public:
      * False otherwise.
      */
     bool path_found;
+    
+    /**
+     * Numbers of nodes visited by the algorithm
+     */
+    int visited_nodes;
     
     /**
      * Heap in which the Vertices will be stored

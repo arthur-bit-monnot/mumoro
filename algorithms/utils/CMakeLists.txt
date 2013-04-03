@@ -1,9 +1,9 @@
 include_directories(../RegLC)
-include_directories(../utils)
+
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
 SET(LOCAL_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/muparo.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/run_configurations.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/node_filter_utils.cpp
     )
     
 SET(SWIG_SOURCES 
@@ -11,7 +11,7 @@ SET(SWIG_SOURCES
     ${LOCAL_SOURCES}
     PARENT_SCOPE
     )
-    
+   
 SET(MAIN_EXE_SOURCES 
     ${MAIN_EXE_SOURCES}
     ${LOCAL_SOURCES}

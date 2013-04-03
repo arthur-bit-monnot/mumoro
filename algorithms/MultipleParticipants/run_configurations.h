@@ -14,6 +14,10 @@ Muparo * time_dep_covoiturage(Transport::Graph * trans, int source1, int source2
 
 Muparo * conv_time_dep_covoiturage(Transport::Graph * trans, int source1, int source2, int dest1, int dest2,
                               RLC::DFA dfa_pass, RLC::DFA dfa_car);
+
+Muparo * restricted_covoiturage(Transport::Graph * trans, int source1, int source2, int dest1, int dest2,
+                              RLC::DFA dfa_pass, RLC::DFA dfa_car, bool use_restrictions = true);
+
 }
 
 
