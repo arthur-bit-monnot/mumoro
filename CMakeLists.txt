@@ -4,14 +4,11 @@ project (MUMORO)
 OPTION(VERBOSE "Debug output with CWD" OFF)
 OPTION(TESTS   "Build tests"           OFF)
 
-IF(TESTS)
-    ENABLE_TESTING()
-ENDIF(TESTS)
 
 
 add_subdirectory ( algorithms )
 
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall" )
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g" )
 set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g" )
 
 INCLUDE_DIRECTORIES( lib/core )
@@ -23,18 +20,32 @@ SET(CORE_SOURCES
     lib/core/duration.cpp
     lib/core/path_algo.cpp
     lib/core/nodes_filter.cpp
+    lib/core/utils.cpp
     )
+    
+set( SOURCES ${SOURCES} ${CORE_SOURCES} )
     
 SET(MAIN_EXE_SOURCES
     ${MAIN_EXE_SOURCES}
-    ${CORE_SOURCES}
+    ${SOURCES}
     )
-
+    
 add_executable( main-exe ${MAIN_EXE_SOURCES} )
 target_link_libraries( main-exe boost_serialization ) 
 IF(VERBOSE)
   target_link_libraries( main-exe debug cwd )
 ENDIF(VERBOSE)
+
+IF(TESTS)
+    set( TEST_SOURCES 
+         ${TESTS_MAIN}
+         ${SOURCES}
+       )
+    add_executable( tests ${TEST_SOURCES} )
+    target_link_libraries( tests boost_serialization ) 
+#     set_target_properties( tests PROPERTIES EXCLUDE_FROM_ALL ON)
+ENDIF(TESTS)
+
 
 
 

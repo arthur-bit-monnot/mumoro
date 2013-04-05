@@ -26,7 +26,7 @@ int main()
 //     mpr.run();
 //     MuPaRo::Muparo * mup = MuPaRo::bi_point_to_point(&g, 223, 3);
     
-    MuPaRo::Muparo * mup = MuPaRo::restricted_covoiturage(&g, 713, 425, 306, 298,  RLC::foot_dfa(), RLC::foot_dfa());
+    MuPaRo::Muparo * mup = MuPaRo::covoiturage(&g, 713, 425, 306, 298,  RLC::foot_dfa(), RLC::foot_dfa());
     mup->run();
     delete mup;
     
