@@ -50,35 +50,35 @@ public:
     /**
      * Returns the source node of an edge
      */
-    virtual RLC::Vertice source(RLC::Edge edge) = 0;
+    virtual RLC::Vertice source( const RLC::Edge & edge ) const = 0;
     
     /**
      * Return the target node of an edge
      */
-    virtual RLC::Vertice target(RLC::Edge) = 0;
+    virtual RLC::Vertice target( const RLC::Edge & ) const = 0;
     
     /**
      * Return a list containing every outgoing edge of a node
      */
-    virtual std::list<RLC::Edge> out_edges(RLC::Vertice) = 0;
+    virtual std::list<RLC::Edge> out_edges( const RLC::Vertice & ) const = 0;
     
     /**
      * Returns the cost (duration) of trip starting at the source node of the edge at time
      * start_sec on day day
      */
-    virtual std::pair<bool, int> duration(RLC::Edge edge, float start_sec, int day) = 0;
+    virtual std::pair<bool, int> duration( const RLC::Edge & edge, const float start_sec, const int day ) const = 0;
     
     /**
      * Returns the minimal cost (duration) of this edge
      */
-    virtual std::pair<bool, int> min_duration(const RLC::Edge edge) const = 0;
+    virtual std::pair<bool, int> min_duration( const RLC::Edge & edge ) const = 0;
     
-    virtual std::set<int> dfa_start_states() = 0;
-    virtual std::set<int> dfa_accepting_states() = 0;
-    virtual int num_transport_vertices() = 0;
-    virtual int num_dfa_vertices() = 0;
+    virtual std::set<int> dfa_start_states() const = 0;
+    virtual std::set<int> dfa_accepting_states() const = 0;
+    virtual int num_transport_vertices() const = 0;
+    virtual int num_dfa_vertices() const = 0;
     
-    inline bool is_accepting(RLC::Vertice v) { return dfa_accepting_states().find(v.second) != dfa_accepting_states().end(); }
+    inline bool is_accepting( const RLC::Vertice & v ) const { return dfa_accepting_states().find(v.second) != dfa_accepting_states().end(); }
 };
 
 class Graph : public AbstractGraph
@@ -94,52 +94,52 @@ public:
     /**
      * Returns the source node of an edge
      */
-    RLC::Vertice source(RLC::Edge edge);
+    RLC::Vertice source( const RLC::Edge & edge ) const;
     
     /**
      * Return the target node of an edge
      */
-    RLC::Vertice target(RLC::Edge);
+    RLC::Vertice target( const RLC::Edge & ) const;
     
     /**
      * Return a list containing every outgoing edge of a node
      */
-    std::list<RLC::Edge> out_edges(RLC::Vertice);
+    std::list<RLC::Edge> out_edges(const RLC::Vertice & ) const;
     
     /**
      * Returns the arrival time of trip starting at the source node of the edge at time
      * start_sec on day day
      */
-    std::pair<bool, int> duration(RLC::Edge edge, float start_sec, int day);
+    std::pair<bool, int> duration(const RLC::Edge & edge, const float start_sec, const int day) const;
     
     /**
      * Returns the minimal cost (duration) of this edge
      */
-    std::pair<bool, int> min_duration(const RLC::Edge edge) const;
+    std::pair<bool, int> min_duration(const RLC::Edge & edge) const;
     
     /**
      * Start states in the DFA.
      * 
      * For backward graphs, this is the set of accepting states.
      */
-    std::set<int> dfa_start_states();
+    std::set<int> dfa_start_states() const;
     
     /**
      * Accepting states in the DFA.
      * 
      * For backward graphs, this is the start state.
      */
-    std::set<int> dfa_accepting_states();
+    std::set<int> dfa_accepting_states() const;
     
     /**
      * Number of vertices in the transport graph
      */
-    int num_transport_vertices();
+    int num_transport_vertices() const;
     
     /**
      * Number of vertices in the DFA
      */
-    int num_dfa_vertices();
+    int num_dfa_vertices() const;
 };
 
 class BackwardGraph : public AbstractGraph
@@ -153,44 +153,44 @@ public:
     /**
      * Returns the source node of an edge
      */
-    RLC::Vertice source(RLC::Edge edge);
+    RLC::Vertice source( const RLC::Edge & edge ) const;
     
     /**
      * Return the target node of an edge
      */
-    RLC::Vertice target(RLC::Edge);
+    RLC::Vertice target( const RLC::Edge & ) const;
     
     /**
      * Return a list containing every outgoing edge of a node
      */
-    std::list<RLC::Edge> out_edges(RLC::Vertice);
+    std::list<RLC::Edge> out_edges( const RLC::Vertice & ) const;
     
     /**
      * Returns the arrival time of trip starting at the source node of the edge at time
      * start_sec on day day
      */
-    std::pair<bool, int> duration(RLC::Edge edge, float start_sec, int day);
+    std::pair<bool, int> duration( const RLC::Edge & edge, const float start_sec, const int day ) const;
     
     /**
      * Returns the minimal cost (duration) of this edge
      */
-    std::pair<bool, int> min_duration(const RLC::Edge edge) const;
+    std::pair<bool, int> min_duration(const RLC::Edge & edge) const;
     
     /**
      * Start states in the DFA.
      * 
      * For backward graphs, this is the set of accepting states.
      */
-    std::set<int> dfa_start_states();
+    std::set<int> dfa_start_states() const;
     
     /**
      * Accepting states in the DFA.
      * 
      * For backward graphs, this is the start state.
      */
-    std::set<int> dfa_accepting_states();
-    int num_transport_vertices();
-    int num_dfa_vertices();
+    std::set<int> dfa_accepting_states()const ;
+    int num_transport_vertices() const;
+    int num_dfa_vertices() const;
     
 };
 

@@ -130,17 +130,17 @@ dfa(dfa)
 }
 
 
-RLC::Vertice Graph::source(RLC::Edge edge) 
+RLC::Vertice Graph::source( const RLC::Edge & edge) const
 {
     return RLC::Vertice(boost::source(edge.first, transport->g), boost::source(edge.second, dfa.graph));
 }
 
-RLC::Vertice Graph::target(RLC::Edge edge)
+RLC::Vertice Graph::target( const RLC::Edge & edge) const
 {
     return RLC::Vertice(boost::target(edge.first, transport->g), boost::target(edge.second, dfa.graph));
 }
 
-std::list<RLC::Edge> Graph::out_edges(RLC::Vertice vertice)
+std::list<RLC::Edge> Graph::out_edges( const RLC::Vertice & vertice) const
 {
     std::list<RLC::Edge> edges;
     
@@ -161,34 +161,34 @@ std::list<RLC::Edge> Graph::out_edges(RLC::Vertice vertice)
     return edges;
 }
 
-std::pair<bool, int> Graph::duration(RLC::Edge edge, float start_sec, int day)
+std::pair<bool, int> Graph::duration( const RLC::Edge & edge, const float start_sec, const int day) const
 {
     return transport->g[edge.first].duration(start_sec, day);
 }
 
-std::pair<bool, int> Graph::min_duration (const Edge edge ) const
+std::pair<bool, int> Graph::min_duration (const Edge & edge ) const
 {
     return transport->g[edge.first].duration.min_duration();
 }
 
-std::set<int> Graph::dfa_start_states()
+std::set<int> Graph::dfa_start_states() const
 {
     std::set<int> states;
     states.insert(dfa.start_state);
     return states;
 }
 
-std::set<int> Graph::dfa_accepting_states()
+std::set<int> Graph::dfa_accepting_states() const
 {
     return dfa.accepting_states;
 }
 
-int Graph::num_transport_vertices()
+int Graph::num_transport_vertices() const
 {
     return num_vertices(transport->g);
 }
 
-int Graph::num_dfa_vertices()
+int Graph::num_dfa_vertices() const
 {
     return num_vertices(dfa.graph);
 }
@@ -202,17 +202,17 @@ forward_graph(forward_graph)
 {
 }
 
-Vertice BackwardGraph::source ( Edge edge )
+Vertice BackwardGraph::source ( const Edge & edge ) const
 {
     return forward_graph->target( edge );
 }
 
-Vertice BackwardGraph::target ( Edge edge )
+Vertice BackwardGraph::target ( const Edge & edge ) const
 {
     return forward_graph->source( edge );
 }
 
-list< Edge > BackwardGraph::out_edges ( Vertice vertice )
+list< Edge > BackwardGraph::out_edges ( const Vertice & vertice ) const
 {
     std::list<RLC::Edge> edges;
     
@@ -233,32 +233,32 @@ list< Edge > BackwardGraph::out_edges ( Vertice vertice )
     return edges;
 }
 
-std::pair<bool, int> BackwardGraph::duration ( Edge edge, float start_sec, int day )
+std::pair<bool, int> BackwardGraph::duration ( const Edge & edge, const float start_sec, const int day ) const
 {
     return forward_graph->transport->g[edge.first].duration(start_sec, day, true);
 }
 
-std::pair<bool, int> BackwardGraph::min_duration ( const Edge edge ) const
+std::pair<bool, int> BackwardGraph::min_duration ( const Edge & edge ) const
 {
     return forward_graph->transport->g[edge.first].duration.min_duration();
 }
 
-std::set< int > BackwardGraph::dfa_start_states()
+std::set< int > BackwardGraph::dfa_start_states() const
 {
     return forward_graph->dfa_accepting_states();
 }
 
-std::set< int > BackwardGraph::dfa_accepting_states()
+std::set< int > BackwardGraph::dfa_accepting_states() const
 {
     return forward_graph->dfa_start_states();
 }
 
-int BackwardGraph::num_transport_vertices()
+int BackwardGraph::num_transport_vertices() const
 {
     return forward_graph->num_transport_vertices();
 }
 
-int BackwardGraph::num_dfa_vertices()
+int BackwardGraph::num_dfa_vertices() const
 {
     return forward_graph->num_dfa_vertices();
 }
