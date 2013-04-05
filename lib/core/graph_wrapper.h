@@ -190,16 +190,16 @@ struct Graph
     /**
      * Performs operations that need to be done once all information is in the graph :
      * 
-     * - sorting timetables
-     * - build an edge index
-     * - compute min duration for each edge
+     * - sorts timetables
+     * - builds an edge index
+     * - computes min duration for each edge
      */
     void preprocess();
     
     /**
      * List all edges with type `type`
      */
-    EdgeList listEdges(const EdgeMode type = WhateverEdge);
+    EdgeList listEdges(const EdgeMode type = WhateverEdge) const;
     
     /**
      * Return the Edge instance associated with the edge index passed

@@ -217,16 +217,11 @@ void Graph::save(const std::string & filename) const
     oArchive << g;
 }
 
-EdgeList Graph::listEdges(const EdgeMode type)
+EdgeList Graph::listEdges(const EdgeMode type) const
 {
     EdgeList edgeList;
-    int index = 0;
+    
     BOOST_FOREACH(edge_t e, boost::edges(g)) {
-        if(g[e].edge_index != index++) {
-            this->initEdgeIndexes();
-            return this->listEdges(type);
-        }
-            
         if(type == WhateverEdge || g[e].type == type)
             edgeList.push_back(g[e].edge_index);
     }

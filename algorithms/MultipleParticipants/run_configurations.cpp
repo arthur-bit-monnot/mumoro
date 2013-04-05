@@ -52,7 +52,7 @@ Muparo * bi_point_to_point(Transport::Graph * trans, int source, int dest)
     return mup;
 }
 
-Muparo * covoiturage(Transport::Graph * trans, int source1, int source2, int dest1, int dest2, RLC::DFA dfa_pass, RLC::DFA dfa_car, int limit)
+Muparo * bidir_covoiturage(Transport::Graph * trans, int source1, int source2, int dest1, int dest2, RLC::DFA dfa_pass, RLC::DFA dfa_car, int limit)
 {
     MuparoParameters mup_params;
     mup_params.search_type = Bidirectional;
@@ -255,9 +255,10 @@ Muparo* conv_time_dep_covoiturage ( Transport::Graph* trans, int source1, int so
     return mup;
 }
 
-Muparo* restricted_covoiturage ( Transport::Graph* trans, int source1, int source2, int dest1, int dest2, 
-                                 RLC::DFA dfa_pass, RLC::DFA dfa_car, bool use_restrictions )
+Muparo * covoiturage ( Transport::Graph* trans, int source1, int source2, int dest1, int dest2, 
+                                 RLC::DFA dfa_pass, RLC::DFA dfa_car )
 {
+    cout <<"Covoiturage :"<< source1<<" "<<source2<<" "<<dest1<<" "<<dest2<<endl;
     MuparoParameters mup_params;
     mup_params.search_type = DestNodes;
     
@@ -276,27 +277,13 @@ Muparo* restricted_covoiturage ( Transport::Graph* trans, int source1, int sourc
     mup->dfas.push_back(dfa_car);
     mup->dfas.push_back(dfa_pass);
     
-    RLC::DijkstraParameters * param_car_start = new RLC::DijkstraParameters();
-    param_car_start->filter_nodes = use_restrictions;
-    param_car_start->filter = rectangle_containing(trans, source2, dest2, 0.015);
-    
+    RLC::DijkstraParameters * param_car_start = new RLC::DijkstraParameters();   
     RLC::DijkstraParameters * param_car_arr = new RLC::DijkstraParameters();
-    param_car_arr->filter_nodes = use_restrictions;
-    param_car_arr->filter = rectangle_containing(trans, source2, dest2, 0.015);
-    
     RLC::DijkstraParameters * param_car_shared = new RLC::DijkstraParameters();
     param_car_shared->cost_factor = 2;
-    param_car_shared->filter_nodes = use_restrictions;
-    param_car_shared->filter = rectangle_containing(trans, source2, dest2, 0.015);
     
-    RLC::DijkstraParameters * param_passenger_start = new RLC::DijkstraParameters();
-    param_passenger_start->filter_nodes = use_restrictions;
-    param_passenger_start->filter = isochrone( trans, mup->dfas[0], source1, 1200);
-    
+    RLC::DijkstraParameters * param_passenger_start = new RLC::DijkstraParameters();    
     RLC::DijkstraParameters * param_passenger_arr = new RLC::DijkstraParameters();
-    param_passenger_arr->filter_nodes = use_restrictions;
-    param_passenger_arr->filter = isochrone( trans, mup->dfas[4], dest1, 1200);
-    
     
     RLC::Graph *g1 = new RLC::Graph(mup->transport, mup->dfas[0] );
     RLC::Graph *g2 = new RLC::Graph(mup->transport, mup->dfas[1] );
@@ -334,9 +321,36 @@ Muparo* restricted_covoiturage ( Transport::Graph* trans, int source1, int sourc
     pr2->conditions.push_back(3);
     pr2->insertion = 4;
     mup->propagation_rules.push_back(pr2);
+    
+    add_rectangle_restriction_on_car(mup, trans, source2, dest2, 0.015);
 
     return mup;
 }
 
+void add_rectangle_restriction_on_car(Muparo * mup, Transport::Graph* trans, int source, int dest, float margin)
+{
+    RLC::DijkstraParameters * param_car_start = mup->dij[1]->params;
+    param_car_start->filter_nodes = true;
+    param_car_start->filter = rectangle_containing(trans, source, dest, margin);
+    
+    RLC::DijkstraParameters * param_car_arr = mup->dij[2]->params;
+    param_car_arr->filter_nodes = true;
+    param_car_arr->filter = rectangle_containing(trans, source, dest, margin);
+    
+    RLC::DijkstraParameters * param_car_shared = mup->dij[3]->params;
+    param_car_shared->filter_nodes = true;
+    param_car_shared->filter = rectangle_containing(trans, source, dest, margin);
+}
+
+void add_isochrone_restriction_on_passenger(Muparo * mup, Transport::Graph* trans, int source, int dest, float max_time)
+{
+    RLC::DijkstraParameters * param_passenger_start = mup->dij[0]->params;
+    param_passenger_start->filter_nodes = true;
+    param_passenger_start->filter = isochrone( trans, mup->dfas[0], source, max_time);
+    
+    RLC::DijkstraParameters * param_passenger_arr = mup->dij[4]->params;
+    param_passenger_arr->filter_nodes = true;
+    param_passenger_arr->filter = isochrone( trans, mup->dfas[4], dest, max_time);
+}
 
 } //end namespace MuPaRo
