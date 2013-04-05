@@ -1,18 +1,7 @@
-#include <sys/times.h>
-
 #include <boost/foreach.hpp> 
 
 #include "muparo.h"
-
-double get_run_time_sec() {
-
-  struct tms usage;
-  static int clock_ticks = sysconf(_SC_CLK_TCK);
-  times(&usage);
-  double df=((double)usage.tms_utime+(double)usage.tms_stime)/clock_ticks;
-
-  return df;
-}
+#include "utils.h"
 
 namespace MuPaRo
 {
@@ -25,7 +14,7 @@ bool PropagationRule::applicable(int node) const
     }
     
     BOOST_FOREACH( int layer, conditions ) {
-        if( !mup->is_set( StateFreeNode(layer, node) ) ) {
+        if( !mup->is_node_set( StateFreeNode(layer, node) ) ) {
             return false;
         }
     }
@@ -61,8 +50,7 @@ int PropagationRule::arrival_in_insertion_layer ( const int node ) const
         return mup->arrival( StateFreeNode(conditions[1], node) );
     }
     
-    BOOST_ASSERT(false); // This should never be reached;
-    return -1;
+    throw new Invalid_Operation(); // This should never be reached;
 }
 
 int PropagationRule::cost_in_insertion_layer ( const int node ) const
@@ -93,7 +81,7 @@ int PropagationRule::cost_in_insertion_layer ( const int node ) const
 bool ConnectionRule::applicable ( const int node ) const
 {
     BOOST_FOREACH( int layer, conditions ) {
-        if( !mup->is_set( StateFreeNode(layer, node) ) ) {
+        if( !mup->is_node_set( StateFreeNode(layer, node) ) ) {
             return false;
         }
     }
@@ -156,9 +144,11 @@ transport(trans),
 connection_found(false),
 vres(transport)
 {
+    is_set = new boost::dynamic_bitset<>*[num_layers];
     flags = new Flag* [num_layers];
     for(int i=0; i<num_layers ; ++i) {
-        flags[i] = new Flag[boost::num_vertices(transport->g)];
+        is_set[i] = new boost::dynamic_bitset<>(boost::num_vertices(transport->g));
+        flags[i] = (Flag*) malloc( sizeof( Flag ) * boost::num_vertices(transport->g) );
     }
 }
 
@@ -168,8 +158,10 @@ Muparo::~Muparo()
     {
         delete dij[i];
         delete graphs[i];
+        delete is_set[i];
         delete[] flags[i];
     }
+    delete is_set;
     delete[] flags;
     
     for(uint i=0 ; i<propagation_rules.size() ; ++i) {
@@ -195,7 +187,7 @@ bool Muparo::run()
             check_connections( layer );
         }
         
-        if( graphs[layer]->is_accepting( vert ) && !is_set( node ) ) {
+        if( graphs[layer]->is_accepting( vert ) && !is_node_set( node ) ) {
             set( CompleteNode(layer, vert) );
             apply_rules( node.second );
         }
@@ -209,7 +201,7 @@ bool Muparo::run()
     return true;
 }
 
-bool Muparo::finished()
+bool Muparo::finished() const
 {
     bool heap_empties = true;
     bool goals_reached = true;
@@ -224,7 +216,7 @@ bool Muparo::finished()
     if(params.search_type == DestNodes) {
         goals_reached = true;
         BOOST_FOREACH(StateFreeNode n, goal_nodes) {
-            if(!is_set(n)) {
+            if(!is_node_set(n)) {
                 goals_reached = false;
                 break;
             }
@@ -249,7 +241,7 @@ bool Muparo::finished()
 }
 
 
-int Muparo::select_layer()
+int Muparo::select_layer() const
 {
     int best_cost = 999999999;
     int best_layer = -1;
@@ -265,7 +257,7 @@ int Muparo::select_layer()
 }
 
 
-void Muparo::apply_rules ( int node )
+void Muparo::apply_rules ( const int node )
 {
     BOOST_FOREACH( PropagationRule * rule, propagation_rules )
         rule->apply( node );
@@ -274,7 +266,7 @@ void Muparo::apply_rules ( int node )
         rule.apply( node );
 }
 
-bool Muparo::insert ( StateFreeNode n, int arrival, int cost )
+bool Muparo::insert ( const StateFreeNode & n, const int arrival, const int cost )
 {
     bool inserted = false;
     int layer = n.first;
@@ -285,7 +277,8 @@ bool Muparo::insert ( StateFreeNode n, int arrival, int cost )
         rlc_node.first = node;
         rlc_node.second = dfa_start;
         
-        if( dij[layer]->insert_node( rlc_node, arrival, cost, RLC::Predecessor() ) )
+        RLC::Predecessor pred; pred.has_pred = false;
+        if( dij[layer]->insert_node( rlc_node, arrival, cost, pred ) )
             inserted = true;
     }
     
@@ -335,14 +328,16 @@ void Muparo::build_result()
             vres.edges.push_back(transport->edgeIndex( dij[l]->get_pred(vert).first ));
             queue.push_back( CompleteNode(l, graphs[l]->source(dij[l]->get_pred(vert) )));
         }
-        else if( flags[l][vert.first].pred_layers.empty() )
+        else if( flags[l][vert.first].pred_layers == 0 ) // no pred layers  
         {
         }
         else
         {
-            BOOST_FOREACH(int layer, flags[l][vert.first].pred_layers) {
-                queue.push_back( CompleteNode(layer, RLC::Vertice(vert.first, flags[layer][vert.first].dfa_state )));
-                vres.c_nodes.push_back(vert.first);
+            for(uint layer=0 ; layer < sizeof(Flag::pred_layers)*8 ; ++layer) {
+                if(flags[l][vert.first].pred_layers & (1 << layer)) {
+                    queue.push_back( CompleteNode(layer, RLC::Vertice(vert.first, flags[layer][vert.first].dfa_state )));
+                    vres.c_nodes.push_back(vert.first);
+                }
             }
         }
     }

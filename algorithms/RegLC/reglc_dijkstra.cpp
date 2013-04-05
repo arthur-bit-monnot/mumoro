@@ -26,14 +26,16 @@ dfa_num_vert( graph->num_dfa_vertices() )
     costs = new int*[dfa_num_vert];
     references = new Heap::handle_type*[dfa_num_vert];
     status = new uint*[dfa_num_vert];
-    predecessors = new Predecessor*[dfa_num_vert];
+    has_predecessor = new boost::dynamic_bitset<>*[dfa_num_vert];
+    predecessors = new RLC::Edge*[dfa_num_vert];
     for(int i=0 ; i<dfa_num_vert ; ++i) {
         arr_times[i] = new float[trans_num_vert];
         costs[i] = new int[trans_num_vert];
         references[i] = new Heap::handle_type[trans_num_vert];
         status[i] = new uint[trans_num_vert];
-        predecessors[i] = new Predecessor[trans_num_vert];
-        
+        has_predecessor[i] = new boost::dynamic_bitset<>(trans_num_vert);
+        predecessors[i] = (RLC::Edge *) malloc(trans_num_vert * sizeof(RLC::Edge));
+
         // all vertices are white
         memset(status[i], 0, trans_num_vert * sizeof(status[0][0]));
     }
@@ -54,7 +56,8 @@ dfa_num_vert( graph->num_dfa_vertices() )
     
     // insert start vertices in heap
     BOOST_FOREACH(RLC::Vertice rlc_start, source_vertices) {
-        insert_node(rlc_start, start_sec, 0, Predecessor());
+        Predecessor pred; pred.has_pred = false; //empty predecessor object
+        insert_node(rlc_start, start_sec, 0, pred);
     }
     
     Dout(dc::notice, "Building Dijkstra object on graph with "<<trans_num_vert<<" nodes in Graph & "<<dfa_num_vert<<" nodes in DFA");    
@@ -67,12 +70,14 @@ Dijkstra::~Dijkstra()
         delete[] costs[i];
         delete[] references[i];
         delete[] status[i];
+        delete has_predecessor[i];
         delete[] predecessors[i];
     }
     delete[] arr_times;
     delete[] costs;
     delete[] references;
     delete[] status;
+    delete[] has_predecessor;
     delete[] predecessors;
 }
 using namespace std;
@@ -146,8 +151,12 @@ Vertice Dijkstra::treat_next()
         if(has_traffic) {
 //             BOOST_ASSERT(edge_cost >= 0);
             //TODO remove inconsistent data from generated graph
-            if(edge_cost >= 0)
-                insert_node(target, target_arr, target_cost, Predecessor(e));
+            if(edge_cost >= 0) {
+                Predecessor pred;
+                pred.has_pred = true;
+                pred.pred = e;
+                insert_node(target, target_arr, target_cost, pred);
+            }
         }
         
         
@@ -155,7 +164,7 @@ Vertice Dijkstra::treat_next()
     return curr.v;
 }
 
-bool Dijkstra::insert_node ( Vertice vert, int arr, int vert_cost, Predecessor pred )
+bool Dijkstra::insert_node ( const Vertice & vert, const int arr, const int vert_cost, const Predecessor & pred )
 {
     // check if we are above the cost limit
     if( params->cost_limit && vert_cost > params->cost_limit_value )
@@ -170,7 +179,8 @@ bool Dijkstra::insert_node ( Vertice vert, int arr, int vert_cost, Predecessor p
         Dout(dc::notice, " -- Inserting target into heap : ("<< vert.first<<", "<<vert.second<<")");
         set_arrival(vert, arr);
         set_cost(vert, vert_cost);
-        set_pred(vert, pred);
+        if(pred.has_pred)
+            set_pred(vert, pred.pred);
         put_dij_node(vert);
         set_gray(vert);
         
@@ -188,7 +198,8 @@ bool Dijkstra::insert_node ( Vertice vert, int arr, int vert_cost, Predecessor p
         
         set_arrival(vert, arr);
         set_cost(vert, vert_cost);
-        set_pred(vert, pred);
+        if(pred.has_pred)
+            set_pred(vert, pred.pred);
         heap.update(handle(vert));
         
         if( params->save_touched_nodes )

@@ -16,8 +16,6 @@ struct Dij_node
 
 struct Predecessor
 {
-    Predecessor() : has_pred(false) {}
-    Predecessor(RLC::Edge e) : has_pred(true), pred(e) {}
     bool has_pred;
     RLC::Edge pred;
 };
@@ -39,8 +37,8 @@ struct DijkstraParameters
 {
     DijkstraParameters() : 
     save_touched_nodes(false), 
-    use_cost_lower_bounds(false) , 
-    cost_limit(false), 
+    use_cost_lower_bounds(false),
+    cost_limit(false),
     cost_factor(1),
     filter_nodes(false),
     filter(NULL)
@@ -109,14 +107,15 @@ public:
      * Insert/update a node in the heap.
      * Return True if the node was updated, false otherwise.
      */
-    bool insert_node(Vertice node, int arrival, int cost, Predecessor pred);
+    bool insert_node(const Vertice & node, const int arrival, const int cost, const Predecessor & pred);
     
     DijkstraParameters * params;
     
     float **arr_times;
     int **costs;
     Heap::handle_type **references;
-    Predecessor **predecessors;
+    boost::dynamic_bitset<> ** has_predecessor;
+    RLC::Edge **predecessors;
     uint **status; //TODO : very big for only two bits ...
 
     /**
@@ -181,16 +180,14 @@ public:
         n.v = v;
         references[v.second][v.first] = heap.push(n);
     }
-    inline void clear_pred(const RLC::Vertice v) { predecessors[v.second][v.first].has_pred = false; }
+    inline void clear_pred(const RLC::Vertice v) { has_predecessor[v.second]->reset(v.first); }
     inline void set_pred(const RLC::Vertice v, const RLC::Edge pred) { 
-        predecessors[v.second][v.first].has_pred = true;
-        predecessors[v.second][v.first].pred = pred; 
+        has_predecessor[v.second]->set(v.first);
+        predecessors[v.second][v.first] = pred; 
     }
-    inline void set_pred(const RLC::Vertice v, const Predecessor pred) { 
-        predecessors[v.second][v.first] = pred;
-    }
-    inline RLC::Edge get_pred(const RLC::Vertice v) const { return predecessors[v.second][v.first].pred; }
-    inline bool has_pred(const RLC::Vertice v) const { return predecessors[v.second][v.first].has_pred; }
+
+    inline RLC::Edge get_pred(const RLC::Vertice v) const { return predecessors[v.second][v.first]; }
+    inline bool has_pred(const RLC::Vertice v) const { return has_predecessor[v.second]->test(v.first); }
     
     inline Heap::handle_type handle(const RLC::Vertice v) const { return references[v.second][v.first]; }
     

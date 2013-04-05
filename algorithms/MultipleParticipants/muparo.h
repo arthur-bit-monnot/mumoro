@@ -86,8 +86,6 @@ typedef pair<StateFreeNode, int> StartNode;
 
 struct Flag
 {
-    Flag() : set(false) {}
-    bool set;
     int dfa_state;
     int arrival;
     int cost;
@@ -95,7 +93,7 @@ struct Flag
      * If node was inserted after application of rule, this list
      * contains the layers the predecessors must be searched in.
      */
-    std::list< int > pred_layers;
+    unsigned char pred_layers;
 };
 
 typedef enum { DestNodes, Bidirectional, Connection } SearchType;
@@ -122,6 +120,8 @@ public:
     vector<RLC::Dijkstra*> dij;
     vector<PropagationRule*> propagation_rules;
     vector<ConnectionRule> connection_rules;
+    
+    boost::dynamic_bitset<> ** is_set;
     Flag **flags;
     
     list<StartNode> start_nodes;
@@ -137,8 +137,8 @@ public:
 public:
     bool run();
     
-    void clear_pred_layers(const StateFreeNode n) const { flags[n.first][n.second].pred_layers.clear(); }
-    void add_pred_layer(const StateFreeNode n, int layer) { flags[n.first][n.second].pred_layers.push_back(layer); }
+    void clear_pred_layers(const StateFreeNode n) const { flags[n.first][n.second].pred_layers = 0; }
+    void add_pred_layer(const StateFreeNode n, const int layer) { flags[n.first][n.second].pred_layers |= (1 << layer); }
     
     void check_connections( const int modified_layer );
     
@@ -146,14 +146,14 @@ public:
      * Returns True if this node was set (i.e. there is an accepting state in the dfa that was recahed for this 
      * node
      */
-    bool is_set(const StateFreeNode n) const { return flags[n.first][n.second].set; }
+    bool is_node_set(const StateFreeNode n) const { return is_set[n.first]->test( n.second ); }
     
     /**
      * Whan an accepting state is reached, this used to store the dfa state and arrival 
      * time at this node.
      */
     void set( const CompleteNode n) {
-        flags[n.first][n.second.first].set = true;
+        is_set[n.first]->set( n.second.first );
         flags[n.first][n.second.first].dfa_state = n.second.second;
         flags[n.first][n.second.first].arrival = dij[n.first]->arrival(n.second);
         flags[n.first][n.second.first].cost = dij[n.first]->cost(n.second);
@@ -163,7 +163,7 @@ public:
      * Earliest arrival to an accepting state of this node.
      */
     int arrival(const StateFreeNode n) const { 
-        BOOST_ASSERT(is_set(n));
+        BOOST_ASSERT(is_node_set(n));
         return flags[n.first][n.second].arrival;
     }
     
@@ -182,13 +182,13 @@ public:
      *  - either all heaps are empties
      *  - or the connection point was found such as no shorter path can be found
      */
-    bool finished();
+    bool finished() const;
     
     /**
      * Returns the id of the next layer to treat.
      * This is the layer with the minimum cost in its heap.
      */
-    int select_layer();
+    int select_layer() const;
     
     /**
      * Inserts a node in the relevant layer (given in `n`) with arrival time `arrival`.
@@ -196,13 +196,13 @@ public:
      * 
      * Returns true if at least one node was inserted
      */
-    bool insert(StateFreeNode n, int arrival, int cost);
+    bool insert(const StateFreeNode & n, const int arrival, const int cost);
     
     /**
      * For a given node, check all rules if it is appicable for this node.
      * If it is, it then proceed to insertion.
      */
-    void apply_rules(int node);
+    void apply_rules(const int node);
     
     /**
      * Returns the minimal cost that might appear in a layer.

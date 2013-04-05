@@ -258,7 +258,6 @@ Muparo* conv_time_dep_covoiturage ( Transport::Graph* trans, int source1, int so
 Muparo * covoiturage ( Transport::Graph* trans, int source1, int source2, int dest1, int dest2, 
                                  RLC::DFA dfa_pass, RLC::DFA dfa_car )
 {
-    cout <<"Covoiturage :"<< source1<<" "<<source2<<" "<<dest1<<" "<<dest2<<endl;
     MuparoParameters mup_params;
     mup_params.search_type = DestNodes;
     
