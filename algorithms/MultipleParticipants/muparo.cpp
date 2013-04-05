@@ -247,8 +247,8 @@ int Muparo::select_layer() const
     int best_layer = -1;
     
     for(int i=0 ; i<num_layers ; ++i) {
-        if( !dij[i]->heap.empty() && ( dij[i]->cost( dij[i]->heap.top().v ) < best_cost ) ) {
-            best_cost = dij[i]->cost( dij[i]->heap.top().v );
+        if( !dij[i]->heap.empty() && ( dij[i]->cost( dij[i]->heap.top() ) < best_cost ) ) {
+            best_cost = dij[i]->cost( dij[i]->heap.top() );
             best_layer = i;
         }
     }
@@ -277,8 +277,7 @@ bool Muparo::insert ( const StateFreeNode & n, const int arrival, const int cost
         rlc_node.first = node;
         rlc_node.second = dfa_start;
         
-        RLC::Predecessor pred; pred.has_pred = false;
-        if( dij[layer]->insert_node( rlc_node, arrival, cost, pred ) )
+        if( dij[layer]->insert_node( rlc_node, arrival, cost ) )
             inserted = true;
     }
     
@@ -386,7 +385,7 @@ int Muparo::min_cost ( const int layer ) const
 {
     int min = 99999999;
     if( ! dij[layer]->heap.empty() ) {
-        min = dij[layer]->cost( dij[layer]->heap.top().v );
+        min = dij[layer]->cost( dij[layer]->heap.top() );
     }
     
     BOOST_FOREACH(PropagationRule * rule, propagation_rules) {

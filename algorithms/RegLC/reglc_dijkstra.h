@@ -8,26 +8,14 @@
 
 namespace RLC {
 
-
-struct Dij_node 
-{
-    RLC::Vertice v;
-};
-
-struct Predecessor
-{
-    bool has_pred;
-    RLC::Edge pred;
-};
-
 struct Compare
 {
     int ***costs;
     Compare() {}
     Compare( int *** dist ) { costs = dist; }
-    bool operator()(Dij_node a, Dij_node b) const
+    bool operator()(RLC::Vertice a, RLC::Vertice b) const
     {
-        return (*costs)[a.v.second][a.v.first] > (*costs)[b.v.second][b.v.first];
+        return (*costs)[a.second][a.first] > (*costs)[b.second][b.first];
     }
     
 };
@@ -78,7 +66,7 @@ struct DijkstraParameters
 };
 
 
-typedef boost::heap::fibonacci_heap<Dij_node, boost::heap::compare<Compare> > Heap;
+typedef boost::heap::fibonacci_heap<RLC::Vertice, boost::heap::compare<Compare> > Heap;
 
 
 
@@ -107,7 +95,8 @@ public:
      * Insert/update a node in the heap.
      * Return True if the node was updated, false otherwise.
      */
-    bool insert_node(const Vertice & node, const int arrival, const int cost, const Predecessor & pred);
+    bool insert_node_with_predecessor(const Vertice & node, const int arrival, const int cost, const RLC::Edge & pred);
+    bool insert_node(const Vertice & node, const int arrival, const int cost);
     
     DijkstraParameters * params;
     
@@ -176,12 +165,10 @@ public:
     
     inline Heap::handle_type dij_node(const RLC::Vertice v) const { return references[v.second][v.first]; }
     inline void put_dij_node(const RLC::Vertice v) { 
-        Dij_node n;
-        n.v = v;
-        references[v.second][v.first] = heap.push(n);
+        references[v.second][v.first] = heap.push(v);
     }
     inline void clear_pred(const RLC::Vertice v) { has_predecessor[v.second]->reset(v.first); }
-    inline void set_pred(const RLC::Vertice v, const RLC::Edge pred) { 
+    inline void set_pred(const RLC::Vertice v, const RLC::Edge & pred) { 
         has_predecessor[v.second]->set(v.first);
         predecessors[v.second][v.first] = pred; 
     }

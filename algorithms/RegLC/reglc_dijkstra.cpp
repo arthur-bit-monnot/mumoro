@@ -56,8 +56,7 @@ dfa_num_vert( graph->num_dfa_vertices() )
     
     // insert start vertices in heap
     BOOST_FOREACH(RLC::Vertice rlc_start, source_vertices) {
-        Predecessor pred; pred.has_pred = false; //empty predecessor object
-        insert_node(rlc_start, start_sec, 0, pred);
+        insert_node(rlc_start, start_sec, 0);
     }
     
     Dout(dc::notice, "Building Dijkstra object on graph with "<<trans_num_vert<<" nodes in Graph & "<<dfa_num_vert<<" nodes in DFA");    
@@ -114,20 +113,20 @@ bool Dijkstra::run()
 
 Vertice Dijkstra::treat_next() 
 {
-    Dij_node curr = heap.top();
+    RLC::Vertice curr = heap.top();
     heap.pop();
-    set_black(curr.v);
+    set_black(curr);
     
-    Dout(dc::notice, "Current node ("<<curr.v.first<<", "<<curr.v.second<<") "<<arrival(curr.v));
+    Dout(dc::notice, "Current node ("<<curr.first<<", "<<curr.second<<") "<<arrival(curr));
     
-    if( dest_vertices.find(curr.v) != dest_vertices.end()) {
+    if( dest_vertices.find(curr) != dest_vertices.end()) {
         path_found = true;
-        return curr.v;
+        return curr;
     } else {
         visited_nodes += 1;
     }
     
-    list<RLC::Edge> n_out_edges = graph->out_edges(curr.v);
+    list<RLC::Edge> n_out_edges = graph->out_edges(curr);
     BOOST_FOREACH(RLC::Edge e, n_out_edges) 
     {
         RLC::Vertice target = graph->target(e);
@@ -137,34 +136,39 @@ Vertice Dijkstra::treat_next()
         if(params->use_cost_lower_bounds) {
             boost::tie(has_traffic, edge_cost) = graph->min_duration(e);
         } else {
-            boost::tie(has_traffic, edge_cost) = graph->duration(e, arrival(curr.v), start_day);
+            boost::tie(has_traffic, edge_cost) = graph->duration(e, arrival(curr), start_day);
         }
-        int target_cost = cost(curr.v) + edge_cost * params->cost_factor;
+        int target_cost = cost(curr) + edge_cost * params->cost_factor;
         float target_arr;
         if(graph->forward)
-            target_arr = arrival(curr.v) + edge_cost;
+            target_arr = arrival(curr) + edge_cost;
         else 
-            target_arr = arrival(curr.v) - edge_cost;
+            target_arr = arrival(curr) - edge_cost;
         
         Dout(dc::notice, " - edge {target: ("<<target.first<<", "<<target.second<<") }");   
         
         if(has_traffic) {
 //             BOOST_ASSERT(edge_cost >= 0);
-            //TODO remove inconsistent data from generated graph
+//             TODO remove inconsistent data from generated graph
             if(edge_cost >= 0) {
-                Predecessor pred;
-                pred.has_pred = true;
-                pred.pred = e;
-                insert_node(target, target_arr, target_cost, pred);
+                insert_node_with_predecessor(target, target_arr, target_cost, e);
             }
         }
         
         
     }
-    return curr.v;
+    return curr;
 }
 
-bool Dijkstra::insert_node ( const Vertice & vert, const int arr, const int vert_cost, const Predecessor & pred )
+bool Dijkstra::insert_node_with_predecessor ( const Vertice & vert, const int arr, const int vert_cost, const RLC::Edge & pred )
+{
+    bool was_inserted = insert_node( vert, arr, vert_cost );
+    if( was_inserted )
+        set_pred( vert, pred );
+    return was_inserted;
+}
+
+bool Dijkstra::insert_node ( const Vertice & vert, const int arr, const int vert_cost )
 {
     // check if we are above the cost limit
     if( params->cost_limit && vert_cost > params->cost_limit_value )
@@ -179,8 +183,6 @@ bool Dijkstra::insert_node ( const Vertice & vert, const int arr, const int vert
         Dout(dc::notice, " -- Inserting target into heap : ("<< vert.first<<", "<<vert.second<<")");
         set_arrival(vert, arr);
         set_cost(vert, vert_cost);
-        if(pred.has_pred)
-            set_pred(vert, pred.pred);
         put_dij_node(vert);
         set_gray(vert);
         
@@ -198,8 +200,6 @@ bool Dijkstra::insert_node ( const Vertice & vert, const int arr, const int vert
         
         set_arrival(vert, arr);
         set_cost(vert, vert_cost);
-        if(pred.has_pred)
-            set_pred(vert, pred.pred);
         heap.update(handle(vert));
         
         if( params->save_touched_nodes )
