@@ -3,10 +3,9 @@
 #include "node_filter_utils.h"
 
 #include "nodes_filter.h"
-#include "reglc_dijkstra.h"
 
 NodeSet* isochrone ( Transport::Graph * trans, RLC::DFA dfa, const int center, const int max_time )
-{
+{/*
     NodeSet * ns = new NodeSet(trans);
     
     RLC::Graph forward(trans, dfa);
@@ -26,11 +25,13 @@ NodeSet* isochrone ( Transport::Graph * trans, RLC::DFA dfa, const int center, c
     }
     
     return ns;
+    */
 }
 
 
 BBNodeFilter* rectangle_containing ( Transport::Graph* trans, const int node1, const int node2, const float margin )
 {
+    /*
     float lat1 = trans->g[node1].lat;
     float lon1 = trans->g[node1].lon;
     float lat2 = trans->g[node2].lat;
@@ -54,5 +55,6 @@ BBNodeFilter* rectangle_containing ( Transport::Graph* trans, const int node1, c
     }
     
     return new BBNodeFilter(trans, max_lon, min_lon, max_lat, min_lat);
+    */
 }
 

@@ -122,7 +122,7 @@ DFA pt_dfa()
 /**************************** Graph ***********************************/
 
 
-Graph::Graph(Transport::Graph* transport, DFA dfa) : 
+Graph::Graph(const Transport::Graph* transport, DFA dfa) : 
 AbstractGraph(true, transport),
 transport(transport), 
 dfa(dfa)

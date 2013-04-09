@@ -42,9 +42,9 @@ public:
      * Associated transport graph. 
      * This should not used directly except for information regarding edges and node properties.
      */
-    Transport::Graph *transport;
+    const Transport::Graph * transport;
     
-    AbstractGraph( bool forward, Transport::Graph *transport ) : forward(forward), transport(transport) {}
+    AbstractGraph( bool forward, const Transport::Graph *transport ) : forward(forward), transport(transport) {}
     virtual ~AbstractGraph() {}
     
     /**
@@ -84,10 +84,10 @@ public:
 class Graph : public AbstractGraph
 {
 public:
-    Graph(Transport::Graph *trans, DFA dfa);
+    Graph(const Transport::Graph *trans, DFA dfa);
     virtual ~Graph() {}
     
-    Transport::Graph *transport;
+    const Transport::Graph *transport;
     DFA dfa;
     
     

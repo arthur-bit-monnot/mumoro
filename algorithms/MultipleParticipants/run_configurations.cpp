@@ -3,10 +3,14 @@
 #include "node_filter_utils.h"
 
 namespace MuPaRo {
+    
+using namespace AlgoMPR;
 
-Muparo * point_to_point(Transport::Graph * trans, int source, int dest)
+AlgoMPR::PtToPt * point_to_point(Transport::Graph * trans, int source, int dest)
 {
-    Muparo * mup = new Muparo(trans, 1);
+    PtToPt::ParamType p( MuparoParams(trans, 1), AspectTargetParams( 0, dest ) );
+    std::cout << "Dest ::: "<<dest <<endl;
+    PtToPt * mup = new PtToPt( p );
     int day = 10;
     
     mup->dfas.push_back(RLC::bike_pt_dfa());
@@ -14,7 +18,8 @@ Muparo * point_to_point(Transport::Graph * trans, int source, int dest)
     for(int i=0; i<mup->num_layers ; ++i)
     {
         mup->graphs.push_back( new RLC::Graph(mup->transport, mup->dfas[i] ));
-        mup->dij.push_back( new RLC::Dijkstra(mup->graphs[i], -1, -1, -1, day) );
+        PtToPt::Dijkstra::ParamType p( RLC::DRegLCParams( mup->graphs[i], day) );
+        mup->dij.push_back( new PtToPt::Dijkstra( p ) );
     }
     
     mup->start_nodes.push_back( StartNode( StateFreeNode(0, source), 50000) );
@@ -23,6 +28,52 @@ Muparo * point_to_point(Transport::Graph * trans, int source, int dest)
     return mup;
 }
 
+VisualResult point_to_point_res ( Transport::Graph* trans, int source, int dest )
+{
+    PtToPt * ptp = point_to_point( trans, source, dest );
+    ptp->run();
+    ptp->build_result();
+    return ptp->get_result();
+}
+
+SharedPath* shared_path ( Transport::Graph* trans, int src1, int src2, int dest )
+{
+    int day = 10;
+    SharedPath::ParamType p(
+        MuparoParams( trans, 3 ),
+        AspectTargetParams( 2, dest ),
+        AspectPropagationRuleParams( SumPlusWaitCost, MaxArrival, 2, 0, 1)
+    );
+    SharedPath * sp = new SharedPath( p );
+    
+    
+    
+    for(int i=0; i<sp->num_layers ; ++i)
+    {
+        sp->dfas.push_back(RLC::bike_pt_dfa());
+        sp->graphs.push_back( new RLC::Graph(sp->transport, sp->dfas[i] ));
+        PtToPt::Dijkstra::ParamType p( RLC::DRegLCParams( sp->graphs[i], day) );
+        sp->dij.push_back( new PtToPt::Dijkstra( p ) );
+    }
+    
+    sp->start_nodes.push_back( StartNode( StateFreeNode(0, src1), 50000) );
+    sp->start_nodes.push_back( StartNode( StateFreeNode(1, src2), 50000) );
+    
+    return sp;
+}
+
+VisualResult show_shared_path ( Transport::Graph* trans, int src1, int src2, int dest )
+{
+    SharedPath * sp = shared_path( trans, src1, src2, dest );
+    sp->run();
+    sp->build_result();
+    return sp->get_result();
+}
+
+
+
+
+/*
 Muparo * bi_point_to_point(Transport::Graph * trans, int source, int dest)
 {
     MuparoParameters mup_params;
@@ -51,6 +102,7 @@ Muparo * bi_point_to_point(Transport::Graph * trans, int source, int dest)
     
     return mup;
 }
+
 
 Muparo * bidir_covoiturage(Transport::Graph * trans, int source1, int source2, int dest1, int dest2, RLC::DFA dfa_pass, RLC::DFA dfa_car, int limit)
 {
@@ -188,6 +240,7 @@ Muparo * time_dep_covoiturage(Transport::Graph * trans, int source1, int source2
     mup->connection_rules.push_back(cr);
     return mup;
 }
+
 
 Muparo* conv_time_dep_covoiturage ( Transport::Graph* trans, int source1, int source2, int dest1, int dest2, RLC::DFA dfa_pass, RLC::DFA dfa_car )
 {
@@ -351,5 +404,6 @@ void add_isochrone_restriction_on_passenger(Muparo * mup, Transport::Graph* tran
     param_passenger_arr->filter_nodes = true;
     param_passenger_arr->filter = isochrone( trans, mup->dfas[4], dest, max_time);
 }
+*/
 
 } //end namespace MuPaRo

@@ -335,19 +335,20 @@ class Mumoro:
         return dij.get_result()
     
     def muparo(self, start, dest, secs, day, graph ):
-        #mpr = mumoro.point_to_point(graph, 277967, 284756)
+        #res = mumoro.point_to_point_res(graph, 254, 306)
+        res = mumoro.show_shared_path( graph, start, dest, 306 )
         #mpr = mumoro.conv_time_dep_covoiturage(graph, 313889, 265278, start, dest, mumoro.pt_foot_dfa(), mumoro.car_dfa())
         ## Intéressant pour les cout max : 
         #mpr = mumoro.conv_time_dep_covoiturage(graph, 313889, 265278, 319962, 99363, mumoro.pt_foot_dfa(), mumoro.car_dfa())
         
         #mpr = mumoro.conv_time_dep_covoiturage(graph, 713, 425, 306, 298,  mumoro.foot_dfa(), mumoro.foot_dfa())
-        mpr = mumoro.covoiturage(graph, 313889, 265278, start, dest, mumoro.pt_foot_dfa(), mumoro.car_dfa())
+        #mpr = mumoro.covoiturage(graph, 313889, 265278, start, dest, mumoro.pt_foot_dfa(), mumoro.car_dfa())
         #mpr = mumoro.restricted_covoiturage(graph, 713, 425, 306, 298,  mumoro.foot_dfa(), mumoro.foot_dfa())
         #mumoro.add_isochrone_restriction_on_passenger(mpr, graph, 313889, start, 12000)
-        mpr.run()
-        print mpr.visited_nodes()
-        res = mpr.get_result()
-        mumoro.free(mpr)
+        #mpr.run()
+        #print mpr.visited_nodes()
+        #res = mpr.get_result()
+        #mumoro.free(mpr)
         return res
     
     @cherrypy.expose

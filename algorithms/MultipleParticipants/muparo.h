@@ -2,7 +2,7 @@
 #define MUPARO_H
 
 #include "reglc_graph.h"
-#include "reglc_dijkstra.h"
+#include "DRegLC.h"
 #include "nodes_filter.h"
 
 using namespace std;
@@ -12,57 +12,6 @@ struct Invalid_Operation {};
 namespace MuPaRo
 {
 
-typedef enum { SumCost, MaxCost, SumPlusWaitCost } CostCombination;
-typedef enum { MaxArrival, FirstLayerArrival, SecondLayerArrival } ArrivalCombination;
-
-class Muparo;
-
-/**
- * Used to propagate results from one or several layers to another one.
- * 
- * Meaning : given a node with id `n` :
- * if nodes (l, n) are set for every layer l in conditions
- * then insert (l2, n) for every layer l2 in insertions
- */
-struct PropagationRule
-{
-    PropagationRule(Muparo * mup) : mup(mup), cost_comb(MaxCost), arr_comb(MaxArrival), filter(NULL) {}
-    ~PropagationRule() { if(filter != NULL) delete filter; }
-    Muparo * mup;
-    CostCombination cost_comb;
-    ArrivalCombination arr_comb;
-    vector<int> conditions;
-    int insertion;
-    inline int combine_costs(const int old, const int add) const {
-        if(cost_comb == SumCost)
-            return old + add;
-        else if(cost_comb == MaxCost)
-            return old > add ? old : add;
-        else
-            throw Invalid_Operation();
-        
-        return -1;
-    }
-    int arrival_in_insertion_layer( const int node ) const;
-    int cost_in_insertion_layer( const int node ) const;
-    bool applicable(const int node) const;
-    void apply(const int node);
-    
-    NodeFilter * filter;
-};
-
-struct ConnectionRule
-{
-    ConnectionRule(Muparo * mup) : mup(mup), comb(SumCost) {}
-    Muparo * mup;
-    CostCombination comb;
-    list<int> conditions;
-    int get_cost( const int node, bool real_cost = false ) const;
-    bool applicable(const int node) const;
-    void apply(const int node);
-    
-    int l3_dest;
-};
 
 /**
  * First : id of the layer the node belongs to
@@ -96,49 +45,86 @@ struct Flag
     unsigned char pred_layers;
 };
 
-typedef enum { DestNodes, Bidirectional, Connection } SearchType;
-
-struct MuparoParameters
+struct MuparoParams
 {
-    MuparoParameters() : search_type(DestNodes) {}
-    SearchType search_type;
-    std::pair<int, int> bidir_layers;
+    MuparoParams(const Transport::Graph * transport, const int num_layers) : transport(transport), num_layers(num_layers) {}
+    const Transport::Graph * transport;
+    const int num_layers;
 };
 
+typedef enum { DestNodes, Bidirectional, Connection } SearchType;
+
+template<typename Algo>
 class Muparo
 {
 public:
-    Muparo(Transport::Graph * transport, int num_layers, MuparoParameters p = MuparoParameters());
-    ~Muparo();
+    typedef Algo Dijkstra;
+    typedef LISTPARAM<MuparoParams> ParamType;
     
-    MuparoParameters params;
+    Muparo( ParamType p ) :
+    num_layers(p.value.num_layers),
+    transport(p.value.transport),
+    vres(p.value.transport)
+    {
+        is_set = new boost::dynamic_bitset<>*[num_layers];
+        flags = new Flag* [num_layers];
+        for(int i=0; i<num_layers ; ++i) {
+            is_set[i] = new boost::dynamic_bitset<>(boost::num_vertices(transport->g));
+            flags[i] = (Flag*) malloc( sizeof( Flag ) * boost::num_vertices(transport->g) );
+        }
+    }
     
-    int num_layers;
-    Transport::Graph * transport;
+    ~Muparo()
+    {
+        for(int i=0; i<num_layers ; ++i)
+        {
+            delete dij[i];
+            delete graphs[i];
+            delete is_set[i];
+            delete[] flags[i];
+        }
+        delete is_set;
+        delete[] flags;
+    }
+    
+    const int num_layers;
+    const Transport::Graph * transport;
     vector<RLC::DFA> dfas;
     vector<RLC::AbstractGraph*> graphs;
-    vector<RLC::Dijkstra*> dij;
-    vector<PropagationRule*> propagation_rules;
-    vector<ConnectionRule> connection_rules;
+    vector<Algo*> dij;
     
     boost::dynamic_bitset<> ** is_set;
     Flag **flags;
     
     list<StartNode> start_nodes;
     list<StateFreeNode> goal_nodes;
+
     
-    /** Bidirectional variables */
-    bool connection_found;
-    int best_cost;
-    RLC::Vertice best_bidir_connection;
-    int best_connection_node;
-    
-    
-public:
-    bool run();
+    bool run()
+    {
+        BOOST_FOREACH(StartNode sn, start_nodes) {
+            insert(sn.first, sn.second, 0);
+        }
+        
+        while( !finished() ) {
+            const int layer = select_layer();
+            
+            RLC::Vertice vert = dij[layer]->treat_next();
+            StateFreeNode node(layer, vert.first);
+            
+            if( graphs[layer]->is_accepting( vert ) && !is_node_set( node ) ) {
+                set( CompleteNode(layer, vert) );
+                apply_rules( node.second );
+            }
+        }
+
+        return true;
+    }
     
     void clear_pred_layers(const StateFreeNode n) const { flags[n.first][n.second].pred_layers = 0; }
-    void add_pred_layer(const StateFreeNode n, const int layer) { flags[n.first][n.second].pred_layers |= (1 << layer); }
+    void add_pred_layer(const StateFreeNode n, const int layer) { 
+        cerr << "Add pred layer " << n.first <<" "<< n.second <<endl;
+        flags[n.first][n.second].pred_layers |= (1 << layer); }
     
     void check_connections( const int modified_layer );
     
@@ -153,6 +139,7 @@ public:
      * time at this node.
      */
     void set( const CompleteNode n) {
+        cerr << "Set "<<n.first<<" "<<n.second.first<<endl;
         is_set[n.first]->set( n.second.first );
         flags[n.first][n.second.first].dfa_state = n.second.second;
         flags[n.first][n.second.first].arrival = dij[n.first]->arrival(n.second);
@@ -168,7 +155,7 @@ public:
     }
     
     int get_cost(const StateFreeNode n) const { 
-        BOOST_ASSERT(is_set(n));
+        BOOST_ASSERT(is_node_set(n));
         return flags[n.first][n.second].cost;
     }
     
@@ -182,13 +169,38 @@ public:
      *  - either all heaps are empties
      *  - or the connection point was found such as no shorter path can be found
      */
-    bool finished() const;
+    virtual bool finished() const 
+    {
+        bool heap_empties = true;
+        
+        BOOST_FOREACH(RLC::DRegLC *d, dij) {
+            if(! d->finished() ) {
+                heap_empties = false;
+                break;
+            }
+        }
+        
+        return heap_empties;
+    }
     
     /**
      * Returns the id of the next layer to treat.
      * This is the layer with the minimum cost in its heap.
      */
-    int select_layer() const;
+    int select_layer() const
+    {
+        int best_cost = 999999999;
+        int best_layer = -1;
+        
+        for(int i=0 ; i<num_layers ; ++i) {
+            if( !dij[i]->heap.empty() && ( dij[i]->cost( dij[i]->heap.top() ) < best_cost ) ) {
+                best_cost = dij[i]->cost( dij[i]->heap.top() );
+                best_layer = i;
+            }
+        }
+        
+        return best_layer;
+    }
     
     /**
      * Inserts a node in the relevant layer (given in `n`) with arrival time `arrival`.
@@ -196,33 +208,76 @@ public:
      * 
      * Returns true if at least one node was inserted
      */
-    bool insert(const StateFreeNode & n, const int arrival, const int cost);
+    bool insert(const StateFreeNode & n, const int arrival, const int cost)
+    {
+        bool inserted = false;
+        int layer = n.first;
+        int node = n.second;
+        BOOST_FOREACH(int dfa_start, graphs[layer]->dfa_start_states())  
+        {
+            RLC::Vertice rlc_node;
+            rlc_node.first = node;
+            rlc_node.second = dfa_start;
+            
+            if( dij[layer]->insert_node( rlc_node, arrival, cost ) ) {
+                inserted = true;
+                clear_pred_layers( n );
+            }
+        }
+        
+        return inserted;
+    }    
     
     /**
      * For a given node, check all rules if it is appicable for this node.
      * If it is, it then proceed to insertion.
      */
-    void apply_rules(const int node);
-    
-    /**
-     * Returns the minimal cost that might appear in a layer.
-     * Whith no propagation_rules this is simply the minimal cost in heap.
-     * 
-     * This is more tricky than it sounds since, nodes might be insert in this layer when propagation_rules are applied.
-     */
-    int min_cost(const int layer) const;
-    
+    virtual void apply_rules( const int node ) { /* does nothing */ }
     
     /** Results **/
     VisualResult vres;
-    void build_result();
-    VisualResult get_result() const;
-    int visited_nodes() const;
+    
+    virtual void init_result_queue( std::list< CompleteNode > & queue ) { /* does nothing */ };
+    
+    void build_result() 
+    {
+        std::list< CompleteNode > queue;
+        
+        init_result_queue( queue );
+        
+        while( !queue.empty() ) {
+            CompleteNode curr = queue.back();
+            queue.pop_back();
+            
+            int l = curr.first;
+            RLC::Vertice vert = curr.second;
+            
+            if( dij[l]->has_pred(vert) ) {
+                vres.edges.push_back(transport->edgeIndex( dij[l]->get_pred(vert).first ));
+                queue.push_back( CompleteNode(l, graphs[l]->source(dij[l]->get_pred(vert) )));
+            }
+            else if( flags[l][vert.first].pred_layers == 0 ) // no pred layers  
+            {
+            }
+            else
+            {
+                for(uint layer=0 ; layer < sizeof(Flag::pred_layers)*8 ; ++layer) {
+                    cerr << std::hex << flags[l][vert.first].pred_layers;
+                    if(flags[l][vert.first].pred_layers & (1 << layer)) {
+                        cerr << layer <<" "<< vert.first<<endl;
+                        queue.push_back( CompleteNode(layer, RLC::Vertice(vert.first, flags[layer][vert.first].dfa_state )));
+                        vres.c_nodes.push_back(vert.first);
+                    }
+                }
+            }
+        }
+    }
+    VisualResult get_result() const { return vres; };
 };
 
 
-
-void free(Muparo * mup);
+template<typename Algo>
+void free(Muparo<Algo> * mup);
 
 } // end namespace MuPaRo
 
