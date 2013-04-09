@@ -67,7 +67,9 @@ VisualResult show_shared_path ( Transport::Graph* trans, int src1, int src2, int
     SharedPath * sp = shared_path( trans, src1, src2, dest );
     sp->run();
     sp->build_result();
-    return sp->get_result();
+    VisualResult res = sp->get_result();
+    delete sp;
+    return res;
 }
 
 
@@ -128,7 +130,9 @@ VisualResult show_car_sharing ( const Transport::Graph* trans, int src_ped, int 
     CarSharing * cs = car_sharing(trans, src_ped, src_car, dest_ped, dest_car, dfa_ped, dfa_car);
     cs->run();
     cs->build_result();
-    return cs->get_result();
+    VisualResult res = cs->get_result();
+    delete cs;
+    return res;
 }
 
 

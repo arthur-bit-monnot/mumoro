@@ -8,8 +8,8 @@ OPTION(TESTS   "Build tests"           OFF)
 
 add_subdirectory ( algorithms )
 
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g" )
-set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g" )
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -std=c++11" )
+set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g -std=c++11" )
 
 INCLUDE_DIRECTORIES( lib/core )
 INCLUDE_DIRECTORIES( ${ALGO_INC_DIRS} )

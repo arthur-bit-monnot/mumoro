@@ -45,7 +45,7 @@ std::pair<bool, int> Duration::operator()(float start, int day, bool backward) c
 {
     if(backward) {
         if (dur_type == ConstDur) {
-            return std::make_pair<bool, int>(true, const_duration);
+            return std::pair<bool, int>(true, const_duration);
         } else if(dur_type == FrequencyDur) {
             return freq_duration_backward(start, day);
         } else {
@@ -55,7 +55,7 @@ std::pair<bool, int> Duration::operator()(float start, int day, bool backward) c
     else /** forward **/
     {
         if (dur_type == ConstDur) {
-            return std::make_pair<bool, int>(true, const_duration);
+            return std::pair<bool, int>(true, const_duration);
         } else if(dur_type == FrequencyDur) {
             return freq_duration_forward(start, day);
         } else {
@@ -67,7 +67,7 @@ std::pair<bool, int> Duration::operator()(float start, int day, bool backward) c
 std::pair<bool, int> Duration::min_duration() const
 {
     BOOST_ASSERT(const_duration >= 0);
-    return std::make_pair<bool, int>(true, const_duration);
+    return std::pair<bool, int>(true, const_duration);
 }
 
 
@@ -113,7 +113,7 @@ std::pair<bool, int> Duration::freq_duration_forward(float start_time, int day, 
             return next_day;
     }
     
-    return std::make_pair<bool, int>(has_traffic, cost);
+    return std::pair<bool, int>(has_traffic, cost);
 }
 
 std::pair<bool, int> Duration::freq_duration_backward(float start_time, int day, int allowed_lookups) const
@@ -157,7 +157,7 @@ std::pair<bool, int> Duration::freq_duration_backward(float start_time, int day,
             return next_day;
     }
     
-    return std::make_pair<bool, int>(has_traffic, cost);
+    return std::pair<bool, int>(has_traffic, cost);
 }
 
 
@@ -241,7 +241,7 @@ std::pair<bool, int> Duration::tt_duration_forward(float start, int day, int all
             return next_day;
     }
 
-    return std::make_pair<bool, int>(has_traffic, cost);
+    return std::pair<bool, int>(has_traffic, cost);
 }
 
 std::pair<bool, int> Duration::tt_duration_backward(float start, int day, int allowed_lookups) const
@@ -328,7 +328,7 @@ std::pair<bool, int> Duration::tt_duration_backward(float start, int day, int al
             return next_day;
     }
 
-    return std::make_pair<bool, int>(has_traffic, cost);
+    return std::pair<bool, int>(has_traffic, cost);
 }
 
 void Duration::set_min()

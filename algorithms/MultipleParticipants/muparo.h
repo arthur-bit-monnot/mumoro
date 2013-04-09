@@ -74,7 +74,7 @@ public:
         }
     }
     
-    ~Muparo()
+    virtual ~Muparo()
     {
         for(int i=0; i<num_layers ; ++i)
         {
@@ -98,6 +98,22 @@ public:
     
     list<StartNode> start_nodes;
     list<StateFreeNode> goal_nodes;
+    
+    virtual CompleteNode proceed_one_step() 
+    {
+        const int layer = select_layer();
+            
+        RLC::Vertice vert = dij[layer]->treat_next();
+        StateFreeNode node(layer, vert.first);
+        CompleteNode c_node(layer, vert);
+        
+        if( graphs[layer]->is_accepting( vert ) && !is_node_set( node ) ) {
+            set( c_node );
+            apply_rules( node.second );
+        }
+        
+        return c_node;
+    }
 
     
     bool run()
@@ -107,15 +123,7 @@ public:
         }
         
         while( !finished() ) {
-            const int layer = select_layer();
-            
-            RLC::Vertice vert = dij[layer]->treat_next();
-            StateFreeNode node(layer, vert.first);
-            
-            if( graphs[layer]->is_accepting( vert ) && !is_node_set( node ) ) {
-                set( CompleteNode(layer, vert) );
-                apply_rules( node.second );
-            }
+            proceed_one_step();
         }
 
         return true;

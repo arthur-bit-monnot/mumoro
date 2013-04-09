@@ -20,6 +20,7 @@ public:
     AspectTarget( ParamType p ) : Base(p.next) {
         goal = StateFreeNode(p.value.target_layer, p.value.target_node);
     }
+    virtual ~AspectTarget() {};
     
     StateFreeNode goal;
     

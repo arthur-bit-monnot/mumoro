@@ -22,10 +22,10 @@ void run_test(std::string directory, Transport::Graph * trans, int car_start_nod
               int passenger_arrival_node, int time, int day, RLC::DFA dfa_car, RLC::DFA dfa_passenger)
 {
     double start, end;
-    Muparo * mup;
+    AlgoMPR::CarSharing * mup;
     cout << "unrestricted = { "<<endl;
     START_TICKING;
-    mup = covoiturage(trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, dfa_passenger, dfa_car);
+    mup = car_sharing(trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, dfa_passenger, dfa_car);
     STOP_TICKING;
     cout << "init = " << RUNTIME <<endl;
     START_TICKING;
@@ -33,15 +33,15 @@ void run_test(std::string directory, Transport::Graph * trans, int car_start_nod
     STOP_TICKING;
     
     cout << ",\n time = " <<RUNTIME;
-    cout << ",\n visited-nodes: "<<mup->visited_nodes();
+//     cout << ",\n visited-nodes: "<<mup->visited_nodes();
     
     cout <<endl;
 }
 
 void hundred_inits(Transport::Graph * trans) {
-    Muparo * mup;
+    AlgoMPR::CarSharing * mup;
     for(int i=0 ; i<100 ; ++i) {
-        mup = covoiturage(trans, 0, 0, 0, 0, *dfas[1], *dfas[0]);
+        mup = car_sharing(trans, 0, 0, 0, 0, *dfas[1], *dfas[0]);
         delete mup;
     }
 }

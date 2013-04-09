@@ -36,6 +36,7 @@ public:
     {
 
     }
+    virtual ~AspectPropagationRule() {}
     
     CostCombination cost_comb;
     ArrivalCombination arr_comb;
