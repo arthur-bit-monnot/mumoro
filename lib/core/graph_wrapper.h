@@ -177,13 +177,33 @@ namespace Transport {
 struct Graph
 {
     Graph_t g;
+    
+    /**
+     * Initializes the graph with a given number of nodes
+     */
     Graph(int nb_nodes);
+    
+    /**
+     * Loads the graph from the archive
+     */
     Graph(const std::string & filename);
+    
+    /**
+     * Insert an edge from *source* to *target* in the graph
+     */
     void add_edge(int source, int target, const Edge & e);
-    void set_coord(int node, float lon, float lat);
+    
+    /**
+     * Adds public transport information to the given edge
+     */
     bool public_transport_edge(int source, int target, DurationType dur_type, float start, float arrival, 
                                       int duration, const std::string & services, const EdgeMode type = UnknownEdgeType);
-    bool dijkstra(int source, int target);
+
+    /**
+     * Sets longitude and latitude to the node
+     */
+    void set_coord(int node, float lon, float lat);
+    
     void save(const std::string & filename) const;
     void load(const std::string & filename);
     
@@ -222,6 +242,16 @@ struct Graph
      * Returns the target (node index) of an edge
      */
     inline int targetNode(const int edge_id) const { return target(this->edge_descriptor(edge_id), g); }
+    
+    /**
+     * Returns the longitude of a node
+     */
+    inline float longitude(const int node) const { return g[node].lon; }
+    
+    /**
+     * Returns the latitude of a node
+     */
+    inline float latitude(const int node) const { return g[node].lat; }
   
 private:
     std::vector<edge_t> edges_vec;

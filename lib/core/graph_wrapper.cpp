@@ -152,29 +152,6 @@ struct Comp
     bool operator()(const Duration &, float) const {return false;}
 };
 
-bool Graph::dijkstra(int source, int target)
-{
-    std::vector<int> p(boost::num_vertices(g));
-    std::vector<float> d(boost::num_vertices(g));
-    try{
-    boost::dijkstra_shortest_paths(g, source,
-            boost::predecessor_map(&p[0])
-            .distance_map(&d[0])
-            .weight_map(get(&Edge::duration, g))
-            .visitor(dijkstra_goal_visitor(target))
-            .distance_zero(30000)
-            .distance_combine(&calc_duration)
-            .distance_compare(Comp())
-            );
-    return false;
-    }
-    catch(found_goal)
-    {
-        return true;
-    }
-
-}
-
 void Graph::preprocess()
 {
     sort();

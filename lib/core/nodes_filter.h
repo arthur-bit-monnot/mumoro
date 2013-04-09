@@ -8,10 +8,10 @@
 class NodeFilter
 {
 public:
-    NodeFilter(Transport::Graph * g) : g(g) {}
+    NodeFilter(const Transport::Graph * g) : g(g) {}
     virtual ~NodeFilter() {}
     virtual bool isIn( const int node ) const = 0;
-    Transport::Graph * g;
+    const Transport::Graph * g;
     
     VisualResult visualization() const;
 };
@@ -19,7 +19,7 @@ public:
 class BBNodeFilter : public NodeFilter
 {
 public:
-    BBNodeFilter(Transport::Graph * g, float max_lon, float min_lon, float max_lat, float min_lat);
+    BBNodeFilter(const Transport::Graph * g, float max_lon, float min_lon, float max_lat, float min_lat);
     bool isIn( const int node ) const;
 private:
     const float max_lon;
@@ -31,7 +31,7 @@ private:
 class NodeSet : public NodeFilter
 {
 public:
-    NodeSet(Transport::Graph * g);
+    NodeSet(const Transport::Graph * g);
     bool isIn(const int node) const;
     
     void addNode( const int node );
@@ -40,7 +40,7 @@ private:
     boost::dynamic_bitset<> bitset;
 };
 
-BBNodeFilter * cap_jj_nf(Transport::Graph * g);
+BBNodeFilter * cap_jj_nf(const Transport::Graph * g);
 
 
 

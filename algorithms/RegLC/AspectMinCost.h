@@ -9,13 +9,11 @@ template<typename Base>
 class AspectMinCost : public Base {
 public:    
     typedef typename Base::ParamType ParamType;
-    AspectMinCost( ParamType parameters ) : Base(parameters) { count = 0; }
+    AspectMinCost( ParamType parameters ) : Base(parameters) {}
     virtual ~AspectMinCost() {}
-    
-    int count;
-    
+
     virtual std::pair <bool, int> duration( const RLC::Edge& edge, const float start_sec, const int day ) const {
-        return Base::graph->min_cost( edge );
+        return Base::graph->min_duration( edge );
     }
     
 };

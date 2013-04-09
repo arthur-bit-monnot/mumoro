@@ -18,7 +18,7 @@ VisualResult NodeFilter::visualization() const
 }
 
 
-BBNodeFilter::BBNodeFilter ( Transport::Graph * g, float max_lon, float min_lon, float max_lat, float min_lat ) :
+BBNodeFilter::BBNodeFilter ( const Transport::Graph * g, float max_lon, float min_lon, float max_lat, float min_lat ) :
 NodeFilter( g ),
 max_lon(max_lon), min_lon(min_lon), max_lat(max_lat), min_lat(min_lat)
 {
@@ -33,12 +33,12 @@ bool BBNodeFilter::isIn ( int node ) const
     return in;
 }
 
-BBNodeFilter * cap_jj_nf(Transport::Graph * g)
+BBNodeFilter * cap_jj_nf( const Transport::Graph * g)
 {
     return new BBNodeFilter(g, 1.44940832773, 1.44468763987, 43.6059589047, 43.6040632995);
 }
 
-NodeSet::NodeSet ( Transport::Graph * g ) :
+NodeSet::NodeSet ( const Transport::Graph * g ) :
 NodeFilter( g ),
 bitset(boost::num_vertices(g->g))
 {

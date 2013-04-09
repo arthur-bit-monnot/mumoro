@@ -28,7 +28,18 @@ DFA pt_foot_dfa();
 DFA bike_pt_dfa();
 DFA pt_dfa();
 
+/**
+ * A vertice in the DRegLC algorithm
+ *  - First : Node in the transportation graph
+ *  - Second : State in the DFA
+ */
 typedef std::pair<int, int> Vertice;
+
+/**
+ * An edge in the DRegLC algorithm
+ *  - First : edge in the transportation graph
+ *  - Second : edge in the DFA
+ */
 typedef std::pair<edge_t, edge_t> Edge;
 
 class AbstractGraph {
