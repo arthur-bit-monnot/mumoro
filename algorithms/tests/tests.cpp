@@ -10,30 +10,42 @@ using std::ifstream;
 #include "run_configurations.h"
 #include "utils.h"
 
-#define START_TICKING start = get_run_time_sec()
-#define STOP_TICKING end = get_run_time_sec()
-#define RUNTIME (end - start)*((double) 1000)
 
 using namespace MuPaRo;
+using namespace AlgoMPR;
 
 RLC::DFA * dfas[2];
 
 void run_test(std::string directory, Transport::Graph * trans, int car_start_node, int passenger_start_node, int car_arrival_node,
               int passenger_arrival_node, int time, int day, RLC::DFA dfa_car, RLC::DFA dfa_passenger)
 {
-    double start, end;
-    AlgoMPR::CarSharing * mup;
+    typedef CarSharingTest CurrAlgo;
+    
     cout << "unrestricted = { "<<endl;
     START_TICKING;
-    mup = car_sharing(trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, dfa_passenger, dfa_car);
+    CurrAlgo::ParamType p(
+        MuparoParams( trans, 5 ),
+        AspectTargetParams( 4, passenger_arrival_node ),
+        AspectPropagationRuleParams( SumPlusWaitCost, MaxArrival, 2, 0, 1),
+        AspectPropagationRuleParams( SumCost, FirstLayerArrival, 4, 2, 3)
+    );
+    
+    CurrAlgo cs( p );
+    
+    init_car_sharing<CurrAlgo>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, dfa_passenger, dfa_car );
+
     STOP_TICKING;
     cout << "init = " << RUNTIME <<endl;
     START_TICKING;
-    mup->run();
+    cs.run();
     STOP_TICKING;
     
     cout << ",\n time = " <<RUNTIME;
-//     cout << ",\n visited-nodes: "<<mup->visited_nodes();
+    cout << ",\n visited-nodes: "<<cs.count;
+    cout << ",\n visited-per-layer: [";
+    BOOST_FOREACH( CurrAlgo::Dijkstra * dij, cs.dij )
+        cout << dij->count <<", ";
+    cout <<"]";
     
     cout <<endl;
 }
@@ -89,7 +101,7 @@ int main(void)
     cout << ",\n time = " <<RUNTIME;
     */
     while ( !indata.eof() ) { // keep reading until end-of-file
-        indata >> car_start_node >> passenger_start_node >> car_arrival_node >> passenger_arrival_node 
+        indata >> passenger_start_node >> car_start_node >> passenger_arrival_node >> car_arrival_node
                >> time >> day >> dfa_car >> dfa_passenger;
         run_test("1", transport, car_start_node, passenger_start_node, car_arrival_node, passenger_arrival_node, 
                  time, day, *dfas[dfa_car], *dfas[dfa_passenger]);

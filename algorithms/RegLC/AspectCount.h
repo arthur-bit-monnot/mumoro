@@ -16,7 +16,6 @@ public:
     
     virtual RLC::Vertice treat_next() {
         count++;
-        std::cout << count << std::endl;
         return Base::treat_next();
     }
     

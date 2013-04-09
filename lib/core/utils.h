@@ -3,6 +3,12 @@
 
 double get_run_time_sec();
 
+static double ticking_start, ticking_end;
+
+#define START_TICKING ticking_start = get_run_time_sec()
+#define STOP_TICKING ticking_end = get_run_time_sec()
+#define RUNTIME (ticking_end - ticking_start)*((double) 1000)
+
 struct END {};
 static END End;
 

@@ -336,14 +336,17 @@ class Mumoro:
     
     def muparo(self, start, dest, secs, day, graph ):
         #res = mumoro.point_to_point_res(graph, 254, 306)
-        res = mumoro.show_shared_path( graph, start, dest, 306 )
+        #res = mumoro.show_shared_path( graph, start, dest, 306 )
         #mpr = mumoro.conv_time_dep_covoiturage(graph, 313889, 265278, start, dest, mumoro.pt_foot_dfa(), mumoro.car_dfa())
         ## Intéressant pour les cout max : 
         #mpr = mumoro.conv_time_dep_covoiturage(graph, 313889, 265278, 319962, 99363, mumoro.pt_foot_dfa(), mumoro.car_dfa())
         
-        res = mumoro.show_car_sharing(graph, 713, 425, 306, 298,  mumoro.pt_foot_dfa(), mumoro.bike_dfa())
-        g = mumoro.RLC_Graph( graph, mumoro.pt_foot_dfa() )
-        res = mumoro.show_isochrone( g, dest, 120 )
+        #res = mumoro.show_car_sharing(graph, 713, 425, 306, 298,  mumoro.pt_foot_dfa(), mumoro.bike_dfa())
+        #res = mumoro.show_car_sharing(graph, 313889, 265278, 278790, 112254, mumoro.pt_foot_dfa(), mumoro.car_dfa())
+        res = mumoro.show_car_sharing(graph, start, dest, 278790, 112254, mumoro.pt_foot_dfa(), mumoro.car_dfa())
+        print "{} {} {} {} {} {} {} {}".format(start, dest, 278790, 112254, secs, 10, 1, 0)
+        #g = mumoro.RLC_Graph( graph, mumoro.pt_foot_dfa() )
+        #res = mumoro.show_isochrone( g, dest, 120 )
         #mpr = mumoro.covoiturage(graph, 313889, 265278, start, dest, mumoro.pt_foot_dfa(), mumoro.car_dfa())
         #mpr = mumoro.restricted_covoiturage(graph, 713, 425, 306, 298,  mumoro.foot_dfa(), mumoro.foot_dfa())
         #mumoro.add_isochrone_restriction_on_passenger(mpr, graph, 313889, start, 12000)
