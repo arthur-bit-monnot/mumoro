@@ -28,7 +28,7 @@ AlgoMPR::PtToPt * point_to_point(Transport::Graph * trans, int source, int dest)
     return mup;
 }
 
-VisualResult point_to_point_res ( Transport::Graph* trans, int source, int dest )
+VisualResult show_point_to_point ( Transport::Graph* trans, int source, int dest )
 {
     PtToPt * ptp = point_to_point( trans, source, dest );
     ptp->run();
@@ -68,6 +68,67 @@ VisualResult show_shared_path ( Transport::Graph* trans, int src1, int src2, int
     sp->run();
     sp->build_result();
     return sp->get_result();
+}
+
+
+CarSharing * car_sharing ( const Transport::Graph* trans, int src_ped, int src_car, int dest_ped, int dest_car, 
+                                   RLC::DFA dfa_ped, RLC::DFA dfa_car )
+{
+    CarSharing::ParamType p(
+        MuparoParams( trans, 5 ),
+        AspectTargetParams( 4, dest_ped ),
+        AspectPropagationRuleParams( SumPlusWaitCost, MaxArrival, 2, 0, 1),
+        AspectPropagationRuleParams( SumCost, FirstLayerArrival, 4, 2, 3)
+    );
+    
+    CarSharing * cs = new CarSharing( p );
+    
+    cs->vres.a_nodes.push_back(src_ped);
+    cs->vres.a_nodes.push_back(src_car);
+    cs->vres.b_nodes.push_back(dest_ped);
+    cs->vres.b_nodes.push_back(dest_car);
+    
+    int day = 10;
+    int time = 50000;
+    
+    cs->dfas.push_back(dfa_ped);
+    cs->dfas.push_back(dfa_car);
+    cs->dfas.push_back(dfa_car);
+    cs->dfas.push_back(dfa_car);
+    cs->dfas.push_back(dfa_ped);
+
+    
+    RLC::Graph *g1 = new RLC::Graph(cs->transport, cs->dfas[0] );
+    RLC::Graph *g2 = new RLC::Graph(cs->transport, cs->dfas[1] );
+    RLC::Graph *g3 = new RLC::Graph(cs->transport, cs->dfas[2] );
+    RLC::BackwardGraph *g4 = new RLC::BackwardGraph(g2);
+    RLC::Graph *g5 = new RLC::Graph(cs->transport, cs->dfas[4] );
+    
+    cs->graphs.push_back( g1 );
+    cs->graphs.push_back( g2 );
+    cs->graphs.push_back( g3 );
+    cs->graphs.push_back( g4 );
+    cs->graphs.push_back( g5 );
+    cs->dij.push_back( new CarSharing::Dijkstra( CarSharing::Dijkstra::ParamType(RLC::DRegLCParams(g1, day, 1)) ) );
+    cs->dij.push_back( new CarSharing::Dijkstra( CarSharing::Dijkstra::ParamType(RLC::DRegLCParams(g2, day, 1)) ) );
+    cs->dij.push_back( new CarSharing::Dijkstra( CarSharing::Dijkstra::ParamType(RLC::DRegLCParams(g3, day, 2)) ) );
+    cs->dij.push_back( new CarSharing::Dijkstra( CarSharing::Dijkstra::ParamType(RLC::DRegLCParams(g4, day, 1)) ) );
+    cs->dij.push_back( new CarSharing::Dijkstra( CarSharing::Dijkstra::ParamType(RLC::DRegLCParams(g5, day, 1)) ) );
+    
+    cs->insert( StateFreeNode(0, src_ped), time, 0);
+    cs->insert( StateFreeNode(1, src_car), time, 0);
+    cs->insert( StateFreeNode(3, dest_car), 0, 0);
+    
+    return cs;
+}
+
+VisualResult show_car_sharing ( const Transport::Graph* trans, int src_ped, int src_car, int dest_ped, int dest_car, 
+                                        RLC::DFA dfa_ped, RLC::DFA dfa_car )
+{
+    CarSharing * cs = car_sharing(trans, src_ped, src_car, dest_ped, dest_car, dfa_ped, dfa_car);
+    cs->run();
+    cs->build_result();
+    return cs->get_result();
 }
 
 

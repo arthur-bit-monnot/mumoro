@@ -8,11 +8,17 @@ namespace MuPaRo {
 
 AlgoMPR::PtToPt * point_to_point(Transport::Graph * trans, int source, int dest);
 
-VisualResult point_to_point_res(Transport::Graph * trans, int source, int dest);
+VisualResult show_point_to_point(Transport::Graph * trans, int source, int dest);
 
 AlgoMPR::SharedPath * shared_path(Transport::Graph * trans, int src1, int src2, int dest);
 
 VisualResult show_shared_path(Transport::Graph * trans, int src1, int src2, int dest);
+
+AlgoMPR::CarSharing * car_sharing(const Transport::Graph * trans, int src_ped, int src_car, int dest_ped, int dest_car,
+                                  RLC::DFA dfa_ped, RLC::DFA dfa_car);
+
+VisualResult show_car_sharing(const Transport::Graph * trans, int src_ped, int src_car, int dest_ped, int dest_car,
+                                  RLC::DFA dfa_ped, RLC::DFA dfa_car);
 /*
 Muparo * bi_point_to_point(Transport::Graph * trans, int source, int dest);
 Muparo * bidir_covoiturage(Transport::Graph * trans, int source1, int source2, int dest1, int dest2,

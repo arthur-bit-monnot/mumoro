@@ -12,7 +12,7 @@ namespace AlgoMPR {
     
     typedef AspectTarget<Muparo<Algo::Basic> > PtToPt;
     typedef AspectPropagationRule<AspectTarget<Muparo<Algo::Basic> > > SharedPath;
-    
+    typedef AspectPropagationRule<AspectPropagationRule<AspectTarget<Muparo<Algo::Basic> > > > CarSharing;
 }
 
 

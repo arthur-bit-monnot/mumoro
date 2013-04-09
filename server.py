@@ -341,7 +341,7 @@ class Mumoro:
         ## Intéressant pour les cout max : 
         #mpr = mumoro.conv_time_dep_covoiturage(graph, 313889, 265278, 319962, 99363, mumoro.pt_foot_dfa(), mumoro.car_dfa())
         
-        #mpr = mumoro.conv_time_dep_covoiturage(graph, 713, 425, 306, 298,  mumoro.foot_dfa(), mumoro.foot_dfa())
+        res = mumoro.show_car_sharing(graph, 713, 425, 306, 298,  mumoro.pt_foot_dfa(), mumoro.bike_dfa())
         #mpr = mumoro.covoiturage(graph, 313889, 265278, start, dest, mumoro.pt_foot_dfa(), mumoro.car_dfa())
         #mpr = mumoro.restricted_covoiturage(graph, 713, 425, 306, 298,  mumoro.foot_dfa(), mumoro.foot_dfa())
         #mumoro.add_isochrone_restriction_on_passenger(mpr, graph, 313889, start, 12000)

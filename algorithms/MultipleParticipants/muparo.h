@@ -122,9 +122,7 @@ public:
     }
     
     void clear_pred_layers(const StateFreeNode n) const { flags[n.first][n.second].pred_layers = 0; }
-    void add_pred_layer(const StateFreeNode n, const int layer) { 
-        cerr << "Add pred layer " << n.first <<" "<< n.second <<endl;
-        flags[n.first][n.second].pred_layers |= (1 << layer); }
+    void add_pred_layer(const StateFreeNode n, const int layer) { flags[n.first][n.second].pred_layers |= (1 << layer); }
     
     void check_connections( const int modified_layer );
     
@@ -139,7 +137,6 @@ public:
      * time at this node.
      */
     void set( const CompleteNode n) {
-        cerr << "Set "<<n.first<<" "<<n.second.first<<endl;
         is_set[n.first]->set( n.second.first );
         flags[n.first][n.second.first].dfa_state = n.second.second;
         flags[n.first][n.second.first].arrival = dij[n.first]->arrival(n.second);
@@ -262,9 +259,7 @@ public:
             else
             {
                 for(uint layer=0 ; layer < sizeof(Flag::pred_layers)*8 ; ++layer) {
-                    cerr << std::hex << flags[l][vert.first].pred_layers;
                     if(flags[l][vert.first].pred_layers & (1 << layer)) {
-                        cerr << layer <<" "<< vert.first<<endl;
                         queue.push_back( CompleteNode(layer, RLC::Vertice(vert.first, flags[layer][vert.first].dfa_state )));
                         vres.c_nodes.push_back(vert.first);
                     }
