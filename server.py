@@ -88,16 +88,17 @@ def is_color_valid( color ):
     return False
 
 #Loads an osm (compressed of not) file and insert data into database
-def import_street_data( filename ):
+def import_street_data( filenames ):
+    origin = str( filenames )
     engine = create_engine( db_type + ":///" + db_params )
     metadata = MetaData(bind = engine)
     mumoro_metadata = Table('metadata', metadata, autoload = True)
-    s = mumoro_metadata.select((mumoro_metadata.c.origin == filename) & (mumoro_metadata.c.node_or_edge == 'Nodes'))
+    s = mumoro_metadata.select((mumoro_metadata.c.origin == origin) & (mumoro_metadata.c.node_or_edge == 'Nodes'))
     rs = s.execute()
     nd = 0
     for row in rs:
          nd = row[0]
-    s = mumoro_metadata.select((mumoro_metadata.c.origin == filename) & (mumoro_metadata.c.node_or_edge == 'Edges'))
+    s = mumoro_metadata.select((mumoro_metadata.c.origin == origin) & (mumoro_metadata.c.node_or_edge == 'Edges'))
     rs = s.execute()
     ed = 0
     for row in rs:
@@ -190,9 +191,9 @@ def transferEdge( duration, mode_change ):
 
 #Connects 2 given layers on same nodes with the given cost(s)
 def connect_layers_same_nodes( layer1, layer2, cost ):
-    if not layer1 or not layer2 or not cost:
+    if not layer1 or not layer2:
         raise NameError('One or more paramaters are empty')
-    same_nodes_connection_array.append( { 'layer1':layer1, 'layer2':layer2, 'cost':cost } )
+    same_nodes_connection_array.append( { 'layer1':layer1, 'layer2':layer2, 'property':transferEdge(cost, 0) } )
 
 #Connect 2 given layers on a node list (arg 3 which should be the returned data from import_municipal_data or import_bike_service) with the given cost(s)
 def connect_layers_from_node_list( layer1, layer2, node_list, cost, cost2 = None ):
@@ -279,7 +280,7 @@ class Mumoro:
                 self.session.commit()
             self.g = layer.MultimodalGraph( layers )
             for i in same_nodes_connection_array:
-                self.g.connect_same_nodes( i['layer1']['layer'],i['layer2']['layer'],i['cost'] )
+                self.g.connect_same_nodes( i['layer1']['layer'],i['layer2']['layer'],i['property'] )
             for i in nearest_nodes_connection_array:
                 self.g.connect_nearest_nodes( i['layer1']['layer'],i['layer2']['layer'],i['cost'], i['cost2'] )
             for i in nodes_list_connection_array:
@@ -335,24 +336,15 @@ class Mumoro:
         return dij.get_result()
     
     def muparo(self, start, dest, secs, day, graph ):
-        #res = mumoro.point_to_point_res(graph, 254, 306)
+        res = mumoro.show_point_to_point(graph, dest, start)
         #res = mumoro.show_shared_path( graph, start, dest, 306 )
-        #mpr = mumoro.conv_time_dep_covoiturage(graph, 313889, 265278, start, dest, mumoro.pt_foot_dfa(), mumoro.car_dfa())
-        ## Intéressant pour les cout max : 
-        #mpr = mumoro.conv_time_dep_covoiturage(graph, 313889, 265278, 319962, 99363, mumoro.pt_foot_dfa(), mumoro.car_dfa())
-        
-        #res = mumoro.show_car_sharing(graph, 713, 425, 306, 298,  mumoro.pt_foot_dfa(), mumoro.bike_dfa())
-        #res = mumoro.show_car_sharing(graph, 313889, 265278, 278790, 112254, mumoro.pt_foot_dfa(), mumoro.car_dfa())
-        res = mumoro.show_car_sharing(graph, start, dest, 278790, 112254, mumoro.pt_foot_dfa(), mumoro.car_dfa())
-        print "{} {} {} {} {} {} {} {}".format(start, dest, 278790, 112254, secs, 10, 1, 0)
+        #res = mumoro.show_car_sharing(graph, start, dest, 278790, 112254, mumoro.pt_foot_dfa(), mumoro.car_dfa())
+        #print "{} {} {} {} {} {} {} {}".format(start, dest, 278790, 112254, secs, 10, 1, 0)
         #g = mumoro.RLC_Graph( graph, mumoro.pt_foot_dfa() )
         #res = mumoro.show_isochrone( g, dest, 120 )
-        #mpr = mumoro.covoiturage(graph, 313889, 265278, start, dest, mumoro.pt_foot_dfa(), mumoro.car_dfa())
-        #mpr = mumoro.restricted_covoiturage(graph, 713, 425, 306, 298,  mumoro.foot_dfa(), mumoro.foot_dfa())
-        #mumoro.add_isochrone_restriction_on_passenger(mpr, graph, 313889, start, 12000)
-        #mpr.run()
-        #print mpr.visited_nodes()
-        #res = mpr.get_result()
+        
+        #res = mumoro.show_meeting_points( graph, start )
+        
         #mumoro.free(mpr)
         return res
     

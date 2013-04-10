@@ -56,6 +56,7 @@ class Importer():
         mapper(Metadata, self.mumoro_metadata)
         Session = sessionmaker(bind=self.engine)
         self.session = Session()
+        
         for f in street_data_array:
                 self.import_osm( f )
 
@@ -84,17 +85,19 @@ class Importer():
         clear_mappers()
         mapper(Metadata, self.mumoro_metadata)
 
-    def import_osm( self, filename ):
-        print "Adding street data from " + filename
-        nodes = Metadata("OSM nodes", "Nodes", filename)
-        edges = Metadata("OSM edges", "Edges", filename)
+    def import_osm( self, filenames ):
+        origin = str( filenames )
+        print "Adding street data from " + origin
+        nodes = Metadata("OSM nodes", "Nodes", origin)
+        edges = Metadata("OSM edges", "Edges", origin)
         self.session.add(nodes)
         self.session.add(edges)
         self.session.commit()
-        osm4routing.parse(filename, self.db_string, str(edges.id), str(nodes.id) ) 
+        for filename in filenames:
+            osm4routing.parse(filename, self.db_string, str(edges.id), str(nodes.id) ) 
+            print "Done importing street data from " + filename
+            print "---------------------------------------------------------------------"
         self.init_mappers()
-        print "Done importing street data from " + filename
-        print "---------------------------------------------------------------------"
 
     def import_gtfs(self, filename, start_date, end_date, network_name = "GTFS"):
         print "Adding municipal data from " + filename
@@ -236,10 +239,11 @@ class Importer():
 
 
 #Loads an osm (compressed of not) file and insert data into database
-def import_street_data( filename ):
-    if not os.path.exists( filename ):
-        raise NameError('File does not exist')
-    street_data_array.append( filename )
+def import_street_data( filenames ):
+    for filename in filenames:
+        if not os.path.exists( filename ):
+            raise NameError('File does not exist: '+filename)
+    street_data_array.append( filenames )
 
 # Loads public transport data from GTFS file format
 def import_gtfs_data( filename, network_name = "Public transport"):

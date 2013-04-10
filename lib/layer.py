@@ -71,13 +71,14 @@ class BaseLayer(object):
     def map(self, o_id):
         s = self.nodes_table.select(self.nodes_table.c.original_id==o_id)
         rs = s.execute()
+        result = None
         for row in rs:
             result = row
         if result:
             return result[0] + self.offset
         else:
             print "Unable to find id {0}".format(o_id)
-            raise DataIncoherence()
+            return None
 
     def borders(self):
         max_lon = select([func.max(self.nodes_table.c.lon, type_=Float )]).execute().first()[0]    
@@ -347,6 +348,7 @@ class MultimodalGraph(object):
             if n2:
                 self.graph.add_edge(n1.id + layer1.offset, n2, property)
                 count += 1
+                print count
         return count
 
     def connect_same_nodes_random(self, layer1, layer2, property, freq):
