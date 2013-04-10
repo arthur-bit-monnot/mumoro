@@ -11,6 +11,8 @@
 
 #include "RegLC/AspectTarget.h"
 
+#include "MultipleParticipants/PotentialMeetingPoints.h"
+
 using namespace RLC;
 
 int main() 
@@ -43,14 +45,16 @@ int main()
 //      RLC::DRegLC * dreg = RLC::dreg_with_target(&rlc, 425, 306);
 //      AlgoMPR::PtToPt *mup =  MuPaRo::point_to_point( &g, 254, 900 );
 //      AlgoMPR::SharedPath * mup = MuPaRo::shared_path( &g, 254, 425, 900 );
-     AlgoMPR::CarSharing * mup = car_sharing( &g, 713, 425, 306, 298,  foot_dfa(), foot_dfa() );
+//      AlgoMPR::CarSharing * mup = car_sharing( &g, 713, 425, 306, 298,  foot_dfa(), foot_dfa() );
+//      
+//      mup->run();
+//      
+//      
+//      
+//      mup->build_result();
+//      mup->get_result();
+//      cout << "jdklfjdskfjqdslfjdqsf\n\n";
+//      show_car_sharing( &g, 713, 425, 306, 298,  foot_dfa(), foot_dfa() );
      
-     mup->run();
-     
-     
-     
-     mup->build_result();
-     mup->get_result();
-     cout << "jdklfjdskfjqdslfjdqsf\n\n";
-     show_car_sharing( &g, 713, 425, 306, 298,  foot_dfa(), foot_dfa() );
+     show_meeting_points(&g, 425);
 }

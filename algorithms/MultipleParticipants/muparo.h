@@ -198,7 +198,7 @@ public:
         int best_layer = -1;
         
         for(int i=0 ; i<num_layers ; ++i) {
-            if( !dij[i]->heap.empty() && ( dij[i]->cost( dij[i]->heap.top() ) < best_cost ) ) {
+            if( !dij[i]->finished() && ( dij[i]->cost( dij[i]->heap.top() ) < best_cost ) ) {
                 best_cost = dij[i]->cost( dij[i]->heap.top() );
                 best_layer = i;
             }

@@ -3,7 +3,7 @@
 
 double get_run_time_sec();
 
-static double ticking_start, ticking_end;
+extern double ticking_start, ticking_end;
 
 #define START_TICKING ticking_start = get_run_time_sec()
 #define STOP_TICKING ticking_end = get_run_time_sec()

@@ -5,6 +5,8 @@
 
 #include "utils.h"
 
+double ticking_start, ticking_end;
+
 double get_run_time_sec() {
 
   struct tms usage;

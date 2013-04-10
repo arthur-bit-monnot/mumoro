@@ -66,7 +66,10 @@ std::pair<bool, int> Duration::operator()(float start, int day, bool backward) c
 
 std::pair<bool, int> Duration::min_duration() const
 {
-    BOOST_ASSERT(const_duration >= 0);
+    if(const_duration < 0) {
+        std::cerr << "WARNING CONST DURATION < 0\n";
+        return std::pair<bool, int>(false, const_duration);
+    }
     return std::pair<bool, int>(true, const_duration);
 }
 

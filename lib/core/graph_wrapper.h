@@ -191,7 +191,7 @@ struct Graph
     /**
      * Insert an edge from *source* to *target* in the graph
      */
-    void add_edge(int source, int target, const Edge & e);
+    void add_edge(int source, int target, Edge e);
     
     /**
      * Adds public transport information to the given edge

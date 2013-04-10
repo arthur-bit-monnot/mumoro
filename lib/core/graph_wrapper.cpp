@@ -83,7 +83,7 @@ void Graph::initEdgeIndexes() {
     }
 }
 
-void Graph::add_edge(int source, int target, const Edge & e)
+void Graph::add_edge(int source, int target, Edge e)
 {
     boost::add_edge(source, target, e, g);
 }

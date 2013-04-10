@@ -6,6 +6,7 @@
 #include "AspectCount.h"
 #include "AspectMaxCostPruning.h"
 #include "AspectMinCost.h"
+#include "AspectNoRun.h"
 
 
 namespace Algo {
