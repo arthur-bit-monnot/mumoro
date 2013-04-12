@@ -177,7 +177,7 @@ namespace Transport {
 struct Graph
 {
     Graph_t g;
-    
+
     /**
      * Initializes the graph with a given number of nodes
      */
@@ -222,10 +222,15 @@ struct Graph
     EdgeList listEdges(const EdgeMode type = WhateverEdge) const;
     
     /**
+     * Returns the number of vertices in the graph
+     */
+    inline int num_vertices() const { return boost::num_vertices( g ); }
+    
+    /**
      * Return the Edge instance associated with the edge index passed
      */
-    inline Edge mapEdge(const int edge_id) const { return g[this->edge_descriptor(edge_id)]; }
-    
+    inline Edge map(const int edge_id) const { return g[this->edge_descriptor(edge_id)]; }
+    inline Edge map( const edge_t edge ) const { return g[edge]; }
     inline int edgeIndex(const edge_t edge) const { return g[edge].edge_index; }
     
     /**
@@ -236,12 +241,14 @@ struct Graph
     /**
      * Returns the origin (node index) of an edge
      */
-    inline int sourceNode(const int edge_id) const { return source(this->edge_descriptor(edge_id), g); }
+    inline int source(const int edge_id) const { return boost::source(this->edge_descriptor(edge_id), g); }
+    inline int source(const edge_t edge) const { return boost::source(edge, g); }
     
     /**
      * Returns the target (node index) of an edge
      */
-    inline int targetNode(const int edge_id) const { return target(this->edge_descriptor(edge_id), g); }
+    inline int target(const int edge_id) const { return boost::target(this->edge_descriptor(edge_id), g); }
+    inline int target(const edge_t edge) const { return boost::target(edge, g); }
     
     /**
      * Returns the longitude of a node

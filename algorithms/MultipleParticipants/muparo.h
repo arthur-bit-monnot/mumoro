@@ -69,8 +69,8 @@ public:
         is_set = new boost::dynamic_bitset<>*[num_layers];
         flags = new Flag* [num_layers];
         for(int i=0; i<num_layers ; ++i) {
-            is_set[i] = new boost::dynamic_bitset<>(boost::num_vertices(transport->g));
-            flags[i] = (Flag*) malloc( sizeof( Flag ) * boost::num_vertices(transport->g) );
+            is_set[i] = new boost::dynamic_bitset<>(transport->num_vertices());
+            flags[i] = (Flag*) malloc( sizeof( Flag ) * transport->num_vertices() );
         }
     }
     

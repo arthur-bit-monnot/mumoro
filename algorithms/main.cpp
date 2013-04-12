@@ -3,8 +3,6 @@
 #include "debug/cwd_sys.h"
 #include "debug/cwd_debug.h"
 
-
-#include "path_algo.h"
 #include "MultipleParticipants/muparo.h"
 #include "MultipleParticipants/run_configurations.h"
 #include "utils/node_filter_utils.h"

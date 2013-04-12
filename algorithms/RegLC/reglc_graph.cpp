@@ -133,12 +133,12 @@ dfa(dfa)
 
 RLC::Vertice Graph::source( const RLC::Edge & edge) const
 {
-    return RLC::Vertice(boost::source(edge.first, transport->g), boost::source(edge.second, dfa.graph));
+    return RLC::Vertice(transport->source( edge.first ), boost::source(edge.second, dfa.graph));
 }
 
 RLC::Vertice Graph::target( const RLC::Edge & edge) const
 {
-    return RLC::Vertice(boost::target(edge.first, transport->g), boost::target(edge.second, dfa.graph));
+    return RLC::Vertice(transport->target( edge.first ), boost::target(edge.second, dfa.graph));
 }
 
 std::list<RLC::Edge> Graph::out_edges( const RLC::Vertice & vertice) const
@@ -152,7 +152,7 @@ std::list<RLC::Edge> Graph::out_edges( const RLC::Vertice & vertice) const
     
     while(g_ei != g_end && dfa_it != dfa_end) {
         while(dfa_it != dfa_end) {
-            if(transport->g[*g_ei].type == dfa.graph[*dfa_it].type)
+            if(transport->map(*g_ei).type == dfa.graph[*dfa_it].type)
                 edges.push_back(RLC::Edge(*g_ei, *dfa_it));
             ++dfa_it;
         }
@@ -164,12 +164,12 @@ std::list<RLC::Edge> Graph::out_edges( const RLC::Vertice & vertice) const
 
 std::pair<bool, int> Graph::duration( const RLC::Edge & edge, const float start_sec, const int day) const
 {
-    return transport->g[edge.first].duration(start_sec, day);
+    return transport->map(edge.first).duration(start_sec, day);
 }
 
 std::pair<bool, int> Graph::min_duration (const Edge & edge ) const
 {
-    return transport->g[edge.first].duration.min_duration();
+    return transport->map(edge.first).duration.min_duration();
 }
 
 std::set<int> Graph::dfa_start_states() const
@@ -186,7 +186,7 @@ std::set<int> Graph::dfa_accepting_states() const
 
 int Graph::num_transport_vertices() const
 {
-    return num_vertices(transport->g);
+    return transport->num_vertices();
 }
 
 int Graph::num_dfa_vertices() const
@@ -224,7 +224,7 @@ list< Edge > BackwardGraph::out_edges ( const Vertice & vertice ) const
     
     while(g_ei != g_end && dfa_it != dfa_end) {
         while(dfa_it != dfa_end) {
-            if(forward_graph->transport->g[*g_ei].type == forward_graph->dfa.graph[*dfa_it].type)
+            if(forward_graph->transport->map(*g_ei).type == forward_graph->dfa.graph[*dfa_it].type)
                 edges.push_back(RLC::Edge(*g_ei, *dfa_it));
             ++dfa_it;
         }
@@ -236,12 +236,12 @@ list< Edge > BackwardGraph::out_edges ( const Vertice & vertice ) const
 
 std::pair<bool, int> BackwardGraph::duration ( const Edge & edge, const float start_sec, const int day ) const
 {
-    return forward_graph->transport->g[edge.first].duration(start_sec, day, true);
+    return forward_graph->transport->map(edge.first).duration(start_sec, day, true);
 }
 
 std::pair<bool, int> BackwardGraph::min_duration ( const Edge & edge ) const
 {
-    return forward_graph->transport->g[edge.first].duration.min_duration();
+    return forward_graph->transport->map(edge.first).duration.min_duration();
 }
 
 std::set< int > BackwardGraph::dfa_start_states() const

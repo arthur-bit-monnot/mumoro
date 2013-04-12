@@ -26,10 +26,10 @@ max_lon(max_lon), min_lon(min_lon), max_lat(max_lat), min_lat(min_lat)
 
 bool BBNodeFilter::isIn ( int node ) const
 {
-    bool in = g->g[node].lon < max_lon 
-        && g->g[node].lon > min_lon
-        && g->g[node].lat < max_lat
-        && g->g[node].lat > min_lat;
+    bool in = g->longitude(node) < max_lon 
+        && g->longitude(node) > min_lon
+        && g->latitude(node) < max_lat
+        && g->latitude(node) > min_lat;
     return in;
 }
 
@@ -40,7 +40,7 @@ BBNodeFilter * cap_jj_nf( const Transport::Graph * g)
 
 NodeSet::NodeSet ( const Transport::Graph * g ) :
 NodeFilter( g ),
-bitset(boost::num_vertices(g->g))
+bitset(g->num_vertices())
 {
 }
 

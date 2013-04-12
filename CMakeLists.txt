@@ -18,7 +18,6 @@ INCLUDE_DIRECTORIES( ${ALGO_INC_DIRS} )
 SET(CORE_SOURCES
     lib/core/graph_wrapper.cpp
     lib/core/duration.cpp
-    lib/core/path_algo.cpp
     lib/core/nodes_filter.cpp
     lib/core/utils.cpp
     )
