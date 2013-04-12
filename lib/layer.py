@@ -27,10 +27,17 @@ from sqlalchemy.orm import *
 class NotAccessible(Exception):
     pass
 
+class NoLength(Exception):
+    pass
+
 class DataIncoherence(Exception):
     pass
+
  
 def duration(length, property, type):
+    if not length and length != 0.0:
+        raise NoLength()
+        
     if type == mumoro.FootEdge:
         if property == 0:
             raise NotAccessible()
@@ -66,7 +73,7 @@ class BaseLayer(object):
         self.metadata = metadata
         self.nodes_table = Table(data['nodes'], metadata, autoload = True)
         self.edges_table = Table(data['edges'], metadata, autoload = True)
-        self.count = select([func.count(self.nodes_table.c.id)]).execute().first()[0]
+        self.count = select([func.max(self.nodes_table.c.id)]).execute().first()[0] + 1
 
     def map(self, o_id):
         s = self.nodes_table.select(self.nodes_table.c.original_id==o_id)
@@ -184,6 +191,9 @@ class Layer(BaseLayer):
                     }
             except NotAccessible:
                 pass
+            except NoLength:
+                print "Error no length : ("+str(source)+", "+str(dest)+") "
+                pass
  
 # A street layer with mixed bike, foot and car
 class MixedStreetLayer(BaseLayer):
@@ -191,6 +201,10 @@ class MixedStreetLayer(BaseLayer):
         super(MixedStreetLayer, self).__init__(name, data, metadata)
                
     def edges(self):
+        
+        count_total = 0
+        count_ko = 0
+
         for edge in self.edges_table.select().execute():
             e = mumoro.Edge()
             e.length = edge.length
@@ -205,7 +219,9 @@ class MixedStreetLayer(BaseLayer):
                            
             for property in properties:
                 e.type = property['type']
-
+                count_total += 1
+                if count_total % 50000 == 0:
+                    print "Treated edges : " + str(count_total)
                 try:
                     dur = duration(e.length, property['prop'], e.type)
                     e.duration = mumoro.Duration(dur)
@@ -219,6 +235,10 @@ class MixedStreetLayer(BaseLayer):
                         }
                 except NotAccessible:
                     pass
+                except NoLength:
+                    count_ko += 1
+                    print "Error no length : ("+str(source)+", "+str(dest)+") "+str(count_ko) + " / " + str(count_total)
+                    pass
  
             # backward arc
             properties = [ {'prop': edge.foot, 'type': mumoro.FootEdge}, 
@@ -227,16 +247,24 @@ class MixedStreetLayer(BaseLayer):
                            
             for property in properties:
                 e.type = property['type']
+                count_total += 1
+                if count_total % 50000 == 0:
+                    print "Treated edges : " + str(count_total)
                 try:
                     dur = duration(e.length, property['prop'], e.type)
                     e.duration = mumoro.Duration(dur)
                     e.elevation = 0
+                    
                     yield {
                         'source': dest,
                         'target': source,
                         'properties': e,
                         }
                 except NotAccessible:
+                    pass
+                except NoLength:
+                    count_ko += 1
+                    print "Error no length : ("+str(source)+", "+str(dest)+") "+str(count_ko) + " / " + str(count_total)
                     pass
  
 class GTFSLayer(BaseLayer):

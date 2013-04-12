@@ -21,8 +21,8 @@ int main()
     Debug( libcw_do.on() );               // Turn on the default Debug Object.
   
 //     Transport::Graph g("/home/arthur/LAAS/mumoro/976c9329c82da079f78be26dddcf1174.dump");
-    Transport::Graph g("/home/arthur/LAAS/Data/Graphs/toulouse-mixed.dump");
-//     Transport::Graph g("/home/arthur/LAAS/Data/Graphs/midi-pyrennees.dump");
+//     Transport::Graph g("/home/arthur/LAAS/Data/Graphs/toulouse-mixed.dump");
+    Transport::Graph g("/home/arthur/LAAS/Data/Graphs/midi-pyrennees.dump");
     
     
      RLC::Graph rlc(&g, RLC::foot_subway_dfa());
@@ -45,16 +45,17 @@ int main()
 //      RLC::DRegLC * dreg = RLC::dreg_with_target(&rlc, 425, 306);
 //      AlgoMPR::PtToPt *mup =  MuPaRo::point_to_point( &g, 254, 900 );
 //      AlgoMPR::SharedPath * mup = MuPaRo::shared_path( &g, 254, 425, 900 );
-//      AlgoMPR::CarSharing * mup = car_sharing( &g, 713, 425, 306, 298,  foot_dfa(), foot_dfa() );
+     AlgoMPR::CarSharing * mup = car_sharing( &g, 713, 425, 306, 298,  foot_dfa(), foot_dfa() );
 //      
-//      mup->run();
+     mup->run();
 //      
 //      
 //      
-//      mup->build_result();
-//      mup->get_result();
+     mup->build_result();
+     mup->get_result();
+     delete mup;
 //      cout << "jdklfjdskfjqdslfjdqsf\n\n";
 //      show_car_sharing( &g, 713, 425, 306, 298,  foot_dfa(), foot_dfa() );
      
-     show_meeting_points(&g, 425);
+//      show_meeting_points(&g, 425);
 }

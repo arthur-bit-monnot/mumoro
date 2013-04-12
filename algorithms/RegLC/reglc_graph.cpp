@@ -79,6 +79,7 @@ DFA pt_foot_dfa()
     edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(0, 0), TransferEdge));
     edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(0, 0), SubwayEdge));
     edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(0, 0), BusEdge));
+    edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(0, 0), TramEdge));
     set<int> accepting;
     accepting.insert(0);
     

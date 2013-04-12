@@ -35,18 +35,18 @@ void run_test(std::string directory, Transport::Graph * trans, int car_start_nod
     init_car_sharing<CurrAlgo>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, dfa_passenger, dfa_car );
 
     STOP_TICKING;
-    cout << "init = " << RUNTIME <<endl;
+    cout << "init-time: " << RUNTIME <<endl;
     START_TICKING;
     cs.run();
     STOP_TICKING;
     
-    cout << ",\n time = " <<RUNTIME;
+    cout << ",\n run-time: " <<RUNTIME;
     cout << ",\n visited-nodes: "<<cs.count;
     cout << ",\n visited-per-layer: [";
     BOOST_FOREACH( CurrAlgo::Dijkstra * dij, cs.dij )
         cout << dij->count <<", ";
     cout <<"]";
-    
+    cout << ",\n solution-cost: "<<cs.solution_cost();
     cout <<endl;
 }
 

@@ -239,6 +239,8 @@ public:
      */
     virtual void apply_rules( const int node ) { /* does nothing */ }
     
+    virtual int solution_cost() const { return -1; }
+    
     /** Results **/
     VisualResult vres;
     

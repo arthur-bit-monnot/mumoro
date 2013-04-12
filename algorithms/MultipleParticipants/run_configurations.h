@@ -6,9 +6,9 @@
 
 namespace MuPaRo {
 
-AlgoMPR::PtToPt * point_to_point(Transport::Graph * trans, int source, int dest);
+AlgoMPR::PtToPt * point_to_point( Transport::Graph * trans, int source, int dest, RLC::DFA dfa = RLC::pt_foot_dfa() );
 
-VisualResult show_point_to_point(Transport::Graph * trans, int source, int dest);
+VisualResult show_point_to_point( Transport::Graph * trans, int source, int dest, RLC::DFA dfa = RLC::pt_foot_dfa());
 
 AlgoMPR::SharedPath * shared_path(Transport::Graph * trans, int src1, int src2, int dest);
 

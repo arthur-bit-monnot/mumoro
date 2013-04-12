@@ -39,6 +39,10 @@ public:
             queue.push_back( CompleteNode(goal.first, RLC::Vertice(goal.second, Base::flags[goal.first][goal.second].dfa_state )));
         }
     };
+    
+    virtual int solution_cost() const {
+        return Base::get_cost( goal );
+    }
 };
 
 } //end namespace MuPaRo

@@ -65,7 +65,7 @@ Graph::Graph(const std::string & filename)
     load(filename);
 }
 
-Graph::Graph(int nb_nodes) : g(nb_nodes+1)
+Graph::Graph(int nb_nodes) : g(nb_nodes)
 {
 }
 

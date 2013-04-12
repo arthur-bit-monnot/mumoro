@@ -6,14 +6,14 @@ namespace MuPaRo {
     
 using namespace AlgoMPR;
 
-AlgoMPR::PtToPt * point_to_point(Transport::Graph * trans, int source, int dest)
+AlgoMPR::PtToPt * point_to_point( Transport::Graph * trans, int source, int dest, RLC::DFA dfa )
 {
     PtToPt::ParamType p( MuparoParams(trans, 1), AspectTargetParams( 0, dest ) );
     std::cout << "Dest ::: "<<dest <<endl;
     PtToPt * mup = new PtToPt( p );
     int day = 10;
     
-    mup->dfas.push_back(RLC::bike_pt_dfa());
+    mup->dfas.push_back(dfa);
     
     for(int i=0; i<mup->num_layers ; ++i)
     {
@@ -28,9 +28,9 @@ AlgoMPR::PtToPt * point_to_point(Transport::Graph * trans, int source, int dest)
     return mup;
 }
 
-VisualResult show_point_to_point ( Transport::Graph* trans, int source, int dest )
+VisualResult show_point_to_point ( Transport::Graph* trans, int source, int dest, RLC::DFA dfa )
 {
-    PtToPt * ptp = point_to_point( trans, source, dest );
+    PtToPt * ptp = point_to_point( trans, source, dest, dfa );
     ptp->run();
     ptp->build_result();
     return ptp->get_result();

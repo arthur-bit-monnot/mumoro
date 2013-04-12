@@ -84,7 +84,7 @@ class GtfsConverter:
         if not self.station_map[trip.route_id].has_key(stop.stop_id):
             self.station_map[trip.route_id][stop.stop_id] = self.count
             physStop = self.s.GetStop(stop.stop_id)
-            if physStop.parent_station == '':
+            if not physStop.parent_station:
                 self.session.add(PT_Node(stop.stop_id, stop.stop.stop_lon, stop.stop.stop_lat, trip.route_id, self.stop_areas_map[stop.stop_id], True))
             else:
                 self.session.add(PT_Node(stop.stop_id, stop.stop.stop_lon, stop.stop.stop_lat, trip.route_id, self.stop_areas_map[physStop.parent_station], True))
@@ -94,7 +94,7 @@ class GtfsConverter:
         if not self.tt_map[trip.route_id].has_key(stop.stop_id):
             self.tt_map[trip.route_id][stop.stop_id] = self.count
             physStop = self.s.GetStop(stop.stop_id)
-            if physStop.parent_station == '':
+            if not physStop.parent_station:
                 self.session.add(PT_Node(stop.stop_id, stop.stop.stop_lon, stop.stop.stop_lat, trip.route_id, self.stop_areas_map[stop.stop_id], False))
             else:
                 self.session.add(PT_Node(stop.stop_id, stop.stop.stop_lon, stop.stop.stop_lat, trip.route_id, self.stop_areas_map[physStop.parent_station], False))
@@ -113,7 +113,7 @@ class GtfsConverter:
         if not self.freq_map[trip.route_id].has_key(stop.stop_id):
             self.freq_map[trip.route_id][stop.stop_id] = self.count
             physStop = self.s.GetStop(stop.stop_id)
-            if physStop.parent_station == '':
+            if not physStop.parent_station:
                 self.session.add(PT_Node(stop.stop_id, stop.stop.stop_lon, stop.stop.stop_lat, trip.route_id, self.stop_areas_map[stop.stop_id], False))
             else:
                 self.session.add(PT_Node(stop.stop_id, stop.stop.stop_lon, stop.stop.stop_lat, trip.route_id, self.stop_areas_map[physStop.parent_station], False))
@@ -154,7 +154,7 @@ class GtfsConverter:
             self.routes_count += 1
 
         for stop in self.s.GetStopList():
-            if stop.parent_station == '':
+            if not stop.parent_station:
                 self.session.add(PT_StopArea(stop.stop_id, stop.stop_name))
                 self.stop_areas_map[stop.stop_id] = self.stop_areas_count
                 self.stop_areas_count += 1
