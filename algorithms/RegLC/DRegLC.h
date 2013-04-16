@@ -3,22 +3,22 @@
 
 #include <boost/heap/fibonacci_heap.hpp>
 #include <boost/foreach.hpp> 
+#include <boost/dynamic_bitset.hpp>
 
 #include "utils.h"
 #include "reglc_graph.h"
-#include "nodes_filter.h"
 
 namespace RLC {
     
 
 
 struct DRegLCParams {
-    DRegLCParams( AbstractGraph * graph, const int day, const int cost_factor = 1 ) : 
+    DRegLCParams( const AbstractGraph * graph, const int day, const int cost_factor = 1 ) : 
     graph(graph), 
     day(day),
     cost_factor(cost_factor) {}
     
-    AbstractGraph * graph;
+    const AbstractGraph * graph;
     const int day;
     const int cost_factor;
 };
@@ -250,7 +250,7 @@ protected:
     int trans_num_vert;
     int dfa_num_vert;
     
-    AbstractGraph * graph;
+    const AbstractGraph * graph;
     int day;
     int cost_factor;
     

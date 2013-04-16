@@ -7,11 +7,13 @@
 #include "AspectMaxCostPruning.h"
 #include "AspectMinCost.h"
 #include "AspectNoRun.h"
+#include "AspectNodePruning.h"
 
 
 namespace Algo {
     
     typedef RLC::DRegLC Basic;
+    typedef RLC::AspectNodePruning<RLC::DRegLC> Filtered;
     
 }
 

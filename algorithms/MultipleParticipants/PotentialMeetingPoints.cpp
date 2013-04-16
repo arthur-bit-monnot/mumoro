@@ -50,6 +50,8 @@ VisualResult show_meeting_points( Transport::Graph * g, int source, int time )
     
     int count = 0;
     
+    float min_lon=99999.0f, min_lat=99999.0f, max_lon=-99999.0f, max_lat=-99999.0f;
+    
     for(int i=0 ; i<g1->num_transport_vertices() ; ++i) {
         StateFreeNode n0(0, i);
         StateFreeNode n1(1, i);
@@ -63,12 +65,23 @@ VisualResult show_meeting_points( Transport::Graph * g, int source, int time )
                 vres.a_nodes.push_back( i );
                 std::cout << i <<endl;
                 ++count;
+                
+                if( g->longitude(i) < min_lon )
+                    min_lon = g->longitude(i);
+                if( g->longitude(i) > max_lon )
+                    max_lon = g->longitude(i);
+                if( g->latitude(i) < min_lat )
+                    min_lat = g->latitude(i);
+                if( g->latitude(i) > max_lat )
+                    max_lat = g->latitude(i);
+                
             }
         }
     }
     
     
     cout << "Number of potential meeting points : " <<count <<endl;
+    cout << "BoundingBox : " << max_lon <<", "<< min_lon <<", "<< max_lat <<", "<< min_lat <<endl;
     
     return vres;
 }

@@ -7,7 +7,7 @@
 
 using namespace RLC;
 
-NodeSet * isochrone ( RLC::AbstractGraph * g, const int center, const int max_time )
+NodeSet * isochrone ( const RLC::AbstractGraph * g, const int center, const int max_time )
 {
     typedef AspectMaxCostPruning<AspectMinCost<DRegLC> > Dij;
     NodeSet * ns = new NodeSet( g->transport );
@@ -29,7 +29,7 @@ NodeSet * isochrone ( RLC::AbstractGraph * g, const int center, const int max_ti
     return ns;
 }
 
-VisualResult show_isochrone ( RLC::AbstractGraph * g, const int center, const int max_time )
+VisualResult show_isochrone ( const RLC::AbstractGraph * g, const int center, const int max_time )
 {
     NodeSet * ns = isochrone( g, center, max_time );
     return ns->visualization();
@@ -37,7 +37,7 @@ VisualResult show_isochrone ( RLC::AbstractGraph * g, const int center, const in
 
 
 
-BBNodeFilter* rectangle_containing ( Transport::Graph* trans, const int node1, const int node2, const float margin )
+BBNodeFilter* rectangle_containing ( const Transport::Graph* trans, const int node1, const int node2, const float margin )
 {
     
     float lat1 = trans->latitude( node1 );
@@ -64,4 +64,16 @@ BBNodeFilter* rectangle_containing ( Transport::Graph* trans, const int node1, c
     
     return new BBNodeFilter(trans, max_lon, min_lon, max_lat, min_lat);
 }
+
+
+BBNodeFilter * bordeaux_bb( const Transport::Graph * trans )
+{
+    return new BBNodeFilter(trans, -0.455148, -0.860322, 45.0317, 44.7266);
+}
+
+BBNodeFilter * toulouse_bb( const Transport::Graph * trans )
+{
+    return new BBNodeFilter(trans, 1.68514, 1.2078, 43.7794, 43.3935);
+}
+
 

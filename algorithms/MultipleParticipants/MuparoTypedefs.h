@@ -14,7 +14,10 @@ namespace AlgoMPR {
     typedef AspectTarget<Muparo<Algo::Basic> > PtToPt;
     typedef AspectPropagationRule<AspectTarget<Muparo<Algo::Basic> > > SharedPath;
     typedef AspectPropagationRule<AspectPropagationRule<AspectTarget<Muparo<Algo::Basic> > > > CarSharing;
-    typedef AspectCount<AspectPropagationRule<AspectPropagationRule<AspectTarget<Muparo<RLC::AspectCount<Algo::Basic> > > > > > CarSharingTest;
+    typedef AspectCount<AspectPropagationRule<AspectPropagationRule<AspectTarget<Muparo
+            <RLC::AspectCount<Algo::Basic> > > > > > CarSharingTest;
+    typedef AspectCount<AspectPropagationRule<AspectPropagationRule<AspectTarget<Muparo
+           <RLC::AspectNodePruning<RLC::AspectCount<Algo::Basic> > > > > > > CarSharingFilteredTest;
 }
 
 

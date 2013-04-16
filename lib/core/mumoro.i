@@ -3,7 +3,6 @@
 
 %{
  #include "graph_wrapper.h"
- #include "path_algo.h"
  #include "nodes_filter.h"
 %}
   
@@ -11,5 +10,4 @@
 
 // Parse the original header file
 %include "graph_wrapper.h" 
-%include "path_algo.h"
 %include "nodes_filter.h"

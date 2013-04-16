@@ -338,12 +338,12 @@ class Mumoro:
     def muparo(self, start, dest, secs, day, graph ):
         #res = mumoro.show_point_to_point(graph, dest, start, mumoro.car_dfa() )
         #res = mumoro.show_shared_path( graph, start, dest, 306 )
-        res = mumoro.show_car_sharing(graph, start, dest, 278790, 112254, mumoro.pt_foot_dfa(), mumoro.car_dfa())
-        print "{} {} {} {} {} {} {} {}".format(start, dest, 278790, 112254, secs, 10, 1, 0)
+        #res = mumoro.show_car_sharing(graph, start, dest, 278790, 112254, mumoro.pt_foot_dfa(), mumoro.car_dfa())
+        #print "{} {} {} {} {} {} {} {}".format(start, dest, 278790, 112254, secs, 10, 1, 0)
         #g = mumoro.RLC_Graph( graph, mumoro.pt_foot_dfa() )
         #res = mumoro.show_isochrone( g, dest, 120 )
         
-        #res = mumoro.show_meeting_points( graph, start )
+        res = mumoro.show_meeting_points( graph, start )
         
         #mumoro.free(mpr)
         return res
@@ -618,8 +618,8 @@ class Mumoro:
         geometry = {'type': 'Linestring'}
         coordinates = []
         for edge_id in res.edges:
-            src_coord = self.g.coordinates(self.g.graph.sourceNode(edge_id))
-            target_coord = self.g.coordinates(self.g.graph.targetNode(edge_id))
+            src_coord = self.g.coordinates(self.g.graph.source(edge_id))
+            target_coord = self.g.coordinates(self.g.graph.target(edge_id))
             feature = {'type': 'feature'}
             geometry = {'type': 'Linestring'}
             coordinates = []
@@ -630,7 +630,7 @@ class Mumoro:
                         'type': 'Linestring',
                         'coordinates': [[src_coord[0], src_coord[1]], [target_coord[0], target_coord[1]]]
                         },
-                    'properties': { 'layer': EdgeTypesToString[self.g.graph.mapEdge(edge_id).type] }
+                    'properties': { 'layer': EdgeTypesToString[self.g.graph.map(edge_id).type] }
                     }
             features.append(connection);
         

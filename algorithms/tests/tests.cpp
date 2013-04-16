@@ -9,6 +9,7 @@ using std::ifstream;
 #include "muparo.h"
 #include "run_configurations.h"
 #include "utils.h"
+#include "node_filter_utils.h"
 
 
 using namespace MuPaRo;
@@ -19,35 +20,97 @@ RLC::DFA * dfas[2];
 void run_test(std::string directory, Transport::Graph * trans, int car_start_node, int passenger_start_node, int car_arrival_node,
               int passenger_arrival_node, int time, int day, RLC::DFA dfa_car, RLC::DFA dfa_passenger)
 {
-    typedef CarSharingTest CurrAlgo;
-    
-    cout << "unrestricted = { "<<endl;
-    START_TICKING;
-    CurrAlgo::ParamType p(
-        MuparoParams( trans, 5 ),
-        AspectTargetParams( 4, passenger_arrival_node ),
-        AspectPropagationRuleParams( SumPlusWaitCost, MaxArrival, 2, 0, 1),
-        AspectPropagationRuleParams( SumCost, FirstLayerArrival, 4, 2, 3)
-    );
-    
-    CurrAlgo cs( p );
-    
-    init_car_sharing<CurrAlgo>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, dfa_passenger, dfa_car );
+    {
+        typedef CarSharingTest CurrAlgo;
+        
+        cout << "unrestricted: { "<<endl;
+        START_TICKING;
+        CurrAlgo::ParamType p(
+            MuparoParams( trans, 5 ),
+            AspectTargetParams( 4, passenger_arrival_node ),
+            AspectPropagationRuleParams( SumCost, MaxArrival, 2, 0, 1),
+            AspectPropagationRuleParams( SumCost, FirstLayerArrival, 4, 2, 3)
+        );
+        
+        CurrAlgo cs( p );
+        
+        init_car_sharing<CurrAlgo>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, dfa_passenger, dfa_car );
 
-    STOP_TICKING;
-    cout << "init-time: " << RUNTIME <<endl;
-    START_TICKING;
-    cs.run();
-    STOP_TICKING;
+        STOP_TICKING;
+        cout << " init-time: " << RUNTIME;
+        START_TICKING;
+        cs.run();
+        STOP_TICKING;
+        
+        cout << ",\n run-time: " <<RUNTIME;
+        cout << ",\n visited-nodes: "<<cs.count;
+        cout << ",\n visited-per-layer: [";
+        BOOST_FOREACH( CurrAlgo::Dijkstra * dij, cs.dij )
+            cout << dij->count <<", ";
+        cout <<"]";
+        cout << ",\n solution-cost: "<<cs.solution_cost();
+        cout << endl << "}" << endl;
+    }
     
-    cout << ",\n run-time: " <<RUNTIME;
-    cout << ",\n visited-nodes: "<<cs.count;
-    cout << ",\n visited-per-layer: [";
-    BOOST_FOREACH( CurrAlgo::Dijkstra * dij, cs.dij )
-        cout << dij->count <<", ";
-    cout <<"]";
-    cout << ",\n solution-cost: "<<cs.solution_cost();
-    cout <<endl;
+    
+    {
+        BBNodeFilter * toulouse = toulouse_bb(trans);
+        BBNodeFilter * bordeaux = bordeaux_bb(trans);
+        
+        cout << "restricted: { "<<endl;
+        START_TICKING;
+        CarSharingFilteredTest::ParamType p(
+            MuparoParams( trans, 5 ),
+            AspectTargetParams( 4, passenger_arrival_node ),
+            AspectPropagationRuleParams( SumCost, MaxArrival, 2, 0, 1),
+            AspectPropagationRuleParams( SumCost, FirstLayerArrival, 4, 2, 3)
+        );
+        
+        std::vector<NodeFilter*> filters;
+        RLC::Graph g1(trans, dfa_passenger );
+        RLC::BackwardGraph g2(&g1);
+        
+        if( toulouse->isIn(passenger_start_node) )
+            filters.push_back( toulouse_bb(trans) );
+        else if( bordeaux->isIn(passenger_start_node) )
+            filters.push_back( bordeaux_bb(trans) );
+        else
+            filters.push_back(isochrone(&g1, passenger_start_node, 600));
+        
+        filters.push_back( rectangle_containing( trans, car_start_node, car_arrival_node, 0.02) );
+        filters.push_back( rectangle_containing( trans, car_start_node, car_arrival_node, 0.02) );
+        filters.push_back( rectangle_containing( trans, car_start_node, car_arrival_node, 0.02) );
+        
+        if( toulouse->isIn(passenger_arrival_node) )
+            filters.push_back( toulouse_bb(trans) );
+        else if( bordeaux->isIn(passenger_arrival_node) )
+            filters.push_back( bordeaux_bb(trans) );
+        else
+            filters.push_back(isochrone(&g2, passenger_arrival_node, 600));
+        
+        delete toulouse;
+        delete bordeaux;
+        
+        CarSharingFilteredTest cs( p );
+        
+        init_car_sharing_filtered<CarSharingFilteredTest>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, dfa_passenger, dfa_car, filters );
+
+        STOP_TICKING;
+        cout << " init-time: " << RUNTIME;
+        START_TICKING;
+        cs.run();
+        STOP_TICKING;
+        
+        cout << ",\n run-time: " <<RUNTIME;
+        cout << ",\n visited-nodes: "<<cs.count;
+        cout << ",\n visited-per-layer: [";
+        BOOST_FOREACH( CarSharingFilteredTest::Dijkstra * dij, cs.dij )
+            cout << dij->count <<", ";
+        cout <<"]";
+        cout << ",\n solution-cost: "<<cs.solution_cost();
+        cout << endl << "}" << endl;
+    }
+    cout << endl;
 }
 
 void hundred_inits(Transport::Graph * trans) {
