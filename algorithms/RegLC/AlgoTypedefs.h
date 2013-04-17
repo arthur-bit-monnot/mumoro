@@ -13,6 +13,7 @@
 namespace Algo {
     
     typedef RLC::DRegLC Basic;
+    typedef RLC::AspectTarget<RLC::DRegLC> PtToPt;
     typedef RLC::AspectNodePruning<RLC::DRegLC> Filtered;
     
 }

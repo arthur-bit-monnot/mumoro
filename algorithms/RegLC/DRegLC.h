@@ -145,6 +145,11 @@ public:
             boost::tie(has_traffic, edge_cost) = duration(e, arrival(curr), day);
 
             int target_cost = cost(curr) + edge_cost * cost_factor;
+            
+            // ignore the edge if it provokes an overflow
+            if(target_cost < cost(curr))
+                has_traffic = false;
+            
             float target_arr;
             if(graph->forward)
                 target_arr = arrival(curr) + edge_cost;

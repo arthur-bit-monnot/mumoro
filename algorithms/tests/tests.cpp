@@ -5,25 +5,42 @@ using std::cout;
 using std::endl;
 #include <fstream>
 using std::ifstream;
+#include <time.h>
 
 #include "muparo.h"
 #include "run_configurations.h"
 #include "utils.h"
 #include "node_filter_utils.h"
+#include "../RegLC/AlgoTypedefs.h"
+
+#include "JsonWriter.h"
 
 
 using namespace MuPaRo;
 using namespace AlgoMPR;
 
 RLC::DFA * dfas[2];
+JsonWriter * out;
 
 void run_test(std::string directory, Transport::Graph * trans, int car_start_node, int passenger_start_node, int car_arrival_node,
               int passenger_arrival_node, int time, int day, RLC::DFA dfa_car, RLC::DFA dfa_passenger)
 {
+    out->step_in();
+    
+    out->add("car-start", car_start_node);
+    out->add("passenger-start", passenger_start_node);
+    out->add("car-arrival", car_arrival_node);
+    out->add("passenger-arrival", passenger_arrival_node);
+    out->add("time", time);
+    out->add("day", day);
+    
     {
         typedef CarSharingTest CurrAlgo;
         
-        cout << "unrestricted: { "<<endl;
+        
+        
+        out->step_in("unrestricted");
+
         START_TICKING;
         CurrAlgo::ParamType p(
             MuparoParams( trans, 5 ),
@@ -37,27 +54,34 @@ void run_test(std::string directory, Transport::Graph * trans, int car_start_nod
         init_car_sharing<CurrAlgo>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, dfa_passenger, dfa_car );
 
         STOP_TICKING;
-        cout << " init-time: " << RUNTIME;
+        out->add("init-time", RUNTIME);
+        
         START_TICKING;
         cs.run();
         STOP_TICKING;
         
-        cout << ",\n run-time: " <<RUNTIME;
-        cout << ",\n visited-nodes: "<<cs.count;
-        cout << ",\n visited-per-layer: [";
-        BOOST_FOREACH( CurrAlgo::Dijkstra * dij, cs.dij )
-            cout << dij->count <<", ";
-        cout <<"]";
-        cout << ",\n solution-cost: "<<cs.solution_cost();
-        cout << endl << "}" << endl;
+        out->add("runtime", RUNTIME);
+        out->add("visited-nodes", cs.count);
+        std::vector<int> per_layer;
+        for(int i=0 ; i<cs.num_layers ; ++i) {
+            per_layer.push_back( cs.dij[i]->count );
+        }
+        out->add("visited-per-layer", per_layer);
+        out->add("solution-cost", cs.solution_cost());
+
+        
+        out->step_out();
     }
+    
+    
     
     
     {
         BBNodeFilter * toulouse = toulouse_bb(trans);
         BBNodeFilter * bordeaux = bordeaux_bb(trans);
         
-        cout << "restricted: { "<<endl;
+        out->step_in("restricted");
+
         START_TICKING;
         CarSharingFilteredTest::ParamType p(
             MuparoParams( trans, 5 ),
@@ -96,21 +120,25 @@ void run_test(std::string directory, Transport::Graph * trans, int car_start_nod
         init_car_sharing_filtered<CarSharingFilteredTest>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, dfa_passenger, dfa_car, filters );
 
         STOP_TICKING;
-        cout << " init-time: " << RUNTIME;
+        out->add("init-time", RUNTIME);
         START_TICKING;
         cs.run();
         STOP_TICKING;
         
-        cout << ",\n run-time: " <<RUNTIME;
-        cout << ",\n visited-nodes: "<<cs.count;
-        cout << ",\n visited-per-layer: [";
-        BOOST_FOREACH( CarSharingFilteredTest::Dijkstra * dij, cs.dij )
-            cout << dij->count <<", ";
-        cout <<"]";
-        cout << ",\n solution-cost: "<<cs.solution_cost();
-        cout << endl << "}" << endl;
+        out->add("runtime", RUNTIME);
+        out->add("visited-nodes", cs.count);
+        
+        std::vector<int> per_layer;
+        for(int i=0 ; i<cs.num_layers ; ++i) {
+            per_layer.push_back( cs.dij[i]->count );
+        }
+        out->add("visited-per-layer", per_layer);
+        
+        out->add("solution-cost", cs.solution_cost());
+        out->step_out();
     }
-    cout << endl;
+    
+    out->step_out();
 }
 
 void hundred_inits(Transport::Graph * trans) {
@@ -121,9 +149,126 @@ void hundred_inits(Transport::Graph * trans) {
     }
 }
 
+void new_test(const Transport::Graph * g)
+{
+    int bordeaux1=-1, bordeaux2=-1, toulouse1=-1, toulouse2=-1;
+    
+    BBNodeFilter * toulouse = toulouse_bb(g);
+    BBNodeFilter * bordeaux = bordeaux_bb(g);
+    int count_toulouse=0, count_bordeaux=0;
+    for(int i=0; i<g->num_vertices() ; ++i) {
+        if(toulouse->isIn(i))
+            count_toulouse++;
+        if(bordeaux->isIn(i))
+            count_bordeaux++;
+    }
+    
+    int picked;
+    {
+        picked = rand() % count_bordeaux;
+        int curr = 0;
+        int i = 0;
+        for(i=0; i<g->num_vertices() && picked != curr ; ++i) {
+            if(bordeaux->isIn(i)) {
+                ++curr;
+                if(curr == picked)
+                    bordeaux1 = i;
+            }
+        }
+    }
+    {
+        picked = rand() % count_bordeaux;
+        int curr = 0;
+        int i=0;
+        for(i=0; i<g->num_vertices() && picked != curr ; ++i) {
+            if(bordeaux->isIn(i)) {
+                ++curr;
+                if(curr == picked)
+                    bordeaux2 = i;
+            }
+        }
+    }
+    {
+        picked = rand() % count_toulouse;
+        int curr = 0;
+        int i = 0;
+        for(i=0; i<g->num_vertices() && picked != curr ; ++i) {
+            if(toulouse->isIn(i)) {
+                ++curr;
+                if(curr == picked)
+                    toulouse1 = i;
+            }
+        }
+    }
+    {
+        picked = rand() % count_toulouse;
+        int curr = 0;
+        int i = 0;
+        for(i=0; i<g->num_vertices() && picked != curr ; ++i) {
+            if(toulouse->isIn(i)) {
+                ++curr;
+                if(curr == picked)
+                    toulouse2 = i;
+            }
+
+        }
+
+    }
+    
+    {
+        const RLC::Graph pt_car(g, RLC::pt_car_dfa());
+        Algo::PtToPt::ParamType p(
+            RLC::DRegLCParams( &pt_car, 10 ), RLC::AspectTargetParams( bordeaux2 )    );
+        Algo::PtToPt * dij = new Algo::PtToPt(p);
+        dij->insert_node(RLC::Vertice(bordeaux1, 0), 0, 0);
+        dij->run();
+        if( !dij->success ) {
+            delete dij;
+            return new_test(g);
+        }
+        delete dij;
+    }
+    {
+        const RLC::Graph pt_car(g, RLC::pt_car_dfa());
+        Algo::PtToPt::ParamType p(
+            RLC::DRegLCParams( &pt_car, 10 ), RLC::AspectTargetParams( toulouse2 )    );
+        Algo::PtToPt * dij = new Algo::PtToPt(p);
+        dij->insert_node(RLC::Vertice(toulouse1, 0), 0, 0);
+        dij->run();
+        if( !dij->success ) {
+            delete dij;
+            return new_test(g);
+        }
+        delete dij;
+    }
+    {
+        const RLC::Graph pt_car(g, RLC::car_dfa());
+        Algo::PtToPt::ParamType p(
+            RLC::DRegLCParams( &pt_car, 10 ), RLC::AspectTargetParams( toulouse2 )    );
+        Algo::PtToPt * dij = new Algo::PtToPt(p);
+        dij->insert_node(RLC::Vertice(bordeaux2, 0), 0, 0);
+        dij->run();
+        if( !dij->success ) {
+            delete dij;
+            return new_test(g);
+        }
+        delete dij;
+    }
+    
+    
+    if( (rand()  % 2) == 0 )
+        cout << bordeaux1 <<" "<< bordeaux2 <<" "<< toulouse1 <<" "<< toulouse2 <<" 32140 10 1 0" <<endl;
+    else
+        cout << toulouse1 <<" "<< toulouse2 <<" "<< bordeaux1 <<" "<< bordeaux2 <<" 32140 10 1 0" <<endl;
+    
+    
+}
+
 
 int main(void)
 {
+    srand (time(NULL));
+    
     dfas[0] = new RLC::DFA(RLC::pt_foot_dfa());
     dfas[1] = new RLC::DFA(RLC::car_dfa());
     
@@ -140,35 +285,26 @@ int main(void)
         exit(1);
     }
     
-    char look_ahead;
-    while( (look_ahead = indata.peek()) == '#' ) {
+    while( indata.peek() == '#' ) {
         indata.getline(buff, 255);
-//         cout << buff;
     }
-    indata.putback(look_ahead);
-    
-    double total = 0;
-    int num_tests = 0;
-    
-    char * test_name ;
     
     indata >> name;
     indata >> dump_file;
+    JsonWriter writer("/home/arthur/LAAS/Data/Results/" + name + ".txt");
+    out = &writer;
     Transport::Graph * transport = new Transport::Graph("/home/arthur/LAAS/Data/Graphs/" + dump_file);
-  
-    /*
-    double start, end;
-    START_TICKING;
-    hundred_inits(transport);
-    STOP_TICKING;
-    cout << ",\n time = " <<RUNTIME;
-    */
+
     while ( !indata.eof() ) { // keep reading until end-of-file
         indata >> passenger_start_node >> car_start_node >> passenger_arrival_node >> car_arrival_node
-               >> time >> day >> dfa_car >> dfa_passenger;
+               >> time >> day >> dfa_car >> dfa_passenger; 
         run_test("1", transport, car_start_node, passenger_start_node, car_arrival_node, passenger_arrival_node, 
                  time, day, *dfas[dfa_car], *dfas[dfa_passenger]);
-        ++num_tests;
     }
+    
+    
+//     for(int i=0 ; i<20 ; ++i)
+//         new_test(transport);
+    
     
 }

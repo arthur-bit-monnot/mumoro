@@ -194,11 +194,11 @@ public:
      */
     int select_layer() const
     {
-        int best_cost = 999999999;
+        int best_cost = std::numeric_limits<int>::max();
         int best_layer = -1;
         
         for(int i=0 ; i<num_layers ; ++i) {
-            if( !dij[i]->finished() && ( dij[i]->cost( dij[i]->heap.top() ) < best_cost ) ) {
+            if( !dij[i]->finished() && ( dij[i]->cost( dij[i]->heap.top() ) <= best_cost ) ) {
                 best_cost = dij[i]->cost( dij[i]->heap.top() );
                 best_layer = i;
             }

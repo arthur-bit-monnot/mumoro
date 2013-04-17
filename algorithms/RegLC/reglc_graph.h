@@ -25,6 +25,7 @@ DFA bike_dfa();
 DFA foot_dfa();
 DFA car_dfa();
 DFA pt_foot_dfa();
+DFA pt_car_dfa();
 DFA bike_pt_dfa();
 DFA pt_dfa();
 

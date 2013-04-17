@@ -86,6 +86,22 @@ DFA pt_foot_dfa()
     return DFA(0, accepting, edges);
 }
 
+DFA pt_car_dfa()
+{
+    DfaEdgeList edges;
+    edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(0, 0), FootEdge));
+    edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(0, 0), TransferEdge));
+    edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(0, 0), SubwayEdge));
+    edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(0, 0), BusEdge));
+    edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(0, 0), TramEdge));
+    edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(0, 1), CarEdge));
+    edges.push_back(pair<pair<int,int>,EdgeMode>(pair<int,int>(1, 1), CarEdge));
+    set<int> accepting;
+    accepting.insert(1);
+    
+    return DFA(0, accepting, edges);
+}
+
 DFA bike_pt_dfa()
 {
     DfaEdgeList edges;

@@ -318,7 +318,7 @@ class MultimodalGraph(object):
             l.offset = nb_nodes
             nb_nodes += l.count
             self.node_to_layer.append((nb_nodes, l.name))
-            print "Layer " + l.name + " for nodes from " + str(l.offset) +" to "+ str(nb_nodes)
+            print "Layer " + l.name + " for nodes from " + str(l.offset) +" to "+ str(nb_nodes - 1)
  
         self.graph = mumoro.Graph(nb_nodes)
  

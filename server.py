@@ -343,7 +343,9 @@ class Mumoro:
         #g = mumoro.RLC_Graph( graph, mumoro.pt_foot_dfa() )
         #res = mumoro.show_isochrone( g, dest, 120 )
         
-        res = mumoro.show_meeting_points( graph, start )
+        res = mumoro.show_car_sharing(graph,112748, 104371, 603225, 397968 , mumoro.pt_foot_dfa(), mumoro.car_dfa())
+        
+        #res = mumoro.show_meeting_points( graph, start )
         
         #mumoro.free(mpr)
         return res
