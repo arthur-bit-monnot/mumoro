@@ -1,12 +1,14 @@
 
 
 #include "PotentialMeetingPoints.h"
+#include <Area.h>
 
 using namespace MuPaRo;
 
 typedef AspectPropagationRule<Muparo< Algo::Basic>> MeetingPoints;
 
-VisualResult show_meeting_points( Transport::Graph * g, int source, int time )
+
+VisualResult show_meeting_points( const Transport::Graph * g, int source, int time )
 {
     int day = 10;
     
@@ -46,7 +48,7 @@ VisualResult show_meeting_points( Transport::Graph * g, int source, int time )
     
     mp.run();
     
-    VisualResult vres( g );
+    VisualResult vres;
     
     int count = 0;
     
@@ -84,4 +86,68 @@ VisualResult show_meeting_points( Transport::Graph * g, int source, int time )
     cout << "BoundingBox : " << max_lon <<", "<< min_lon <<", "<< max_lat <<", "<< min_lat <<endl;
     
     return vres;
+}
+
+typedef Muparo< RLC::AspectNodePruning<RLC::AspectMinCost<Algo::Basic>>> MeetingPointsLB;
+
+NodeSet * meeting_points( const Transport::Graph * g, int source, Area * area )
+{
+    int day = 10;
+    
+    MeetingPointsLB::ParamType p(
+        MuparoParams(g, 3)
+    );
+    
+    MeetingPointsLB mp( p );
+    
+    RLC::DFA dfa_pt = RLC::pt_foot_dfa();
+    RLC::DFA dfa_car = RLC::car_dfa();
+    
+    mp.dfas.push_back(dfa_pt);
+    mp.dfas.push_back(dfa_car);
+    mp.dfas.push_back(dfa_car);
+
+    
+    RLC::Graph *g1 = new RLC::Graph(mp.transport, mp.dfas[0] );
+    RLC::Graph *g2 = new RLC::Graph(mp.transport, mp.dfas[1] );
+    RLC::BackwardGraph *g3 = new RLC::BackwardGraph(g2);
+    
+    mp.graphs.push_back( g1 );
+    mp.graphs.push_back( g2 );
+    mp.graphs.push_back( g3 );
+    mp.dij.push_back( new RLC::AspectMinCost<MeetingPointsLB::Dijkstra>(RLC::AspectMinCost<MeetingPointsLB::Dijkstra>::ParamType(
+        RLC::DRegLCParams(g1, day, 1),
+        RLC::AspectNodePruningParams( area->geo_filter() ) ) ) );
+    mp.dij.push_back( new MeetingPointsLB::Dijkstra( MeetingPointsLB::Dijkstra::ParamType(
+        RLC::DRegLCParams(g2, day, 2),
+        RLC::AspectNodePruningParams( area->geo_filter() ) ) ) );
+    mp.dij.push_back( new MeetingPointsLB::Dijkstra( MeetingPointsLB::Dijkstra::ParamType(
+        RLC::DRegLCParams(g3, day, 1),
+        RLC::AspectNodePruningParams( area->geo_filter() ) ) ) );
+    
+    mp.insert( StateFreeNode(0, source), 0, 0);
+    mp.insert( StateFreeNode(1, source), 0, 0);
+    mp.insert( StateFreeNode(2, source), 0, 0);
+    
+    mp.run();
+    
+    NodeSet * ns = new NodeSet(g->num_vertices());
+    
+    for(int i=0 ; i<area->size() ; ++i) {
+        int node = area->get(i);
+        
+        StateFreeNode n0(0, node);
+        StateFreeNode n1(1, node);
+        StateFreeNode n2(2, node);
+        
+        if(i == source)
+            cout << "source\n";
+        
+        if( mp.is_node_set( n0 ) && mp.is_node_set( n1 ) && mp.is_node_set( n2 ) ) {
+            if( mp.get_cost( n0 ) <= (mp.get_cost( n1 ) + mp.get_cost( n2 ) ) ) {
+                ns->addNode(node);
+            }
+        }
+    }
+    return ns;
 }

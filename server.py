@@ -343,7 +343,11 @@ class Mumoro:
         #g = mumoro.RLC_Graph( graph, mumoro.pt_foot_dfa() )
         #res = mumoro.show_isochrone( g, dest, 120 )
         
-        res = mumoro.show_car_sharing(graph,112748, 104371, 603225, 397968 , mumoro.pt_foot_dfa(), mumoro.car_dfa())
+        bordeaux = mumoro.toulouse_area(graph)
+        bordeaux.center = start
+        bordeaux.init()
+        res = bordeaux.get_res()
+        #res = mumoro.show_car_sharing(graph,112748, 104371, 603225, 397968 , mumoro.pt_foot_dfa(), mumoro.car_dfa())
         
         #res = mumoro.show_meeting_points( graph, start )
         
@@ -568,8 +572,8 @@ class Mumoro:
         geometry = {'type': 'Linestring'}
         coordinates = []
         for edge_id in edges:
-            src_coord = self.g.coordinates(self.g.graph.sourceNode(edge_id))
-            target_coord = self.g.coordinates(self.g.graph.targetNode(edge_id))
+            src_coord = self.g.coordinates(self.g.graph.source(edge_id))
+            target_coord = self.g.coordinates(self.g.graph.target(edge_id))
             feature = {'type': 'feature'}
             geometry = {'type': 'Linestring'}
             coordinates = []
@@ -580,7 +584,7 @@ class Mumoro:
                         'type': 'Linestring',
                         'coordinates': [[src_coord[0], src_coord[1]], [target_coord[0], target_coord[1]]]
                         },
-                    'properties': { 'layer': EdgeTypesToString[self.g.graph.mapEdge(edge_id).type] }
+                    'properties': { 'layer': EdgeTypesToString[self.g.graph.map(edge_id).type] }
                     }
             features.append(connection);
         
@@ -638,7 +642,7 @@ class Mumoro:
         
         for (nodes, layer) in ((res.a_nodes, 'PointA'), (res.b_nodes, 'PointB'), (res.c_nodes, 'PointC')):
             for node_id in nodes:
-                node = res.g.mapNode(node_id)
+                node = self.g.graph.mapNode(node_id)
                 feature = {
                     'type': 'feature',
                     'geometry': {

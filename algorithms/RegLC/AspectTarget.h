@@ -13,8 +13,9 @@ struct AspectTargetParams {
 };
 
 
-template<typename Base>
-class AspectTarget : public Base {
+template<typename Base = DRegLC>
+class AspectTarget : public Base 
+{
 public:    
     typedef LISTPARAM<AspectTargetParams, typename Base::ParamType> ParamType;
     AspectTarget( ParamType parameters ) : Base(parameters.next) {
@@ -35,21 +36,26 @@ public:
     virtual bool finished() const {
         return Base::finished() || Base::success;
     }
-
+    
+    std::vector<int> get_path() const {
+        std::list<int> path;
+        RLC::Vertice curr;
+        
+        BOOST_FOREACH( RLC::Vertice v, dest_vertices ) {
+            if(Base::black(v))
+                curr = v;
+        }
+        
+        path.push_front(curr.first);
+        while( Base::has_pred(curr) ) {
+            curr = Base::g->source(Base::get_pred( curr ));
+            path.push_front(curr.first);
+        }
+        
+        return path;
+    }
 };
-/* TODO clean  up
-DRegLC * dreg_with_target(AbstractGraph * g, const int source, const int target) {
-    typedef AspectMaxCostPruning<AspectCount<AspectTarget<DRegLC> > > Algo;
-    Algo::ParamType p(
-        DRegLCParams( g, 10 ), AspectTargetParams( 306 ), AspectMaxCostPruningParams( 1000 )
-    );
-    Algo * dreg = new Algo(p);
 
-    dreg->insert_node(Vertice(source, 0), 0, 0);
-
-    return dreg;
-}
-*/
 
 }
 

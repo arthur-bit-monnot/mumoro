@@ -8,12 +8,11 @@
 class NodeFilter
 {
 public:
-    NodeFilter(const Transport::Graph * g) : g(g) {}
+    NodeFilter() {}
     virtual ~NodeFilter() {}
-    virtual bool isIn( const int node ) const = 0;
-    const Transport::Graph * g;
     
-    VisualResult visualization() const;
+    virtual bool isIn( const int node ) const = 0;
+    virtual VisualResult visualization() const = 0;
 };
 
 class BBNodeFilter : public NodeFilter
@@ -21,7 +20,9 @@ class BBNodeFilter : public NodeFilter
 public:
     BBNodeFilter(const Transport::Graph * g, float max_lon, float min_lon, float max_lat, float min_lat);
     bool isIn( const int node ) const;
+    virtual VisualResult visualization() const;
 private:
+    const Transport::Graph * g;
     const float max_lon;
     const float min_lon;
     const float max_lat;
@@ -31,13 +32,26 @@ private:
 class NodeSet : public NodeFilter
 {
 public:
-    NodeSet(const Transport::Graph * g);
-    bool isIn(const int node) const;
+    NodeSet ( const int size );
+    bool isIn ( const int node ) const;
     
-    void addNode( const int node );
+    void addNode ( const int node );
+    
+    void add ( const boost::dynamic_bitset<> & to_merge );
 
-private:
+    virtual VisualResult visualization() const;
+
     boost::dynamic_bitset<> bitset;
+};
+
+class AcceptAllFilter : public NodeFilter
+{
+public:
+    AcceptAllFilter () {}
+    virtual ~AcceptAllFilter () {}
+    
+    virtual bool isIn ( const int node ) const { return true; }
+    virtual VisualResult visualization () const { return VisualResult(); }
 };
 
 BBNodeFilter * cap_jj_nf(const Transport::Graph * g);

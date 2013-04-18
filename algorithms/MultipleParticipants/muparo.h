@@ -63,8 +63,7 @@ public:
     
     Muparo( ParamType p ) :
     num_layers(p.value.num_layers),
-    transport(p.value.transport),
-    vres(p.value.transport)
+    transport(p.value.transport)
     {
         is_set = new boost::dynamic_bitset<>*[num_layers];
         flags = new Flag* [num_layers];

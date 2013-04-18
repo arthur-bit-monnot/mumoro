@@ -3,11 +3,13 @@
 
 #include "MuparoTypedefs.h"
 
+class Area;
 
 
-VisualResult show_meeting_points( Transport::Graph * g, int source, int time = 50000 );
 
+VisualResult show_meeting_points( const Transport::Graph * g, int source, int time = 50000 );
 
+NodeSet * meeting_points( const Transport::Graph * g, int source, Area * area );
 
 
 

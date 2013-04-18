@@ -11,11 +11,12 @@ NodeSet * isochrone ( const RLC::AbstractGraph * g, const int center, const int 
 VisualResult show_isochrone ( const RLC::AbstractGraph * g, const int center, const int max_time );
 
 
-BBNodeFilter * rectangle_containing( const Transport::Graph * trans, const int node1, const int node2, const float margin );
+BBNodeFilter * rectangle_containing ( const Transport::Graph * trans, const int node1, const int node2, const float margin );
+BBNodeFilter * rectangle_containing ( const Transport::Graph* trans, const std::vector<int> nodes, const float margin );
 
-BBNodeFilter * bordeaux_bb( const Transport::Graph * trans );
+BBNodeFilter * bordeaux_bb ( const Transport::Graph * trans );
 
-BBNodeFilter * toulouse_bb( const Transport::Graph * trans );
+BBNodeFilter * toulouse_bb ( const Transport::Graph * trans );
 
 
 

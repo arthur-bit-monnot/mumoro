@@ -21,6 +21,8 @@ using namespace AlgoMPR;
 
 RLC::DFA * dfas[2];
 JsonWriter * out;
+Area * toulouse;
+Area * bordeaux;
 
 void run_test(std::string directory, Transport::Graph * trans, int car_start_node, int passenger_start_node, int car_arrival_node,
               int passenger_arrival_node, int time, int day, RLC::DFA dfa_car, RLC::DFA dfa_passenger)
@@ -72,9 +74,6 @@ void run_test(std::string directory, Transport::Graph * trans, int car_start_nod
         
         out->step_out();
     }
-    
-    
-    
     
     {
         BBNodeFilter * toulouse = toulouse_bb(trans);
@@ -138,6 +137,66 @@ void run_test(std::string directory, Transport::Graph * trans, int car_start_nod
         out->step_out();
     }
     
+    
+    
+    
+    {
+        out->step_in("stop-conditions");
+
+        START_TICKING;
+        CarSharingTest::ParamType p(
+            MuparoParams( trans, 5 ),
+            AspectTargetParams( 4, passenger_arrival_node ),
+            AspectPropagationRuleParams( SumCost, MaxArrival, 2, 0, 1),
+            AspectPropagationRuleParams( SumCost, FirstLayerArrival, 4, 2, 3)
+        );
+        
+        std::vector<NodeFilter*> filters;
+        RLC::Graph g1(trans, dfa_passenger );
+        RLC::BackwardGraph g2(&g1);
+        
+        Area * area_start;
+        Area * area_dest;
+        
+        if( toulouse->isIn(passenger_start_node) )
+            area_start = toulouse;
+        else if( bordeaux->isIn(passenger_start_node) )
+            area_start = bordeaux;
+        else
+            return ;
+        
+        
+        if( toulouse->isIn(passenger_arrival_node) )
+            area_dest = toulouse;
+        else if( bordeaux->isIn(passenger_arrival_node) )
+            area_dest = bordeaux;
+        else
+            return ;
+
+        
+        CarSharingTest cs( p );
+        
+        init_car_sharing_with_areas<CarSharingTest>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, dfa_passenger, dfa_car, area_start, area_dest );
+
+        STOP_TICKING;
+        out->add("init-time", RUNTIME);
+        START_TICKING;
+        cs.run();
+        STOP_TICKING;
+        
+        out->add("runtime", RUNTIME);
+        out->add("visited-nodes", cs.count);
+        
+        std::vector<int> per_layer;
+        for(int i=0 ; i<cs.num_layers ; ++i) {
+            per_layer.push_back( cs.dij[i]->count );
+        }
+        out->add("visited-per-layer", per_layer);
+        
+        out->add("solution-cost", cs.solution_cost());
+        out->step_out();
+    }
+    
     out->step_out();
 }
 
@@ -153,67 +212,12 @@ void new_test(const Transport::Graph * g)
 {
     int bordeaux1=-1, bordeaux2=-1, toulouse1=-1, toulouse2=-1;
     
-    BBNodeFilter * toulouse = toulouse_bb(g);
-    BBNodeFilter * bordeaux = bordeaux_bb(g);
-    int count_toulouse=0, count_bordeaux=0;
-    for(int i=0; i<g->num_vertices() ; ++i) {
-        if(toulouse->isIn(i))
-            count_toulouse++;
-        if(bordeaux->isIn(i))
-            count_bordeaux++;
-    }
     
-    int picked;
-    {
-        picked = rand() % count_bordeaux;
-        int curr = 0;
-        int i = 0;
-        for(i=0; i<g->num_vertices() && picked != curr ; ++i) {
-            if(bordeaux->isIn(i)) {
-                ++curr;
-                if(curr == picked)
-                    bordeaux1 = i;
-            }
-        }
-    }
-    {
-        picked = rand() % count_bordeaux;
-        int curr = 0;
-        int i=0;
-        for(i=0; i<g->num_vertices() && picked != curr ; ++i) {
-            if(bordeaux->isIn(i)) {
-                ++curr;
-                if(curr == picked)
-                    bordeaux2 = i;
-            }
-        }
-    }
-    {
-        picked = rand() % count_toulouse;
-        int curr = 0;
-        int i = 0;
-        for(i=0; i<g->num_vertices() && picked != curr ; ++i) {
-            if(toulouse->isIn(i)) {
-                ++curr;
-                if(curr == picked)
-                    toulouse1 = i;
-            }
-        }
-    }
-    {
-        picked = rand() % count_toulouse;
-        int curr = 0;
-        int i = 0;
-        for(i=0; i<g->num_vertices() && picked != curr ; ++i) {
-            if(toulouse->isIn(i)) {
-                ++curr;
-                if(curr == picked)
-                    toulouse2 = i;
-            }
-
-        }
-
-    }
+    
+    bordeaux1 = bordeaux->get( rand() % bordeaux->size() );
+    bordeaux2 = bordeaux->get( rand() % bordeaux->size() );
+    toulouse1 = toulouse->get( rand() % toulouse->size() );
+    toulouse2 = toulouse->get( rand() % toulouse->size() );
     
     {
         const RLC::Graph pt_car(g, RLC::pt_car_dfa());
@@ -294,6 +298,9 @@ int main(void)
     JsonWriter writer("/home/arthur/LAAS/Data/Results/" + name + ".txt");
     out = &writer;
     Transport::Graph * transport = new Transport::Graph("/home/arthur/LAAS/Data/Graphs/" + dump_file);
+    
+    toulouse = toulouse_area(transport);
+    bordeaux = bordeaux_area(transport);
 
     while ( !indata.eof() ) { // keep reading until end-of-file
         indata >> passenger_start_node >> car_start_node >> passenger_arrival_node >> car_arrival_node
@@ -303,8 +310,8 @@ int main(void)
     }
     
     
-//     for(int i=0 ; i<20 ; ++i)
-//         new_test(transport);
+//      for(int i=0 ; i<20 ; ++i)
+//          new_test(transport);
     
     
 }

@@ -120,7 +120,7 @@ public:
     std::pair<bool, int> operator()(float start_time, int day, bool backward = false) const;
     
     /**
-     * Returns the minimum cost that might be appear on this edge.
+     * Returns the minimum cost that might appear on this edge.
      * This is tipically useful for backward search when no arrival time is known
      */
     std::pair<bool, int> min_duration() const;
@@ -275,9 +275,6 @@ const int invalid_node = -1;
 
 struct VisualResult
 {
-    VisualResult() : g(NULL) {}
-    VisualResult(const Transport::Graph * g) : g(g) {}
-    const Transport::Graph *g;
     EdgeList edges;
     NodeList a_nodes;
     NodeList b_nodes;

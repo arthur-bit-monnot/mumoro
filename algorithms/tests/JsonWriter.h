@@ -63,6 +63,7 @@ public:
         out << "\n";
         mark_level();
         out << "}";
+        out.flush();
     }
     
     void add(string name) {

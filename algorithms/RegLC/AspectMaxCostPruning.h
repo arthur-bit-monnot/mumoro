@@ -29,8 +29,8 @@ public:
         else
             return Base::insert_node( node, arrival, cost );
     }
-    
-private:
+     
+protected:
     int max_cost;
 };
 

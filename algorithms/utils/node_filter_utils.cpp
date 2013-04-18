@@ -10,7 +10,7 @@ using namespace RLC;
 NodeSet * isochrone ( const RLC::AbstractGraph * g, const int center, const int max_time )
 {
     typedef AspectMaxCostPruning<AspectMinCost<DRegLC> > Dij;
-    NodeSet * ns = new NodeSet( g->transport );
+    NodeSet * ns = new NodeSet( g->transport->num_vertices() );
     
     Dij::ParamType p(
         DRegLCParams( g, 0, 1 ),
@@ -63,6 +63,33 @@ BBNodeFilter* rectangle_containing ( const Transport::Graph* trans, const int no
     }
     
     return new BBNodeFilter(trans, max_lon, min_lon, max_lat, min_lat);
+}
+
+BBNodeFilter* rectangle_containing ( const Transport::Graph* trans, const std::vector<int> nodes, const float margin )
+{
+    float max_lat = std::numeric_limits< float >::min();
+    float min_lat = std::numeric_limits< float >::max();
+    float max_lon = std::numeric_limits< float >::min();
+    float min_lon = std::numeric_limits< float >::max();
+    
+    BOOST_FOREACH(int node, nodes) {
+        float lat = trans->latitude( node );
+        float lon = trans->longitude( node );
+        
+        if( lat > max_lat ) {
+            max_lat = lat;
+        } 
+        if( lat < min_lat ) {
+            min_lat = lat;
+        }
+        if( lon > max_lon ) {
+            max_lon = lon;
+        } 
+        if( lon < min_lon ) {
+            min_lon = lon;
+        }
+    }
+    return new BBNodeFilter(trans, max_lon + margin, min_lon - margin, max_lat + margin, min_lat - margin);
 }
 
 
