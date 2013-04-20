@@ -206,9 +206,6 @@ class MixedStreetLayer(BaseLayer):
         count_ko = 0
 
         for edge in self.edges_table.select().execute():
-            e = mumoro.Edge()
-            e.length = edge.length
-            
             source = self.map(edge.source)
             dest = self.map(edge.target)
             
@@ -218,20 +215,18 @@ class MixedStreetLayer(BaseLayer):
                            {'prop': edge.car,  'type': mumoro.CarEdge} ]
                            
             for property in properties:
-                e.type = property['type']
                 count_total += 1
                 if count_total % 50000 == 0:
                     print "Treated edges : " + str(count_total)
                 try:
-                    dur = duration(e.length, property['prop'], e.type)
-                    e.duration = mumoro.Duration(dur)
-                    e.elevation = 0
-                #  if self.mode == mumoro.Bike:
-                #      e.elevation = max(0, target_alt - source_alt)
+                    dur = duration(edge.length, property['prop'], property['type'])
                     yield {
                         'source': source,
                         'target': dest,
-                        'properties': e
+                        'properties': { 'road_edge': True, 
+                                        'type': property['type'], 
+                                        'length': edge.length, 
+                                        'duration': dur } 
                         }
                 except NotAccessible:
                     pass
@@ -246,19 +241,20 @@ class MixedStreetLayer(BaseLayer):
                            {'prop': edge.car_rev,  'type': mumoro.CarEdge} ]
                            
             for property in properties:
-                e.type = property['type']
                 count_total += 1
                 if count_total % 50000 == 0:
                     print "Treated edges : " + str(count_total)
+                    
                 try:
-                    dur = duration(e.length, property['prop'], e.type)
-                    e.duration = mumoro.Duration(dur)
-                    e.elevation = 0
+                    dur = duration(edge.length, property['prop'], property['type'])
                     
                     yield {
                         'source': dest,
                         'target': source,
-                        'properties': e,
+                        'properties': { 'road_edge': True, 
+                                        'type': property['type'], 
+                                        'length': edge.length, 
+                                        'duration': dur }
                         }
                 except NotAccessible:
                     pass
@@ -293,19 +289,20 @@ class GTFSLayer(BaseLayer):
         # if a stop is used by 3 routes, the stop will be represented by 3 nodes
         n1 = self.nodes_table.alias()
         n2 = self.nodes_table.alias()
-        res = select([n1,n2], (n1.c.original_id == n2.c.original_id) & (n1.c.route != n2.c.route)).execute()
-        e = mumoro.Edge()
-        e.line_change = 1
-        e.type = mumoro.TransferEdge
-        e.duration = mumoro.Duration(60) # There should be at least a minute between two bus/trains at the same station
+        res = select([n1.c.id,n2.c.id], (n1.c.original_id == n2.c.original_id) & (n1.c.route != n2.c.route)).execute()
         count = 0
         for r in res:
             count += 1
             yield {
-                    'source': row[0] + self.offset,    
-                    'target': row[1] + self.offset,
-                    'properties': e
-                   }
+                    'source': r[0] + self.offset,    
+                    'target': r[1] + self.offset,
+                    'duration_type': mumoro.ConstDur,
+                    'departure': 0,
+                    'arrival': 0,
+                    'duration': 60,
+                    'services': "",
+                    'type': mumoro.TransferEdge
+                    }
         print "{0} transfer edge inserted".format(count)
  
 
@@ -328,11 +325,14 @@ class MultimodalGraph(object):
             count = 0
             for l in layers:
                 for e in l.edges():
-                    if e.has_key('properties'):
-                        self.graph.add_edge(e['source'], e['target'], e['properties'])
+                    if e.has_key('properties') and e['properties']['road_edge']:
+                        self.graph.add_road_edge(e['source'], e['target'], e['properties']['type'], int(e['properties']['duration']))
                         count += 1
+                    elif e.has_key('properties'):
+                        if self.graph.add_public_transport_edge(e['source'], e['target'], e['properties']['type'], int(e['properties']['duration'])):
+                            count += 1
                     else:
-                        if self.graph.public_transport_edge(e['source'], e['target'], e['duration_type'], e['departure'], e['arrival'], e['duration'], 
+                        if self.graph.add_public_transport_edge(e['source'], e['target'], e['duration_type'], e['departure'], e['arrival'], e['duration'], 
                                                             str(e['services']), e['type']):
                             count += 1
                 print "On layer {0}, {1} edges, {2} nodes".format(l.name, count, l.count)
@@ -342,6 +342,9 @@ class MultimodalGraph(object):
 
             self.graph.preprocess()
             print "The multimodal graph has been built and has {0} nodes and {1} edges".format(nb_nodes, count)
+ 
+    def set_id(self, id):
+        self.graph.set_id(id)
  
     def save(self, filename):
         self.graph.save(filename)
@@ -353,6 +356,7 @@ class MultimodalGraph(object):
         for l in self.node_to_layer:
             if int(node) <= l[0]: # nodes from 1 to l[0] are in layer 0, etc
                 return l[1]
+        print sys.exc_info()[0]
         print "Unable to find the right layer for node {0}".format(node)
         print self.node_to_layer
  
@@ -361,6 +365,7 @@ class MultimodalGraph(object):
         for l in self.layers:
             if l.name == name:
                 return l.coordinates(node)
+        print sys.exc_info()[0]
         print "Unknown node: {0} on layer: {1}".format(node, name)
  
     def match(self, name, lon, lat):
@@ -415,9 +420,8 @@ class MultimodalGraph(object):
                 continue
             nearest = layer2.nearest(n.lon, n.lat)
             if nearest:
-                print "Got a match"
-                self.graph.add_edge(n.id + layer1.offset, nearest, property)
-                self.graph.add_edge(nearest, n.id + layer1.offset, property2)
+                self.graph.add_public_transport_edge(n.id + layer1.offset, nearest, property['duration'], property['type'])
+                self.graph.add_public_transport_edge(nearest, n.id + layer1.offset, property2['duration'], property2['type'])
                 count += 2
         return count
  

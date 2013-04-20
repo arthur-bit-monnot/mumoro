@@ -180,14 +180,7 @@ def paths( starting_layer, destination_layer, objectives ):
 
 #Creates a transit cost variable, including the duration in seconds of the transit and if the mode is changed
 def transferEdge( duration, mode_change ):
-    e = mumoro.Edge()
-    if mode_change:
-        e.mode_change = 1
-    else:
-        e.mode_change = 0
-    e.duration = mumoro.Duration( duration );
-    e.type = mumoro.TransferEdge
-    return e
+    return { 'duration': duration, 'type': mumoro.TransferEdge }
 
 #Connects 2 given layers on same nodes with the given cost(s)
 def connect_layers_same_nodes( layer1, layer2, cost ):
@@ -299,6 +292,7 @@ class Mumoro:
                    except KeyError:
                        raise NameError('Can not connect layers from the node list')
             md5_config_checksum = md5_of_file( file( config_file ) )
+            self.g.set_id( md5_config_checksum )
             self.g.save( md5_config_checksum + '.dump' )
             i = self.config_table.insert()
             i.execute({'config_file': config_file, 'md5': md5_config_checksum, 'binary_file': md5_config_checksum + '.dump'})   
@@ -336,17 +330,13 @@ class Mumoro:
         return dij.get_result()
     
     def muparo(self, start, dest, secs, day, graph ):
-        #res = mumoro.show_point_to_point(graph, dest, start, mumoro.car_dfa() )
+        res = mumoro.show_point_to_point(graph, dest, start, mumoro.foot_subway_dfa() )
         #res = mumoro.show_shared_path( graph, start, dest, 306 )
         #res = mumoro.show_car_sharing(graph, start, dest, 278790, 112254, mumoro.pt_foot_dfa(), mumoro.car_dfa())
         #print "{} {} {} {} {} {} {} {}".format(start, dest, 278790, 112254, secs, 10, 1, 0)
         #g = mumoro.RLC_Graph( graph, mumoro.pt_foot_dfa() )
         #res = mumoro.show_isochrone( g, dest, 120 )
         
-        bordeaux = mumoro.toulouse_area(graph)
-        bordeaux.center = start
-        bordeaux.init()
-        res = bordeaux.get_res()
         #res = mumoro.show_car_sharing(graph,112748, 104371, 603225, 397968 , mumoro.pt_foot_dfa(), mumoro.car_dfa())
         
         #res = mumoro.show_meeting_points( graph, start )

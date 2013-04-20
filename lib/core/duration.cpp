@@ -1,18 +1,18 @@
 
 #include "graph_wrapper.h"
 
-Duration::Duration(float d) : const_duration(d), dur_type(ConstDur) { }
+DurationPT::DurationPT(float d) : const_duration(d), dur_type(ConstDur) { }
 
-Duration::Duration() : const_duration(-1) {}
+DurationPT::DurationPT(const DurationType dur_type) : const_duration(-1), dur_type(dur_type) {}
 
-void Duration::append_timetable(float start, float arrival, const std::string & services)
+void DurationPT::append_timetable(float start, float arrival, const std::string & services)
 {
     BOOST_ASSERT(start < arrival);
     BOOST_ASSERT(dur_type == TimetableDur);
     timetable.push_back(Time(start, arrival, Services(services)));
 }
 
-void Duration::append_frequency(int start, int end, int duration, const std::string & services)
+void DurationPT::append_frequency(int start, int end, int duration, const std::string & services)
 {
     BOOST_ASSERT(start < end);
     BOOST_ASSERT(dur_type == FrequencyDur);
@@ -29,7 +29,7 @@ bool compare_frequencies(const Frequency & a, const Frequency & b)
     return get<0>(a) < get<0>(b);
 }
 
-void Duration::sort()
+void DurationPT::sort()
 {
     if(dur_type == TimetableDur)
     {
@@ -41,7 +41,7 @@ void Duration::sort()
     }
 }
 
-std::pair<bool, int> Duration::operator()(float start, int day, bool backward) const
+std::pair<bool, int> DurationPT::operator()(float start, int day, bool backward) const
 {
     if(backward) {
         if (dur_type == ConstDur) {
@@ -64,7 +64,7 @@ std::pair<bool, int> Duration::operator()(float start, int day, bool backward) c
     }
 }
 
-std::pair<bool, int> Duration::min_duration() const
+std::pair<bool, int> DurationPT::min_duration() const
 {
     if(const_duration < 0) {
         std::cerr << "WARNING CONST DURATION < 0\n";
@@ -75,7 +75,7 @@ std::pair<bool, int> Duration::min_duration() const
 
 
 
-std::pair<bool, int> Duration::freq_duration_forward(float start_time, int day, int allowed_lookups) const
+std::pair<bool, int> DurationPT::freq_duration_forward(float start_time, int day, int allowed_lookups) const
 {
     bool has_traffic = false;
     int cost = -1;
@@ -119,7 +119,7 @@ std::pair<bool, int> Duration::freq_duration_forward(float start_time, int day, 
     return std::pair<bool, int>(has_traffic, cost);
 }
 
-std::pair<bool, int> Duration::freq_duration_backward(float start_time, int day, int allowed_lookups) const
+std::pair<bool, int> DurationPT::freq_duration_backward(float start_time, int day, int allowed_lookups) const
 {
     bool has_traffic = false;
     int cost = -1;
@@ -164,7 +164,7 @@ std::pair<bool, int> Duration::freq_duration_backward(float start_time, int day,
 }
 
 
-std::pair<bool, int> Duration::tt_duration_forward(float start, int day, int allowed_lookups) const
+std::pair<bool, int> DurationPT::tt_duration_forward(float start, int day, int allowed_lookups) const
 {
     bool has_traffic = false;
     int cost = -1;
@@ -247,7 +247,7 @@ std::pair<bool, int> Duration::tt_duration_forward(float start, int day, int all
     return std::pair<bool, int>(has_traffic, cost);
 }
 
-std::pair<bool, int> Duration::tt_duration_backward(float start, int day, int allowed_lookups) const
+std::pair<bool, int> DurationPT::tt_duration_backward(float start, int day, int allowed_lookups) const
 {
     bool has_traffic = false;
     int cost = -1;
@@ -334,7 +334,7 @@ std::pair<bool, int> Duration::tt_duration_backward(float start, int day, int al
     return std::pair<bool, int>(has_traffic, cost);
 }
 
-void Duration::set_min()
+void DurationPT::set_min()
 {
     if(dur_type == ConstDur) {
         return;
@@ -351,7 +351,6 @@ void Duration::set_min()
         }
         
         const_duration = min_dur;
-        std::cout<<"Frequency min dur "<<min_dur<<std::endl;
         
     } else if(dur_type == TimetableDur) {
         float tt_start, tt_arrival;
@@ -365,7 +364,6 @@ void Duration::set_min()
         }
         
         const_duration = min_dur;
-        std::cout<<"Timetable min dur "<<min_dur<<std::endl;
     }
     
 }

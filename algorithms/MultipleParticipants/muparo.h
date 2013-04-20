@@ -250,13 +250,15 @@ public:
         std::list< CompleteNode > queue;
         
         init_result_queue( queue );
-        
+        cout << "Path :" <<endl;
         while( !queue.empty() ) {
             CompleteNode curr = queue.back();
             queue.pop_back();
             
             int l = curr.first;
             RLC::Vertice vert = curr.second;
+            
+            cout << vert.first << " " << vert.second << endl;
             
             if( dij[l]->has_pred(vert) ) {
                 vres.edges.push_back(transport->edgeIndex( dij[l]->get_pred(vert).first ));

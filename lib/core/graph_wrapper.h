@@ -26,6 +26,8 @@
 #ifndef GRAPH_WRAPPER_H
 #define GRAPH_WRAPPER_H
 
+using std::vector;
+
 typedef enum { Foot, Bike, Car, PublicTransport } Mode;
 typedef enum { FootEdge = 0, BikeEdge = 1, CarEdge = 2, SubwayEdge = 3, 
                BusEdge = 4, TramEdge = 5, TransferEdge = 6, UnknownEdgeType = 7, 
@@ -103,16 +105,18 @@ void serialize(Archive &ar, Frequency &t, const unsigned int version)
 
 typedef enum { NextDay = 1, PrevDay = 2 } AllowedLookup;
 
-class Duration
+class DurationPT
 {
+private:
+    std::vector<Time> timetable;
+    std::vector<Frequency> frequencies;
+    
 public:
     int const_duration;
     DurationType dur_type;
-    std::vector<Time> timetable;
-    std::vector<Frequency> frequencies;
-public:
-    Duration();
-    Duration(float const_duration);
+    
+    DurationPT(const DurationType dur_type = ConstDur);
+    DurationPT(float const_duration);
     void append_timetable(float start, float arrival, const std::string & services);
     void append_frequency(int start, int end, int duration, const std::string & services);
     void sort();
@@ -127,10 +131,10 @@ public:
     
 
     template<class Archive>
-        void serialize(Archive& ar, const unsigned int version)
-        {
-            ar & dur_type & const_duration & timetable & frequencies;
-        }
+    void serialize(Archive& ar, const unsigned int version)
+    {
+        ar & dur_type & const_duration & timetable & frequencies;
+    }
 
 private: 
     std::pair<bool, int> freq_duration_forward(float start_time, int day, int allowed_lookup = NextDay | PrevDay ) const;
@@ -144,24 +148,26 @@ struct Node
     float lon;
     float lat;
     template<class Archive>
-        void serialize(Archive& ar, const unsigned int version)
-        {
-            ar & lon & lat;
-        }
+    void serialize(Archive& ar, const unsigned int version)
+    {
+        ar & lon & lat;
+    }
 
 };
 
 struct Edge
 {
-    Edge();
-    int edge_index;
+    Edge() : index(-1) {}
+    Edge(const bool road_edge, const int index, const EdgeMode type);
+    bool road_edge;
+    int index;
     EdgeMode type;
-    Duration duration;
-            template<class Archive>
-            void serialize(Archive& ar, const unsigned int version)
-            {
-                ar & edge_index & type & duration;
-            }
+    
+    template<class Archive>
+    void serialize(Archive& ar, const unsigned int version)
+    {
+        ar & road_edge & index & type;
+    }   
 
 };
 
@@ -170,12 +176,11 @@ typedef boost::graph_traits<Graph_t>::edge_descriptor edge_t;
 typedef std::list<int> EdgeList;
 typedef std::list<int> NodeList;
 
-void print_edge(edge_t e, Graph_t g);
-
 namespace Transport {
 
 struct Graph
 {
+public:
     Graph_t g;
 
     /**
@@ -191,18 +196,22 @@ struct Graph
     /**
      * Insert an edge from *source* to *target* in the graph
      */
-    void add_edge(int source, int target, Edge e);
+    void add_road_edge(const int source, const int target, const EdgeMode type, const int duration);
     
     /**
      * Adds public transport information to the given edge
      */
-    bool public_transport_edge(int source, int target, DurationType dur_type, float start, float arrival, 
-                                      int duration, const std::string & services, const EdgeMode type = UnknownEdgeType);
-
+    bool add_public_transport_edge(int source, int target, DurationType dur_type, float start, float arrival, 
+                                      int duration, const std::string & services, const EdgeMode type);
+    bool add_public_transport_edge(int source, int target, const int duration, const EdgeMode type);
+    
     /**
      * Sets longitude and latitude to the node
      */
     void set_coord(int node, float lon, float lat);
+    
+    void set_id(const std::string id) { this->id = id; }
+    std::string get_id() { return id; }
     
     void save(const std::string & filename) const;
     void load(const std::string & filename);
@@ -231,7 +240,35 @@ struct Graph
      */
     inline Edge map(const int edge_id) const { return g[this->edge_descriptor(edge_id)]; }
     inline Edge map( const edge_t edge ) const { return g[edge]; }
-    inline int edgeIndex(const edge_t edge) const { return g[edge].edge_index; }
+    inline int edgeIndex(const edge_t edge) const { 
+        if(g[edge].road_edge) 
+            return g[edge].index; 
+        else 
+            return num_road_edges + g[edge].index; }
+    
+    inline std::pair<bool, int> duration_forward(const edge_t edge, const float start_sec, const int day) const {
+        if(g[edge].road_edge) {
+            return std::pair<bool, int>(true, road_durations[g[edge].index]);
+        } else {
+            return pt_durations[g[edge].index](start_sec, day, false);
+        }
+    }
+    
+    inline std::pair<bool, int> duration_backward(const edge_t edge, const float start_sec, const int day) const {
+        if(g[edge].road_edge) {
+            return std::pair<bool, int>(true, road_durations[g[edge].index]);
+        } else {
+            return pt_durations[g[edge].index](start_sec, day, true);
+        }
+    }
+    
+    inline std::pair<bool, int> min_duration(const edge_t edge) const {
+        if(g[edge].road_edge) {
+            return std::pair<bool, int>(true, road_durations[g[edge].index]);
+        } else {
+            return pt_durations[g[edge].index].min_duration();
+        }
+    }
     
     /**
      * Return the Node instance associated with the node index passed
@@ -261,15 +298,20 @@ struct Graph
     inline float latitude(const int node) const { return g[node].lat; }
   
 private:
+    std::string id;
+    int num_road_edges = 0;
+    int num_pt_edges = 0;
+    
+    vector<int> road_durations;
+    vector<DurationPT> pt_durations;
+    
     std::vector<edge_t> edges_vec;
     inline edge_t edge_descriptor(const int edge_id) const { return edges_vec[edge_id]; }
     
     void compute_min_durations();
     void sort();
-    void initEdgeIndexes();
+    void init_edge_indexes();
 };
-
-const int invalid_node = -1;
 
 } // end namespace Transport
 

@@ -22,9 +22,10 @@ int main()
   
 //     Transport::Graph g("/home/arthur/LAAS/mumoro/976c9329c82da079f78be26dddcf1174.dump");
 //     Transport::Graph g("/home/arthur/LAAS/Data/Graphs/toulouse-mixed.dump");
-    const Transport::Graph g("/home/arthur/LAAS/Data/Graphs/sud-ouest.dump");
+//     const Transport::Graph g("/home/arthur/LAAS/Data/Graphs/sud-ouest.dump");
+    const Transport::Graph g("/home/arthur/LAAS/mumoro/c01210f9d0f38553b4f5fd508c79be1a.dump");
     
-    
+    /*
     RLC::Graph rlc(&g, RLC::car_dfa());
 //     RLC::BackwardGraph back_rlc( &rlc );
     
@@ -45,6 +46,6 @@ int main()
     algo.insert_node(RLC::Vertice(190562, 0), 0, 0);
     algo.run();
     
-    cout << "Num vertices : " << algo.count <<endl;
+    cout << "Num vertices : " << algo.count <<endl;*/
     
 }

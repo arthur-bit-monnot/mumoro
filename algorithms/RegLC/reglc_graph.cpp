@@ -22,7 +22,6 @@ start_state(start), accepting_states(accepting)
     for(it = edges.begin() ; it != edges.end() ; ++it) {
         ::Edge e;
         e.type = (EdgeMode) it->second;
-        e.duration = Duration(1);
         boost::add_edge(it->first.first, it->first.second, e, graph);
     }
 }
@@ -180,12 +179,12 @@ std::list<RLC::Edge> Graph::out_edges( const RLC::Vertice & vertice) const
 
 std::pair<bool, int> Graph::duration( const RLC::Edge & edge, const float start_sec, const int day) const
 {
-    return transport->map(edge.first).duration(start_sec, day);
+    return transport->duration_forward(edge.first, start_sec, day);
 }
 
 std::pair<bool, int> Graph::min_duration (const Edge & edge ) const
 {
-    return transport->map(edge.first).duration.min_duration();
+    return transport->min_duration(edge.first);
 }
 
 std::set<int> Graph::dfa_start_states() const
@@ -252,12 +251,12 @@ list< Edge > BackwardGraph::out_edges ( const Vertice & vertice ) const
 
 std::pair<bool, int> BackwardGraph::duration ( const Edge & edge, const float start_sec, const int day ) const
 {
-    return forward_graph->transport->map(edge.first).duration(start_sec, day, true);
+    return forward_graph->transport->duration_backward(edge.first, start_sec, day);
 }
 
 std::pair<bool, int> BackwardGraph::min_duration ( const Edge & edge ) const
 {
-    return forward_graph->transport->map(edge.first).duration.min_duration();
+    return forward_graph->transport->min_duration(edge.first);
 }
 
 std::set< int > BackwardGraph::dfa_start_states() const

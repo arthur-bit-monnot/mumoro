@@ -90,7 +90,9 @@ public:
     virtual int num_transport_vertices() const = 0;
     virtual int num_dfa_vertices() const = 0;
     
-    inline bool is_accepting( const RLC::Vertice & v ) const { return dfa_accepting_states().find(v.second) != dfa_accepting_states().end(); }
+    inline bool is_accepting( const RLC::Vertice & v ) const { 
+        return dfa_accepting_states().count(v.second) > 0;
+    }
 };
 
 class Graph : public AbstractGraph

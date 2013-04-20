@@ -47,12 +47,7 @@ const char* edgeTypeToString(EdgeMode type) {
         return "------ Unknown -------";
 }
 
-void print_edge(edge_t e, Graph_t g)
-{
-    cout << "("<< source(e, g) <<", "<< target(e, g) <<", "<<g[e].type<<", "<<g[e].duration(0,0).second<<")   ";
-}
-
-Edge::Edge() : edge_index(-1), type(UnknownEdgeType)
+Edge::Edge(const bool road_edge, const int index, const EdgeMode type) : road_edge(road_edge), index(index), type(type)
 {
 }
 
@@ -69,23 +64,15 @@ Graph::Graph(int nb_nodes) : g(nb_nodes)
 {
 }
 
-void Graph::initEdgeIndexes() {
-    std::cout << "Populating indexes\n";
-    if(!edges_vec.empty())
-        edges_vec.clear();
-    edges_vec.resize(num_edges(g));
-    int index = 0;
-    BOOST_FOREACH(edge_t e, boost::edges(g)) {
-        edges_vec[index] = e;
-        g[e].edge_index = index; 
-        BOOST_ASSERT(edges_vec[index] == e);
-        index++;
-    }
-}
 
-void Graph::add_edge(int source, int target, Edge e)
+void Graph::add_road_edge ( const int source, const int target, const EdgeMode type, const int duration )
 {
+    Edge e(true, num_road_edges, type);
+    num_road_edges++;
+    
     boost::add_edge(source, target, e, g);
+    this->road_durations.push_back(duration);
+    BOOST_ASSERT(this->road_durations[e.index] = duration);
 }
 
 void Graph::set_coord(int node, float lon, float lat)
@@ -94,85 +81,72 @@ void Graph::set_coord(int node, float lon, float lat)
     g[node].lat = lat;
 }
 
-bool Graph::public_transport_edge(int source, int target, DurationType dur_type, float start, float arrival, 
-                                  int duration, const std::string & services, const EdgeMode type)
+bool Graph::add_public_transport_edge ( int source, int target, DurationType dur_type, float start, float arrival, int duration, const string& services, const EdgeMode type )
 {
     edge_t e;
     bool b;
-    tie(e, b) = edge(source, target, g);
+    tie(e, b) = boost::edge(source, target, g);
     if(!b)
     {
+        Edge edge(false, num_pt_edges, type);
+        num_pt_edges++;
         bool c;
-        tie(e, c) = boost::add_edge(source, target, g);
-        g[e].type = type;
-        g[e].duration.dur_type = dur_type;
+        tie(e, c) = boost::add_edge(source, target, edge, g);
+        this->pt_durations.push_back(DurationPT(dur_type));
+        
+        BOOST_ASSERT( this->pt_durations[edge.index].dur_type ==  dur_type );
     }
+    int index = g[e].index;
     
     if(dur_type == TimetableDur)
-        g[e].duration.append_timetable(start, arrival, services);
+        pt_durations[index].append_timetable(start, arrival, services);
     else if(dur_type == FrequencyDur)
-        g[e].duration.append_frequency(start, arrival, duration, services);
+        pt_durations[index].append_frequency(start, arrival, duration, services);
     else if(dur_type == ConstDur)
-        g[e].duration.const_duration = duration;
+        pt_durations[index].const_duration = duration;
     
     return !b;
 }
-    struct found_goal
-    {
-    }; // exception for termination
 
-    // visitor that terminates when we find the goal
-
-    class dijkstra_goal_visitor : public boost::default_dijkstra_visitor
-    {   
-        public:
-            
-            dijkstra_goal_visitor(int goal) : m_goal(goal)
-        {
-        }   
-            
-            template <class Graph_t>
-                void examine_vertex(int u, Graph_t& g)
-                {   
-                    if (u == m_goal)
-                        throw found_goal();
-                }
-        private:
-            int m_goal;
-    };
-
-float calc_duration(float in, Duration d)
+bool Graph::add_public_transport_edge ( int source, int target, const int duration, const EdgeMode type )
 {
-    return d(in, 0).second;
+    return add_public_transport_edge(source, target, ConstDur, 0, 0, duration, "", type);
 }
 
-struct Comp
-{
-    bool operator()(float a, float b) const {return a<b;}
-    bool operator()(const Duration &, float) const {return false;}
-};
+
+
+
 
 void Graph::preprocess()
 {
     sort();
-    initEdgeIndexes();
+    init_edge_indexes();
     compute_min_durations();
 }
    
 void Graph::sort()
 {
-    BOOST_FOREACH(edge_t e, boost::edges(g))
-    {
-        g[e].duration.sort();
+    for(uint i=0 ; i<pt_durations.size() ; ++i) {
+        pt_durations[i].sort();
     }
 }
 
 void Graph::compute_min_durations()
 {
-    BOOST_FOREACH(edge_t e, boost::edges(g))
-    {
-        g[e].duration.set_min();
+    for(uint i=0 ; i<pt_durations.size() ; ++i) {
+        pt_durations[i].set_min();
     }
+}
+
+void Graph::init_edge_indexes()
+{
+    edges_vec.resize(num_pt_edges + num_road_edges);
+    int count = 0;
+    BOOST_FOREACH(edge_t e, boost::edges(g)) {
+        count++;
+        edges_vec[ edgeIndex(e) ] = e;
+    }
+    BOOST_ASSERT(count == (num_pt_edges + num_road_edges));
 }
 
 
@@ -181,17 +155,27 @@ void Graph::load(const std::string & filename)
     std::cout << "Loading graph from file " << filename << std::endl;
     std::ifstream ifile(filename.c_str());
     boost::archive::binary_iarchive iArchive(ifile);
+    iArchive >> id;
+    iArchive >> num_road_edges;
+    iArchive >> num_pt_edges;
+    iArchive >> road_durations;
+    iArchive >> pt_durations;
     iArchive >> g; //graph;   
     std::cout << "   " << boost::num_vertices(g) << " nodes" << std::endl;
     std::cout << "   " << boost::num_edges(g) << " edges" << std::endl;
-    initEdgeIndexes();
+    init_edge_indexes();
 }
 
 void Graph::save(const std::string & filename) const
 {
     std::ofstream ofile(filename.c_str());
     boost::archive::binary_oarchive oArchive(ofile);
-    oArchive << g;
+    oArchive << id;
+    oArchive << num_road_edges;
+    oArchive << num_pt_edges;
+    oArchive << road_durations;
+    oArchive << pt_durations;
+    oArchive << g; //graph; 
 }
 
 EdgeList Graph::listEdges(const EdgeMode type) const
@@ -200,7 +184,7 @@ EdgeList Graph::listEdges(const EdgeMode type) const
     
     BOOST_FOREACH(edge_t e, boost::edges(g)) {
         if(type == WhateverEdge || g[e].type == type)
-            edgeList.push_back(g[e].edge_index);
+            edgeList.push_back(g[e].index);
     }
     return edgeList;
 }
