@@ -2,6 +2,7 @@
 #define DREGLC_H
 
 #include <boost/heap/fibonacci_heap.hpp>
+#include <boost/heap/d_ary_heap.hpp>
 #include <boost/foreach.hpp> 
 #include <boost/dynamic_bitset.hpp>
 
@@ -37,8 +38,12 @@ struct DRegCompare
 };
 
     
-typedef boost::heap::fibonacci_heap<RLC::Vertice, boost::heap::compare<DRegCompare> > DRegHeap;
-
+// typedef boost::heap::fibonacci_heap<RLC::Vertice, boost::heap::compare<DRegCompare> > DRegHeap;
+typedef boost::heap::d_ary_heap<
+    RLC::Vertice, 
+    boost::heap::arity<4>,
+    boost::heap::mutable_<true>, 
+    boost::heap::compare<DRegCompare> > DRegHeap;
 
 
 /**
