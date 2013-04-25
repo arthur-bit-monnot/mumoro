@@ -168,10 +168,16 @@ struct Edge
     {
         ar & road_edge & index & type;
     }   
-
 };
 
-typedef boost::adjacency_list<boost::listS, boost::vecS, boost::bidirectionalS, Node, Edge > Graph_t;
+/**
+ * Implementation of the graph.
+ * 
+ * Using vectors (and not lists) is important for cache performance reasons since there is less 
+ * memory overhead and items are stacked.
+ */
+typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS, Node, Edge > Graph_t;
+
 typedef boost::graph_traits<Graph_t>::edge_descriptor edge_t;
 typedef std::list<int> EdgeList;
 typedef std::list<int> NodeList;
@@ -211,7 +217,7 @@ public:
     void set_coord(int node, float lon, float lat);
     
     void set_id(const std::string id) { this->id = id; }
-    std::string get_id() { return id; }
+    std::string get_id() const { return id; }
     
     void save(const std::string & filename) const;
     void load(const std::string & filename);

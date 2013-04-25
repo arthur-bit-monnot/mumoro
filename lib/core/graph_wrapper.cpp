@@ -184,7 +184,7 @@ EdgeList Graph::listEdges(const EdgeMode type) const
     
     BOOST_FOREACH(edge_t e, boost::edges(g)) {
         if(type == WhateverEdge || g[e].type == type)
-            edgeList.push_back(g[e].index);
+            edgeList.push_back(edgeIndex(e));
     }
     return edgeList;
 }
