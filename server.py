@@ -323,14 +323,14 @@ class Mumoro:
         return dij.get_result()
     
     def back_dij_path(self, start, dest, secs, day, graph ):
-        rlc = mumoro.RLC_Graph(graph, mumoro.pt_foot_dfa())
+        rlc = mumoro.RLC_Graph(graph, mumoro.car_dfa())
         back_rlc = mumoro.BackwardGraph(rlc)
         dij = mumoro.Dijkstra(back_rlc, start, dest, secs, day)
         dij.run()
         return dij.get_result()
     
     def muparo(self, start, dest, secs, day, graph ):
-        res = mumoro.show_point_to_point(graph, dest, start, mumoro.foot_subway_dfa() )
+        res = mumoro.show_point_to_point(graph, dest, start, mumoro.car_dfa() )
         #res = mumoro.show_shared_path( graph, start, dest, 306 )
         #res = mumoro.show_car_sharing(graph, start, dest, 278790, 112254, mumoro.pt_foot_dfa(), mumoro.car_dfa())
         #print "{} {} {} {} {} {} {} {}".format(start, dest, 278790, 112254, secs, 10, 1, 0)

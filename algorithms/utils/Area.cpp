@@ -69,7 +69,8 @@ void Area::init_max_dist()
     }
     
     
-    this->max_traversal = max_cost_backward + max_cost_forward;
+    this->diameter = max_cost_backward + max_cost_forward;
+    this->radius = max_cost_backward > max_cost_forward ? max_cost_backward : max_cost_forward;
 }
 
 
@@ -111,11 +112,23 @@ Area * toulouse_area ( const Transport::Graph* g )
 
 Area * bordeaux_area ( const Transport::Graph* g )
 {
-    Area * area = build_area_around( g, 618192, 629765, 600);
-    area->center = 580025;
+//     Area * area = build_area_around( g, 618192, 629765, 600);
+    Area * area = build_area_around( g, 629421, 629765, 600);
+//     area->center = 580025;
+    area->center = 379083;
     area->init();
     return area;
 }
+
+Area* small_area ( const Transport::Graph* g )
+{
+    Area * area = build_area_around( g, 251665, 251665, 120 );
+    area->center = 251665;
+    area->init();
+    cout << "Radius : " << area->radius << "  count : " << area->size() <<endl;;
+    return area;
+}
+
 
 NodeSet * meeting_points_in_area( Area * area )
 {

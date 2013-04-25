@@ -4,6 +4,7 @@
 #include <vector>
 #include <nodes_filter.h>
 #include "node_filter_utils.h"
+#include <Landmark.h>
 
 
 
@@ -17,10 +18,12 @@ public:
     BBNodeFilter * bb = NULL;
     const Transport::Graph * g;
     int center;
-    int max_traversal;
+    int diameter;
+    int radius;
+    RLC::Landmark * lm;
     
     Area( const Transport::Graph * g, const int size ) : ns(size), g(g) {}
-    ~Area() { delete bb; }
+    ~Area() { delete bb; delete lm; }
     
     void add_node( const int n ) {
         nodes.push_back( n );
@@ -40,8 +43,9 @@ public:
     }
 
     void init() {
-        bb = rectangle_containing(g, nodes, 0.1);
+        bb = rectangle_containing(g, nodes, 1.0);
         init_max_dist();
+        lm = RLC::create_landmark( g, center );
     }
     
     VisualResult get_res() { return vres; }
@@ -57,6 +61,7 @@ Area * build_area_around ( const Transport::Graph * g, int start, int end, int m
 
 Area * toulouse_area ( const Transport::Graph * g );
 Area * bordeaux_area ( const Transport::Graph * g );
+Area * small_area ( const Transport::Graph * g );
 
 NodeSet * meeting_points_in_area( Area * area );
 

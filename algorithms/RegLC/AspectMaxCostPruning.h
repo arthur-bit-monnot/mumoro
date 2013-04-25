@@ -24,7 +24,7 @@ public:
     virtual ~AspectMaxCostPruning() {}
     
     virtual bool insert_node( const Vertice & node, const int arrival, const int cost ) {
-        if(cost > max_cost)
+        if(Base::cost_eval(node, cost) > max_cost)
             return false;
         else
             return Base::insert_node( node, arrival, cost );

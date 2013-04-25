@@ -27,12 +27,11 @@ struct DRegLCParams {
 
 struct DRegCompare
 {
-    int ***costs;
-    DRegCompare() {}
-    DRegCompare( int *** dist ) { costs = dist; }
+    int ** & costs;
+    DRegCompare( int ** & dist ) : costs(dist) {}
     bool operator()(RLC::Vertice a, RLC::Vertice b) const
     {
-        return (*costs)[a.second][a.first] > (*costs)[b.second][b.first];
+        return costs[a.second][a.first] > costs[b.second][b.first];
     }
     
 };
@@ -55,10 +54,13 @@ public:
     typedef LISTPARAM<DRegLCParams> ParamType;
 
     DRegLC( ParamType parameters ) :
-    heap( DRegCompare(&(this->costs)) ),
     success( false )
     {
         DRegLCParams & p = parameters.value;
+        
+        if( heap != NULL )
+            delete heap;
+        heap = new DRegHeap( DRegCompare( this-> costs ) );
         
         this->graph = p.graph;
         day = p.day;
@@ -108,7 +110,7 @@ public:
     
     virtual bool finished() const
     {
-        return heap.empty();
+        return heap->empty();
     }
     
     virtual bool check_termination( const RLC::Vertice & vert ) const { return false; }
@@ -131,8 +133,8 @@ public:
      */
     virtual Vertice treat_next()
     {
-        RLC::Vertice curr = heap.top();
-        heap.pop();
+        RLC::Vertice curr = heap->top();
+        heap->pop();
         set_black(curr);
         
         if( check_termination(curr) ) {
@@ -150,6 +152,9 @@ public:
             boost::tie(has_traffic, edge_cost) = duration(e, arrival(curr), day);
 
             int target_cost = cost(curr) + edge_cost * cost_factor;
+            
+            
+            BOOST_ASSERT(!has_traffic || (edge_cost * cost_factor - cost_eval(curr, 0)  + cost_eval(target, 0) >= 0) );
             
             // ignore the edge if it provokes an overflow
             if(target_cost < cost(curr))
@@ -197,11 +202,12 @@ public:
         }
         else if( vert_cost < cost(vert) )
         {
-            BOOST_ASSERT(!black(vert));
+            if(black(vert))
+                BOOST_ASSERT(!black(vert));
             
             set_arrival(vert, arrival);
             set_cost(vert, vert_cost);
-            heap.update(handle(vert));
+            heap->update(handle(vert));
 
             return true;
         }
@@ -218,16 +224,22 @@ public:
     /**
      * Heap in which the Vertices will be stored
      */
-    DRegHeap heap;
+    DRegHeap * heap = NULL;
 
     inline float arrival(const RLC::Vertice v) { return arr_times[v.second][v.first]; }
     inline void set_arrival(const RLC::Vertice v, float time) { arr_times[v.second][v.first] = time; }
     inline float cost(const RLC::Vertice v) const { return costs[v.second][v.first]; }
-    inline void set_cost(const RLC::Vertice v, const int cost) { costs[v.second][v.first] = cost; }
+    inline virtual void set_cost(const RLC::Vertice v, const int cost) { costs[v.second][v.first] = cost; }
+    
+    /**
+     * Used to provide an evaluation of the cost of node v.
+     * This is to be replaced with an evaluation of the current cost + cost to target
+     */
+    virtual inline int cost_eval( const Vertice & v, const int cost ) const { return cost; }
     
     inline DRegHeap::handle_type dij_node(const RLC::Vertice v) const { return references[v.second][v.first]; }
     inline void put_dij_node(const RLC::Vertice v) { 
-        references[v.second][v.first] = heap.push(v);
+        references[v.second][v.first] = heap->push(v);
     }
     inline void clear_pred(const RLC::Vertice v) { has_predecessor[v.second]->reset(v.first); }
     inline void set_pred(const RLC::Vertice v, const RLC::Edge & pred) { 

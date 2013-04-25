@@ -197,8 +197,8 @@ public:
         int best_layer = -1;
         
         for(int i=0 ; i<num_layers ; ++i) {
-            if( !dij[i]->finished() && ( dij[i]->cost( dij[i]->heap.top() ) <= best_cost ) ) {
-                best_cost = dij[i]->cost( dij[i]->heap.top() );
+            if( !dij[i]->finished() && ( dij[i]->cost( dij[i]->heap->top() ) <= best_cost ) ) {
+                best_cost = dij[i]->cost( dij[i]->heap->top() );
                 best_layer = i;
             }
         }
@@ -250,15 +250,12 @@ public:
         std::list< CompleteNode > queue;
         
         init_result_queue( queue );
-        cout << "Path :" <<endl;
         while( !queue.empty() ) {
             CompleteNode curr = queue.back();
             queue.pop_back();
             
             int l = curr.first;
             RLC::Vertice vert = curr.second;
-            
-            cout << vert.first << " " << vert.second << endl;
             
             if( dij[l]->has_pred(vert) ) {
                 vres.edges.push_back(transport->edgeIndex( dij[l]->get_pred(vert).first ));

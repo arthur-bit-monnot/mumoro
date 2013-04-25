@@ -4,6 +4,7 @@
 
 #include "MuparoTypedefs.h"
 #include "node_filter_utils.h"
+#include <AspectTargetAreaLandmark.h>
 
 using RLC::DRegLC;
 using RLC::AspectCount;
@@ -125,9 +126,10 @@ void init_car_sharing_filtered(T * cs, const Transport::Graph* trans, int src_pe
 
 template<typename T>
 void init_car_sharing_with_areas(T * cs, const Transport::Graph* trans, int src_ped, int src_car, int dest_ped, 
-                 int dest_car, RLC::DFA dfa_ped, RLC::DFA dfa_car, Area * area_start, Area * area_dest )
+                 int dest_car, RLC::DFA dfa_ped, RLC::DFA dfa_car, Area * area_start, Area * area_dest, bool use_landmarks = false )
 {
     typedef RLC::AspectTargetArea<RLC::AspectCount<RLC::DRegLC>> CarAlgo;
+    typedef RLC::AspectTargetArea<RLC::AspectTargetAreaLandmark<RLC::AspectCount<RLC::DRegLC>>> CarAlgoLM;
     typedef RLC::AspectNodePruning<RLC::AspectCount<RLC::DRegLC>> PassAlgo;
     
     cs->vres.a_nodes.push_back(src_ped);
@@ -160,18 +162,36 @@ void init_car_sharing_with_areas(T * cs, const Transport::Graph* trans, int src_
         PassAlgo::ParamType(
             RLC::DRegLCParams(g1, day, 1),
             RLC::AspectNodePruningParams( &area_start->ns ) ) ) );
-    cs->dij.push_back( new CarAlgo( 
-        CarAlgo::ParamType(
-            RLC::DRegLCParams(g2, day, 1),
-            RLC::AspectTargetAreaParams(area_start) ) ) );
-    cs->dij.push_back( new CarAlgo( 
-        CarAlgo::ParamType(
-            RLC::DRegLCParams(g3, day, 2),
-            RLC::AspectTargetAreaParams(area_dest) ) ) );
-    cs->dij.push_back( new CarAlgo( 
-        CarAlgo::ParamType(
-            RLC::DRegLCParams(g4, day, 1),
-            RLC::AspectTargetAreaParams(area_dest) ) ) );
+    if(!use_landmarks) {
+        cs->dij.push_back( new CarAlgo( 
+            CarAlgo::ParamType(
+                RLC::DRegLCParams(g2, day, 1),
+                RLC::AspectTargetAreaParams(area_start) ) ) );
+        cs->dij.push_back( new CarAlgo( 
+            CarAlgo::ParamType(
+                RLC::DRegLCParams(g3, day, 2),
+                RLC::AspectTargetAreaParams(area_dest) ) ) );
+        cs->dij.push_back( new CarAlgo( 
+            CarAlgo::ParamType(
+                RLC::DRegLCParams(g4, day, 1),
+                RLC::AspectTargetAreaParams(area_dest) ) ) );
+    } else {
+        cs->dij.push_back( new CarAlgoLM( 
+            CarAlgoLM::ParamType(
+                RLC::DRegLCParams(g2, day, 1),
+                RLC::AspectTargetAreaLandmarkParams(area_start),
+                RLC::AspectTargetAreaParams(area_start) ) ) );
+        cs->dij.push_back( new CarAlgoLM( 
+            CarAlgoLM::ParamType(
+                RLC::DRegLCParams(g3, day, 2),
+                RLC::AspectTargetAreaLandmarkParams(area_dest),
+                RLC::AspectTargetAreaParams(area_dest) ) ) );
+        cs->dij.push_back( new CarAlgoLM( 
+            CarAlgoLM::ParamType(
+                RLC::DRegLCParams(g4, day, 1),
+                RLC::AspectTargetAreaLandmarkParams(area_dest),
+                RLC::AspectTargetAreaParams(area_dest) ) ) );
+    }
     cs->dij.push_back( new PassAlgo( 
         PassAlgo::ParamType(
             RLC::DRegLCParams(g5, day, 1),
@@ -181,27 +201,9 @@ void init_car_sharing_with_areas(T * cs, const Transport::Graph* trans, int src_
     cs->insert( StateFreeNode(1, src_car), time, 0);
     cs->insert( StateFreeNode(3, dest_car), 0, 0);
 }
-/*
-Muparo * bi_point_to_point(Transport::Graph * trans, int source, int dest);
-Muparo * bidir_covoiturage(Transport::Graph * trans, int source1, int source2, int dest1, int dest2,
-                     RLC::DFA dfa1, RLC::DFA dfa2, int limit = -1);
-Muparo * time_dep_covoiturage(Transport::Graph * trans, int source1, int source2, int dest1, int dest2,
-                              RLC::DFA dfa_pass, RLC::DFA dfa_car, int limit = -1);
 
-Muparo * conv_time_dep_covoiturage(Transport::Graph * trans, int source1, int source2, int dest1, int dest2,
-                              RLC::DFA dfa_pass, RLC::DFA dfa_car);
 
-Muparo * covoiturage(Transport::Graph * trans, int source1, int source2, int dest1, int dest2,
-                              RLC::DFA dfa_pass, RLC::DFA dfa_car );
-*/
 
-/**
- * Those functions allow to add further restrictions on a Muparo instance for car-sharing
- */
-/*
-void add_rectangle_restriction_on_car(Muparo * mup, Transport::Graph* trans, int source, int dest, float margin);
-void add_isochrone_restriction_on_passenger(Muparo * mup, Transport::Graph* trans, int source, int dest, float max_time);
-*/
 }
 
 

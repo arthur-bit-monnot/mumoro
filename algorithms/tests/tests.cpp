@@ -36,6 +36,7 @@ void run_test(std::string directory, Transport::Graph * trans, int car_start_nod
     out->add("time", time);
     out->add("day", day);
     
+    
     {
         typedef CarSharingTest CurrAlgo;
         
@@ -75,6 +76,7 @@ void run_test(std::string directory, Transport::Graph * trans, int car_start_nod
         out->step_out();
     }
     
+    /*
     {
         BBNodeFilter * toulouse = toulouse_bb(trans);
         BBNodeFilter * bordeaux = bordeaux_bb(trans);
@@ -136,6 +138,7 @@ void run_test(std::string directory, Transport::Graph * trans, int car_start_nod
         out->add("solution-cost", cs.solution_cost());
         out->step_out();
     }
+    */
     
     
     
@@ -177,6 +180,64 @@ void run_test(std::string directory, Transport::Graph * trans, int car_start_nod
         CarSharingTest cs( p );
         
         init_car_sharing_with_areas<CarSharingTest>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, dfa_passenger, dfa_car, area_start, area_dest );
+
+        STOP_TICKING;
+        out->add("init-time", RUNTIME);
+        START_TICKING;
+        cs.run();
+        STOP_TICKING;
+        
+        out->add("runtime", RUNTIME);
+        out->add("visited-nodes", cs.count);
+        
+        std::vector<int> per_layer;
+        for(int i=0 ; i<cs.num_layers ; ++i) {
+            per_layer.push_back( cs.dij[i]->count );
+        }
+        out->add("visited-per-layer", per_layer);
+        
+        out->add("solution-cost", cs.solution_cost());
+        out->step_out();
+    }
+    
+    
+    {
+        out->step_in("stop-conditions-landmarks");
+
+        START_TICKING;
+        CarSharingTest::ParamType p(
+            MuparoParams( trans, 5 ),
+            AspectTargetParams( 4, passenger_arrival_node ),
+            AspectPropagationRuleParams( SumCost, MaxArrival, 2, 0, 1),
+            AspectPropagationRuleParams( SumCost, FirstLayerArrival, 4, 2, 3)
+        );
+        
+        std::vector<NodeFilter*> filters;
+        RLC::Graph g1(trans, dfa_passenger );
+        RLC::BackwardGraph g2(&g1);
+        
+        Area * area_start;
+        Area * area_dest;
+        
+        if( toulouse->isIn(passenger_start_node) )
+            area_start = toulouse;
+        else if( bordeaux->isIn(passenger_start_node) )
+            area_start = bordeaux;
+        else
+            return ;
+        
+        
+        if( toulouse->isIn(passenger_arrival_node) )
+            area_dest = toulouse;
+        else if( bordeaux->isIn(passenger_arrival_node) )
+            area_dest = bordeaux;
+        else
+            return ;
+
+        
+        CarSharingTest cs( p );
+        
+        init_car_sharing_with_areas<CarSharingTest>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, dfa_passenger, dfa_car, area_start, area_dest, true );
 
         STOP_TICKING;
         out->add("init-time", RUNTIME);
@@ -264,8 +325,6 @@ void new_test(const Transport::Graph * g)
         cout << bordeaux1 <<" "<< bordeaux2 <<" "<< toulouse1 <<" "<< toulouse2 <<" 32140 10 1 0" <<endl;
     else
         cout << toulouse1 <<" "<< toulouse2 <<" "<< bordeaux1 <<" "<< bordeaux2 <<" 32140 10 1 0" <<endl;
-    
-    
 }
 
 
@@ -283,7 +342,8 @@ int main(void)
     
     ifstream indata; // indata is like cin
     
-    indata.open("/home/arthur/LAAS/mumoro/algorithms/tests/basic_test.conf"); // opens the file
+//     indata.open("/home/arthur/LAAS/mumoro/algorithms/tests/basic_test.conf"); // opens the file
+    indata.open("/home/arthur/LAAS/mumoro/algorithms/tests/smaller_areas.conf"); // opens the file
     if(!indata) { // file couldn't be opened
         cerr << "Error: file could not be opened" << endl;
         exit(1);
@@ -301,6 +361,8 @@ int main(void)
     
     toulouse = toulouse_area(transport);
     bordeaux = bordeaux_area(transport);
+    
+    cout << "R(Toulouse) : " << toulouse->radius << " ; R(Bordeaux) : " << bordeaux->radius <<endl;
 
     while ( !indata.eof() ) { // keep reading until end-of-file
         indata >> passenger_start_node >> car_start_node >> passenger_arrival_node >> car_arrival_node

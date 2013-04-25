@@ -33,16 +33,12 @@ public:
     
     virtual bool insert_node( const Vertice & node, const int arrival, const int cost ) {
         if( !max_cost_set && area->isIn( node.first ) ) {
-            AspectMaxCostPruning<Base>::max_cost = cost + area->max_traversal;
+            AspectMaxCostPruning<Base>::max_cost = cost + area->diameter;
             max_cost_set = true;
         }
         
         return AspectMaxCostPruning<Base>::insert_node( node, arrival, cost );
     }
-    
-    
-    
-    
 };
 
 
