@@ -330,6 +330,13 @@ void new_test(const Transport::Graph * g)
 
 int main(void)
 {
+    bool small_areas = true;
+    string config;
+    if(small_areas) 
+        config = "/home/arthur/LAAS/mumoro/algorithms/tests/smaller_areas.conf";
+    else
+        config = "/home/arthur/LAAS/mumoro/algorithms/tests/basic_test.conf";
+     
     srand (time(NULL));
     
     dfas[0] = new RLC::DFA(RLC::pt_foot_dfa());
@@ -342,8 +349,7 @@ int main(void)
     
     ifstream indata; // indata is like cin
     
-//     indata.open("/home/arthur/LAAS/mumoro/algorithms/tests/basic_test.conf"); // opens the file
-    indata.open("/home/arthur/LAAS/mumoro/algorithms/tests/smaller_areas.conf"); // opens the file
+    indata.open(config); // opens the file
     if(!indata) { // file couldn't be opened
         cerr << "Error: file could not be opened" << endl;
         exit(1);
@@ -359,8 +365,13 @@ int main(void)
     out = &writer;
     Transport::Graph * transport = new Transport::Graph("/home/arthur/LAAS/Data/Graphs/" + dump_file);
     
-    toulouse = toulouse_area(transport);
-    bordeaux = bordeaux_area(transport);
+    if(small_areas) {
+        toulouse = toulouse_area_small(transport);
+        bordeaux = bordeaux_area_small(transport);
+    } else {
+        toulouse = toulouse_area(transport);
+        bordeaux = bordeaux_area(transport);
+    }
     
     cout << "R(Toulouse) : " << toulouse->radius << " ; R(Bordeaux) : " << bordeaux->radius <<endl;
 

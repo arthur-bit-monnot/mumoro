@@ -60,7 +60,9 @@ private:
 Area * build_area_around ( const Transport::Graph * g, int start, int end, int max_cost );
 
 Area * toulouse_area ( const Transport::Graph * g );
+Area * toulouse_area_small ( const Transport::Graph * g );
 Area * bordeaux_area ( const Transport::Graph * g );
+Area * bordeaux_area_small ( const Transport::Graph * g );
 Area * small_area ( const Transport::Graph * g );
 
 NodeSet * meeting_points_in_area( Area * area );

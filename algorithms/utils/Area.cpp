@@ -110,11 +110,25 @@ Area * toulouse_area ( const Transport::Graph* g )
     return area;
 }
 
+Area * toulouse_area_small ( const Transport::Graph* g )
+{
+    Area * area = build_area_around( g, 608327, 618191, 600);
+    area->center = 329194;
+    area->init();
+    return area;
+}
+
 Area * bordeaux_area ( const Transport::Graph* g )
 {
-//     Area * area = build_area_around( g, 618192, 629765, 600);
+    Area * area = build_area_around( g, 618192, 629765, 600);
+    area->center = 580025;
+    area->init();
+    return area;
+}
+
+Area * bordeaux_area_small ( const Transport::Graph* g )
+{
     Area * area = build_area_around( g, 629421, 629765, 600);
-//     area->center = 580025;
     area->center = 379083;
     area->init();
     return area;
