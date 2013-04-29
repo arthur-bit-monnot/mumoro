@@ -37,7 +37,7 @@ int main()
 
     int source = 218238; //580025;
     int target = 329194;
-    int landmark = 302296; //target;
+    int landmark = target; //302296; //target;
     
     {
         typedef RLC::AspectCount<RLC::AspectTargetLandmark<RLC::DRegLC>> MyAlgo;

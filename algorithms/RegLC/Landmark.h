@@ -7,6 +7,8 @@
 #include <limits>
 #include <graph_wrapper.h>
 
+#define INF (std::numeric_limits<int>::max() / 3)
+
 namespace RLC {
 
 
@@ -28,38 +30,82 @@ class Landmark
     std::vector<int> hplus;
     
     /**
-     * Distances of this landmark to all other vertices
+     * Distances from this landmark to all other vertices
      */
     std::vector<int> hminus;
     
 public:
     Landmark( const std::string graph_id, const int node, const int size ) : graph_id(graph_id), node(node) {
-        hplus.resize( size, -1);
-        hminus.resize( size, -1);
+        hplus.resize( size, -1 );
+        hminus.resize( size, -1 );
     }
     
-    inline bool forward_reachable( const int node ) { return hplus[node] >= 0; }
+    inline bool forward_reachable( const int node ) const { return hplus[node] >= 0; }
     inline bool backward_reachable( const int node ) const { return hminus[node] >= 0; }
     
     void set_hplus( const int node, const int dist ) {  hplus[node] = dist; }
     void set_hminus( const int node, const int dist ) {  hminus[node] = dist; }
     
+    
+    /**
+     * Returns a lower bound of the distance between source and target
+     */
     int dist_lb( const int source, const int target, const bool is_forward ) const {
         if( is_forward ) {
-            const int dplus = hplus[source] - hplus[target];
-            const int dminus = hminus[target] - hminus[source];
+            const int dplus = potential_plus_forward( source, target );
+            const int dminus = potential_minus_forward( source, target );
             return dplus > dminus ? dplus : dminus;
         } else {
-            const int dplus = hminus[source] - hminus[target];
-            const int dminus = hplus[target] - hplus[source];
+            const int dplus = potential_plus_backward( source, target );
+            const int dminus = potential_minus_backward( source, target );
             return dplus > dminus ? dplus : dminus;
         }
     }
+
+private:
+    /**
+     * Following are the potential functions as defined in "Computing the Shortest PAth: A* Meets
+     * Graph Theory".
+     * 
+     * Those are defined for both forward and backward search.
+     */
     
+    inline int potential_plus_forward( const int source, const int target ) const {
+        if( forward_reachable( source ) && forward_reachable( target ) )
+            return hplus[source] - hplus[target];
+        else
+            return 0;
+    }
+
+    inline int potential_minus_forward( const int source, const int target ) const {
+        if( backward_reachable( source ) && backward_reachable( target ) )
+            return hminus[target] - hminus[source];
+        else
+            return 0;
+    }
+    
+    inline int potential_plus_backward( const int source, const int target ) const {
+        if( forward_reachable( source ) && forward_reachable( target ) )
+            return hplus[target] - hplus[source];
+        else
+            return 0;
+    }
+    
+    inline int potential_minus_backward( const int source, const int target ) const {
+        if( backward_reachable( source ) && backward_reachable( target ) )
+            return hminus[source] - hminus[target];
+        else
+            return 0;
+    }
     
 };
 
 
+/**
+ * Creates a Landmark on 'node' for the graph 'trans'.
+ * 
+ * The computation uses a car DFA (the only considered are the car ones)
+ */
 Landmark * create_landmark( const Transport::Graph * trans, const int node );
 
 
