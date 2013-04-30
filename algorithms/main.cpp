@@ -14,6 +14,7 @@
 #include "RegLC/AspectTargetAreaLandmark.h"
 
 #include "MultipleParticipants/PotentialMeetingPoints.h"
+#include "DataStructures/GraphFactory.h"
 
 using namespace RLC;
 
@@ -21,19 +22,17 @@ int main()
 {
     Debug( dc::notice.on() );             // Turn on the NOTICE Debug Channel.
     Debug( libcw_do.on() );               // Turn on the default Debug Object.
-  
-//     Transport::Graph g("/home/arthur/LAAS/mumoro/976c9329c82da079f78be26dddcf1174.dump");
-//     Transport::Graph g("/home/arthur/LAAS/Data/Graphs/toulouse-mixed.dump");
-    const Transport::Graph g("/home/arthur/LAAS/Data/Graphs/sud-ouest.dump");
-//     const Transport::Graph g("/home/arthur/LAAS/mumoro/c01210f9d0f38553b4f5fd508c79be1a.dump");
     
+    Transport::GraphFactory gf("/home/arthur/LAAS/Data/Graphs/sud-ouest.dump");
     
-    RLC::Graph rlc(&g, RLC::car_dfa());
+    const Transport::Graph * g = gf.get();
+    
+    RLC::Graph rlc(g, RLC::car_dfa());
     RLC::BackwardGraph back_rlc( &rlc );
     
-    Area * toulouse = toulouse_area(&g);
-    Area * bordeaux = bordeaux_area(&g);
-    Area * small = small_area(&g);
+    Area * toulouse = toulouse_area(g);
+    Area * bordeaux = bordeaux_area(g);
+    Area * small = small_area(g);
 
     int source = 218238; //580025;
     int target = 329194;
@@ -42,7 +41,7 @@ int main()
     {
         typedef RLC::AspectCount<RLC::AspectTargetLandmark<RLC::DRegLC>> MyAlgo;
         
-        Landmark * lm = create_landmark( &g, landmark );
+        Landmark * lm = create_car_landmark( g, landmark );
         
         MyAlgo::ParamType p(
             DRegLCParams(&rlc, 10),

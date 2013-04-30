@@ -7,6 +7,7 @@ using std::endl;
 using std::ifstream;
 #include <time.h>
 
+#include "GraphFactory.h"
 #include "muparo.h"
 #include "run_configurations.h"
 #include "utils.h"
@@ -27,7 +28,7 @@ Area * bordeaux;
 Landmark * toulouse_lm;
 Landmark * bordeaux_lm;
 
-void run_test(std::string directory, Transport::Graph * trans, int car_start_node, int passenger_start_node, int car_arrival_node,
+void run_test(std::string directory, const Transport::Graph * trans, int car_start_node, int passenger_start_node, int car_arrival_node,
               int passenger_arrival_node, int time, int day, RLC::DFA dfa_car, RLC::DFA dfa_passenger)
 {
     out->step_in();
@@ -42,8 +43,6 @@ void run_test(std::string directory, Transport::Graph * trans, int car_start_nod
     
     {
         typedef CarSharingTest CurrAlgo;
-        
-        
         
         out->step_in("unrestricted");
 
@@ -373,7 +372,8 @@ int main(void)
     indata >> dump_file;
     JsonWriter writer("/home/arthur/LAAS/Data/Results/" + name + ".txt");
     out = &writer;
-    Transport::Graph * transport = new Transport::Graph("/home/arthur/LAAS/Data/Graphs/" + dump_file);
+    Transport::GraphFactory gf("/home/arthur/LAAS/Data/Graphs/" + dump_file);
+    const Transport::Graph * transport = gf.get();
     
     if(small_areas) {
         toulouse = toulouse_area_small(transport);
@@ -382,8 +382,8 @@ int main(void)
         toulouse = toulouse_area(transport);
         bordeaux = bordeaux_area(transport);
     }
-    toulouse_lm = RLC::create_landmark(transport, toulouse->center);
-    bordeaux_lm = RLC::create_landmark(transport, bordeaux->center);
+    toulouse_lm = RLC::create_car_landmark(transport, toulouse->center);
+    bordeaux_lm = RLC::create_car_landmark(transport, bordeaux->center);
     
     cout << "R(Toulouse) : " << toulouse->radius << " ; R(Bordeaux) : " << bordeaux->radius <<endl;
 

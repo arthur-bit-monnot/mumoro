@@ -126,7 +126,7 @@ private:
  * 
  * The computation uses a car DFA (the only considered are the car ones)
  */
-Landmark * create_landmark( const Transport::Graph * trans, const int node );
+Landmark * create_car_landmark( const Transport::Graph * trans, const int node );
 
 
 } //end namespace RLC

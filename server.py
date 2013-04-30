@@ -257,7 +257,8 @@ class Mumoro:
         row = rs.fetchone()
         if row and row['md5']== md5_of_file( file( config_file ) ) and os.path.exists( os.getcwd() + "/" + row['binary_file'] ):
                 print "No need to rebuilt graph : configuration didn't change so loading from binary file"
-                self.g = layer.MultimodalGraph(layers, str(row['binary_file']))
+                print str(row['binary_file'])
+                self.g = layer.MultimodalGraph(layers, str(row['md5']), str(row['binary_file']))
         else:
             if not row:
                 print "This is the first time of launch: creating multimodal graph from scratch"
@@ -271,7 +272,7 @@ class Mumoro:
                 print "Configuration has not changed since last launch but binary file is missing. Rebuilding multimodal graph"
                 self.config_table.delete().execute()
                 self.session.commit()
-            self.g = layer.MultimodalGraph( layers )
+            self.g = layer.MultimodalGraph( layers, md5_of_file( file( config_file ) ) )
             for i in same_nodes_connection_array:
                 self.g.connect_same_nodes( i['layer1']['layer'],i['layer2']['layer'],i['property'] )
             for i in nearest_nodes_connection_array:
@@ -292,7 +293,6 @@ class Mumoro:
                    except KeyError:
                        raise NameError('Can not connect layers from the node list')
             md5_config_checksum = md5_of_file( file( config_file ) )
-            self.g.set_id( md5_config_checksum )
             self.g.save( md5_config_checksum + '.dump' )
             i = self.config_table.insert()
             i.execute({'config_file': config_file, 'md5': md5_config_checksum, 'binary_file': md5_config_checksum + '.dump'})   
@@ -303,14 +303,14 @@ class Mumoro:
         dest = self.g.match( 'Street', float(dlon), float(dlat))
         date = self.analyse_date( time )
         print "Searching path from {0} to {1} at time {2} on day {3}".format(start, dest, date['seconds'], date['days'])
-        #res = mumoro.cap_jj_nf( self.g.graph ).visualization()
-        #iso = mumoro.isochrone( self.g.graph, mumoro.foot_subway_dfa(), start, 1200 )
+        #res = mumoro.cap_jj_nf( self.g.graph() ).visualization()
+        #iso = mumoro.isochrone( self.g.graph(), mumoro.foot_subway_dfa(), start, 1200 )
         #res = iso.visualization()
         
-        #res = mumoro.rectangle_containing( self.g.graph, start, dest, 0.015 ).visualization()
+        #res = mumoro.rectangle_containing( self.g.graph(), start, dest, 0.015 ).visualization()
         
-        res = self.muparo( start, dest, date['seconds'], date['days'], self.g.graph )
-        print res.a_nodes.size()
+        res = self.muparo( start, dest, date['seconds'], date['days'], self.g.graph() )
+        print res.edges.size()
         return self.resultToGeoJson( res )
     
     def regular_dij_path(self, start, dest, secs, day, graph ):
@@ -330,7 +330,9 @@ class Mumoro:
         return dij.get_result()
     
     def muparo(self, start, dest, secs, day, graph ):
+        print graph.num_vertices()
         res = mumoro.show_point_to_point(graph, dest, start, mumoro.car_dfa() )
+        print res
         #res = mumoro.show_shared_path( graph, start, dest, 306 )
         #res = mumoro.show_car_sharing(graph, start, dest, 278790, 112254, mumoro.pt_foot_dfa(), mumoro.car_dfa())
         #print "{} {} {} {} {} {} {} {}".format(start, dest, 278790, 112254, secs, 10, 1, 0)
@@ -524,21 +526,21 @@ class Mumoro:
     def edgeFeatures(self, restriction):
         edges = None
         if not restriction or restriction == '':
-            edges = self.g.graph.listEdges()
+            edges = self.g.graph().listEdges()
         elif restriction == 'Bus':
-            edges = self.g.graph.listEdges(mumoro.BusEdge)
+            edges = self.g.graph().listEdges(mumoro.BusEdge)
         elif restriction == 'Bike':
-            edges = self.g.graph.listEdges(mumoro.BikeEdge)
+            edges = self.g.graph().listEdges(mumoro.BikeEdge)
         elif restriction == 'Foot':
-            edges = self.g.graph.listEdges(mumoro.FootEdge)
+            edges = self.g.graph().listEdges(mumoro.FootEdge)
         elif restriction == 'Car':
-            edges = self.g.graph.listEdges(mumoro.CarEdge)
+            edges = self.g.graph().listEdges(mumoro.CarEdge)
         elif restriction == 'Subway':
-            edges = self.g.graph.listEdges(mumoro.SubwayEdge)
+            edges = self.g.graph().listEdges(mumoro.SubwayEdge)
         elif restriction == 'Transfer':
-            edges = self.g.graph.listEdges(mumoro.TransferEdge)
+            edges = self.g.graph().listEdges(mumoro.TransferEdge)
         elif restriction == 'Tram':
-            edges = self.g.graph.listEdges(mumoro.TramEdge)
+            edges = self.g.graph().listEdges(mumoro.TramEdge)
         return self.edgesToFeatures(edges)
 
     def edgesToFeatures(self, edges):
@@ -562,8 +564,8 @@ class Mumoro:
         geometry = {'type': 'Linestring'}
         coordinates = []
         for edge_id in edges:
-            src_coord = self.g.coordinates(self.g.graph.source(edge_id))
-            target_coord = self.g.coordinates(self.g.graph.target(edge_id))
+            src_coord = self.g.coordinates(self.g.graph().source(edge_id))
+            target_coord = self.g.coordinates(self.g.graph().target(edge_id))
             feature = {'type': 'feature'}
             geometry = {'type': 'Linestring'}
             coordinates = []
@@ -574,7 +576,7 @@ class Mumoro:
                         'type': 'Linestring',
                         'coordinates': [[src_coord[0], src_coord[1]], [target_coord[0], target_coord[1]]]
                         },
-                    'properties': { 'layer': EdgeTypesToString[self.g.graph.map(edge_id).type] }
+                    'properties': { 'layer': EdgeTypesToString[self.g.graph().map(edge_id).type] }
                     }
             features.append(connection);
         
@@ -614,8 +616,8 @@ class Mumoro:
         geometry = {'type': 'Linestring'}
         coordinates = []
         for edge_id in res.edges:
-            src_coord = self.g.coordinates(self.g.graph.source(edge_id))
-            target_coord = self.g.coordinates(self.g.graph.target(edge_id))
+            src_coord = self.g.coordinates(self.g.graph().source(edge_id))
+            target_coord = self.g.coordinates(self.g.graph().target(edge_id))
             feature = {'type': 'feature'}
             geometry = {'type': 'Linestring'}
             coordinates = []
@@ -626,13 +628,13 @@ class Mumoro:
                         'type': 'Linestring',
                         'coordinates': [[src_coord[0], src_coord[1]], [target_coord[0], target_coord[1]]]
                         },
-                    'properties': { 'layer': EdgeTypesToString[self.g.graph.map(edge_id).type] }
+                    'properties': { 'layer': EdgeTypesToString[self.g.graph().map(edge_id).type] }
                     }
             features.append(connection);
         
         for (nodes, layer) in ((res.a_nodes, 'PointA'), (res.b_nodes, 'PointB'), (res.c_nodes, 'PointC')):
             for node_id in nodes:
-                node = self.g.graph.mapNode(node_id)
+                node = self.g.graph().mapNode(node_id)
                 feature = {
                     'type': 'feature',
                     'geometry': {

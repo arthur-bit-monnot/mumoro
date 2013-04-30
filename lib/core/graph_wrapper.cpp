@@ -58,21 +58,23 @@ namespace Transport {
 Graph::Graph(const std::string & filename)
 {
     load(filename);
+    car_accessible = boost::dynamic_bitset<>(this->num_vertices());
 }
 
-Graph::Graph(int nb_nodes) : g(nb_nodes)
+Graph::Graph(int nb_nodes) : g(nb_nodes), car_accessible(nb_nodes)
 {
 }
 
 
 void Graph::add_road_edge ( const int source, const int target, const EdgeMode type, const int duration )
 {
+    
     Edge e(true, num_road_edges, type);
     num_road_edges++;
     
     boost::add_edge(source, target, e, g);
     this->road_durations.push_back(duration);
-    BOOST_ASSERT(this->road_durations[e.index] = duration);
+    BOOST_ASSERT(this->road_durations[e.index] == duration);
 }
 
 void Graph::set_coord(int node, float lon, float lat)
@@ -141,12 +143,10 @@ void Graph::compute_min_durations()
 void Graph::init_edge_indexes()
 {
     edges_vec.resize(num_pt_edges + num_road_edges);
-    int count = 0;
+
     BOOST_FOREACH(edge_t e, boost::edges(g)) {
-        count++;
         edges_vec[ edgeIndex(e) ] = e;
     }
-    BOOST_ASSERT(count == (num_pt_edges + num_road_edges));
 }
 
 

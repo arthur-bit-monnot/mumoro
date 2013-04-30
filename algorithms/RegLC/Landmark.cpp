@@ -6,7 +6,7 @@
 
 namespace RLC {
 
-Landmark * create_landmark ( const Transport::Graph* trans, const int node )
+Landmark * create_car_landmark ( const Transport::Graph* trans, const int node )
 {
     int day = 10;
     Landmark * lm =  new Landmark( trans->get_id(), node, trans->num_vertices() );

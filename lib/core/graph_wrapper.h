@@ -20,6 +20,7 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
+#include <boost/dynamic_bitset.hpp>
 
 #include <bitset>
 
@@ -186,9 +187,11 @@ namespace Transport {
 
 struct Graph
 {
+    friend class GraphFactory;
 public:
     Graph_t g;
 
+private:
     /**
      * Initializes the graph with a given number of nodes
      */
@@ -215,12 +218,13 @@ public:
      * Sets longitude and latitude to the node
      */
     void set_coord(int node, float lon, float lat);
+    void set_car_accessible( const int node ) { car_accessible.set( node ); }
     
     void set_id(const std::string id) { this->id = id; }
-    std::string get_id() const { return id; }
     
     void save(const std::string & filename) const;
     void load(const std::string & filename);
+
     
     /**
      * Performs operations that need to be done once all information is in the graph :
@@ -230,6 +234,9 @@ public:
      * - computes min duration for each edge
      */
     void preprocess();
+
+public:
+    std::string get_id() const { return id; }
     
     /**
      * List all edges with type `type`
@@ -312,6 +319,7 @@ private:
     vector<DurationPT> pt_durations;
     
     std::vector<edge_t> edges_vec;
+    boost::dynamic_bitset<> car_accessible;
     inline edge_t edge_descriptor(const int edge_id) const { return edges_vec[edge_id]; }
     
     void compute_min_durations();

@@ -307,7 +307,7 @@ class GTFSLayer(BaseLayer):
  
 
 class MultimodalGraph(object):
-    def __init__(self, layers, filename = None):
+    def __init__(self, layers, id, filename = None):
         nb_nodes = 0
         self.node_to_layer = []
         self.layers = layers
@@ -317,40 +317,40 @@ class MultimodalGraph(object):
             self.node_to_layer.append((nb_nodes, l.name))
             print "Layer " + l.name + " for nodes from " + str(l.offset) +" to "+ str(nb_nodes - 1)
  
-        self.graph = mumoro.Graph(nb_nodes)
- 
         if filename:
-            self.graph = mumoro.Graph(filename)
+            self.graph_facto = mumoro.GraphFactory(filename)
         else:
+            self.graph_facto = mumoro.GraphFactory(nb_nodes)
+            self.graph_facto.set_id(id)
+            
             count = 0
             for l in layers:
                 for e in l.edges():
                     if e.has_key('properties') and e['properties']['road_edge']:
-                        self.graph.add_road_edge(e['source'], e['target'], e['properties']['type'], int(e['properties']['duration']))
+                        self.graph_facto.add_road_edge(e['source'], e['target'], e['properties']['type'], int(e['properties']['duration']))
                         count += 1
                     elif e.has_key('properties'):
-                        if self.graph.add_public_transport_edge(e['source'], e['target'], e['properties']['type'], int(e['properties']['duration'])):
+                        if self.graph_facto.add_public_transport_edge(e['source'], e['target'], e['properties']['type'], int(e['properties']['duration'])):
                             count += 1
                     else:
-                        if self.graph.add_public_transport_edge(e['source'], e['target'], e['duration_type'], e['departure'], e['arrival'], e['duration'], 
+                        if self.graph_facto.add_public_transport_edge(e['source'], e['target'], e['duration_type'], e['departure'], e['arrival'], e['duration'], 
                                                             str(e['services']), e['type']):
                             count += 1
                 print "On layer {0}, {1} edges, {2} nodes".format(l.name, count, l.count)
                 
                 for n in l.nodes():
-                    self.graph.set_coord(n.id + l.offset, n.lon, n.lat)
+                    self.graph_facto.set_coord(n.id + l.offset, n.lon, n.lat)
 
-            self.graph.preprocess()
             print "The multimodal graph has been built and has {0} nodes and {1} edges".format(nb_nodes, count)
  
-    def set_id(self, id):
-        self.graph.set_id(id)
+    def graph(self):
+        return self.graph_facto.get()
  
     def save(self, filename):
-        self.graph.save(filename)
+        self.graph_facto.save(filename)
 
-    def load(self, filename):
-        self.graph.load(filename)
+    #def load(self, filename):
+        #self.graph_facto.load(filename)
  
     def layer(self, node):
         for l in self.node_to_layer:
@@ -379,7 +379,7 @@ class MultimodalGraph(object):
         for n1 in layer1.nodes():
             n2 = layer2.map(n1.original_id)
             if n2:
-                self.graph.add_edge(n1.id + layer1.offset, n2, property)
+                self.graph_facto.add_edge(n1.id + layer1.offset, n2, property)
                 count += 1
                 print count
         return count
@@ -389,7 +389,7 @@ class MultimodalGraph(object):
         for n1 in layer1.nodes():
             n2 = layer2.map(n1.original_id)
             if n2 and count % freq == 0:
-                self.graph.add_edge(n1.id + layer.offset, n2, property)
+                self.graph_facto.add_edge(n1.id + layer.offset, n2, property)
                 count += 1
         return count
 
@@ -402,8 +402,8 @@ class MultimodalGraph(object):
             n1 = layer1.match(coord['lon'], coord['lat'])
             n2 = layer2.match(coord['lon'], coord['lat'])
             if n1 and n2:
-                self.graph.add_edge(n1, n2, property)
-                self.graph.add_edge(n2, n1, property2)
+                self.graph_facto.add_edge(n1, n2, property)
+                self.graph_facto.add_edge(n2, n1, property2)
                 count += 2
             else:
                 print "Uho... no connection possible"
@@ -420,8 +420,8 @@ class MultimodalGraph(object):
                 continue
             nearest = layer2.nearest(n.lon, n.lat)
             if nearest:
-                self.graph.add_public_transport_edge(n.id + layer1.offset, nearest, property['duration'], property['type'])
-                self.graph.add_public_transport_edge(nearest, n.id + layer1.offset, property2['duration'], property2['type'])
+                self.graph_facto.add_public_transport_edge(n.id + layer1.offset, nearest, property['duration'], property['type'])
+                self.graph_facto.add_public_transport_edge(nearest, n.id + layer1.offset, property2['duration'], property2['type'])
                 count += 2
         return count
  
