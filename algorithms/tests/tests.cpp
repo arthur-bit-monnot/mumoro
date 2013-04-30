@@ -12,6 +12,7 @@ using std::ifstream;
 #include "utils.h"
 #include "node_filter_utils.h"
 #include "../RegLC/AlgoTypedefs.h"
+#include "Landmark.h"
 
 #include "JsonWriter.h"
 
@@ -23,6 +24,8 @@ RLC::DFA * dfas[2];
 JsonWriter * out;
 Area * toulouse;
 Area * bordeaux;
+Landmark * toulouse_lm;
+Landmark * bordeaux_lm;
 
 void run_test(std::string directory, Transport::Graph * trans, int car_start_node, int passenger_start_node, int car_arrival_node,
               int passenger_arrival_node, int time, int day, RLC::DFA dfa_car, RLC::DFA dfa_passenger)
@@ -216,28 +219,35 @@ void run_test(std::string directory, Transport::Graph * trans, int car_start_nod
         RLC::Graph g1(trans, dfa_passenger );
         RLC::BackwardGraph g2(&g1);
         
-        Area * area_start;
-        Area * area_dest;
+        Area * area_start, * area_dest;
+        Landmark * lm_start, * lm_dest;
         
-        if( toulouse->isIn(passenger_start_node) )
+        if( toulouse->isIn(passenger_start_node) ) {
             area_start = toulouse;
-        else if( bordeaux->isIn(passenger_start_node) )
+            lm_start = toulouse_lm;
+        } else if( bordeaux->isIn(passenger_start_node) ) {
             area_start = bordeaux;
-        else
+            lm_start = bordeaux_lm;
+        } else {
             return ;
+        }
         
-        
-        if( toulouse->isIn(passenger_arrival_node) )
+        if( toulouse->isIn(passenger_arrival_node) ) {
             area_dest = toulouse;
-        else if( bordeaux->isIn(passenger_arrival_node) )
+            lm_dest = toulouse_lm;
+        } else if( bordeaux->isIn(passenger_arrival_node) ) {
             area_dest = bordeaux;
-        else
+            lm_dest = bordeaux_lm;
+        } else {
             return ;
+        }
 
         
         CarSharingTest cs( p );
         
-        init_car_sharing_with_areas<CarSharingTest>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, dfa_passenger, dfa_car, area_start, area_dest, true );
+        init_car_sharing_with_areas<CarSharingTest>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, 
+                                                     dfa_passenger, dfa_car, area_start, area_dest, 
+                                                     true, lm_start, lm_dest );
 
         STOP_TICKING;
         out->add("init-time", RUNTIME);
@@ -330,7 +340,7 @@ void new_test(const Transport::Graph * g)
 
 int main(void)
 {
-    bool small_areas = true;
+    bool small_areas = false;
     string config;
     if(small_areas) 
         config = "/home/arthur/LAAS/mumoro/algorithms/tests/smaller_areas.conf";
@@ -372,6 +382,8 @@ int main(void)
         toulouse = toulouse_area(transport);
         bordeaux = bordeaux_area(transport);
     }
+    toulouse_lm = RLC::create_landmark(transport, toulouse->center);
+    bordeaux_lm = RLC::create_landmark(transport, bordeaux->center);
     
     cout << "R(Toulouse) : " << toulouse->radius << " ; R(Bordeaux) : " << bordeaux->radius <<endl;
 

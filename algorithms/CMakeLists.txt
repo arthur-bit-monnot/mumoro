@@ -2,6 +2,7 @@
 add_subdirectory( utils )
 add_subdirectory( RegLC )
 add_subdirectory( MultipleParticipants )
+add_subdirectory( DataStructures )
 add_subdirectory( tests )
 
 ## This might be used to add module with no change in build configuration. However it makes it hard for IDEs to track which directories 

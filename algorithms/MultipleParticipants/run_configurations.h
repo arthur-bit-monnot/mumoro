@@ -6,8 +6,10 @@
 #include "node_filter_utils.h"
 #include <AspectTargetAreaLandmark.h>
 
+
 using RLC::DRegLC;
 using RLC::AspectCount;
+using RLC::Landmark;
 
 
 namespace MuPaRo {
@@ -126,7 +128,8 @@ void init_car_sharing_filtered(T * cs, const Transport::Graph* trans, int src_pe
 
 template<typename T>
 void init_car_sharing_with_areas(T * cs, const Transport::Graph* trans, int src_ped, int src_car, int dest_ped, 
-                 int dest_car, RLC::DFA dfa_ped, RLC::DFA dfa_car, Area * area_start, Area * area_dest, bool use_landmarks = false )
+                 int dest_car, RLC::DFA dfa_ped, RLC::DFA dfa_car, Area * area_start, Area * area_dest, 
+                 bool use_landmarks = false, const Landmark * lm_start = NULL, const Landmark * lm_dest = NULL )
 {
     typedef RLC::AspectTargetArea<RLC::AspectCount<RLC::DRegLC>> CarAlgo;
     typedef RLC::AspectTargetArea<RLC::AspectTargetAreaLandmark<RLC::AspectCount<RLC::DRegLC>>> CarAlgoLM;
@@ -179,17 +182,17 @@ void init_car_sharing_with_areas(T * cs, const Transport::Graph* trans, int src_
         cs->dij.push_back( new CarAlgoLM( 
             CarAlgoLM::ParamType(
                 RLC::DRegLCParams(g2, day, 1),
-                RLC::AspectTargetAreaLandmarkParams(area_start),
+                RLC::AspectTargetAreaLandmarkParams(area_start, lm_start),
                 RLC::AspectTargetAreaParams(area_start) ) ) );
         cs->dij.push_back( new CarAlgoLM( 
             CarAlgoLM::ParamType(
                 RLC::DRegLCParams(g3, day, 2),
-                RLC::AspectTargetAreaLandmarkParams(area_dest),
+                RLC::AspectTargetAreaLandmarkParams(area_dest, lm_dest),
                 RLC::AspectTargetAreaParams(area_dest) ) ) );
         cs->dij.push_back( new CarAlgoLM( 
             CarAlgoLM::ParamType(
                 RLC::DRegLCParams(g4, day, 1),
-                RLC::AspectTargetAreaLandmarkParams(area_dest),
+                RLC::AspectTargetAreaLandmarkParams(area_dest, lm_dest),
                 RLC::AspectTargetAreaParams(area_dest) ) ) );
     }
     cs->dij.push_back( new PassAlgo( 

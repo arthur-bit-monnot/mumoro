@@ -4,8 +4,10 @@
 #include <vector>
 #include <nodes_filter.h>
 #include "node_filter_utils.h"
-#include <Landmark.h>
 
+namespace RLC {
+    class Landmark;
+}
 
 
 
@@ -20,10 +22,9 @@ public:
     int center;
     int diameter;
     int radius;
-    RLC::Landmark * lm;
     
     Area( const Transport::Graph * g, const int size ) : ns(size), g(g) {}
-    ~Area() { delete bb; delete lm; }
+    ~Area() { delete bb; }
     
     void add_node( const int n ) {
         nodes.push_back( n );
@@ -45,7 +46,6 @@ public:
     void init() {
         bb = rectangle_containing(g, nodes, 1.0);
         init_max_dist();
-        lm = RLC::create_landmark( g, center );
     }
     
     VisualResult get_res() { return vres; }

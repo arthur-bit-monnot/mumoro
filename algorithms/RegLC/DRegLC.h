@@ -153,7 +153,7 @@ public:
 
             int target_cost = cost(curr) + edge_cost * cost_factor;
             
-            
+//             if(!(!has_traffic || (edge_cost * cost_factor - cost_eval(curr, 0)  + cost_eval(target, 0) >= 0) ))
             BOOST_ASSERT(!has_traffic || (edge_cost * cost_factor - cost_eval(curr, 0)  + cost_eval(target, 0) >= 0) );
             
             // ignore the edge if it provokes an overflow
