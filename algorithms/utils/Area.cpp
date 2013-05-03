@@ -73,6 +73,17 @@ void Area::init_max_dist()
     this->radius = max_cost_backward > max_cost_forward ? max_cost_backward : max_cost_forward;
 }
 
+void Area::init_num_car_accessible()
+{
+    num_car_accessible = 0;
+    BOOST_FOREACH(int node, this->nodes) {
+        if( this->g->car_accessible( node ) )
+            num_car_accessible++;
+    }
+    
+    cout << "Num car accessible : " << num_car_accessible <<endl;
+}
+
 
 Area * build_area_around ( const Transport::Graph* trans, int start, int end, int max_cost )
 {

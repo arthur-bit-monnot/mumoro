@@ -28,40 +28,115 @@
 
 using namespace std;
 
-const char* edgeTypeToString(EdgeMode type) {
-    if(type == FootEdge)
-        return "Foot";
-    else if(type == BikeEdge)
-        return "Bike";
-    else if(type == CarEdge)
-        return "Car";
-    else if(type == BusEdge)
-        return "Bus";
-    else if(type == TramEdge)
-        return "Tram";
-    else if(type == SubwayEdge)
-        return "Subway";
-    else if(type == TransferEdge)
-        return "--Transfer--";
-    else
-        return "------ Unknown -------";
-}
+namespace boost
+{
+    namespace serialization
+    {
+        template <class Archive>
+        void save(Archive &ar, const Time &t, const unsigned int version)
+        {
+            ar << boost::get<0>(t);
+            ar << boost::get<1>(t);
+            std::string s = boost::get<2>(t).to_string();
+            ar << s;
+        }
+
+        template <class Archive>
+        void load(Archive &ar, Time &t, const unsigned int version)
+        {
+            ar >> boost::get<0>(t);
+            ar >> boost::get<1>(t);
+            std::string s;
+            ar >> s;
+            boost::get<2>(t) = Services(s);
+        }
+
+        template <class Archive>
+        void serialize(Archive &ar, Time &t, const unsigned int version)
+        {
+                boost::serialization::split_free(ar, t, version);
+        }
+
+        template <class Archive>
+        void save(Archive &ar, const Frequency &t, const unsigned int version)
+        {
+            ar << boost::get<0>(t);
+            ar << boost::get<1>(t);
+            ar << boost::get<2>(t);
+            std::string s = boost::get<3>(t).to_string();
+            ar << s;
+        }
+
+        template <class Archive>
+        void load(Archive &ar, Frequency &t, const unsigned int version)
+        {
+            ar >> boost::get<0>(t);
+            ar >> boost::get<1>(t);
+            ar >> boost::get<2>(t);
+            std::string s;
+            ar >> s;
+            boost::get<3>(t) = Services(s);
+        }
+
+        template <class Archive>
+        void serialize(Archive &ar, Frequency &t, const unsigned int version)
+        {
+                boost::serialization::split_free(ar, t, version);
+        }
+
+        template < class Archive , typename Block , typename Allocator >
+        inline void save( Archive & ar , boost::dynamic_bitset< Block , Allocator > const & t , const unsigned int /* version */ )
+        {
+                // Serialize bitset size
+                std::size_t size = t.size();
+                ar << size;
+
+                // Convert bitset into a vector
+                std::vector< Block > v( t.num_blocks() );
+                to_block_range( t, v.begin() );
+
+                // Serialize vector
+                ar & v;
+        }
+
+        template < class Archive , typename Block , typename Allocator >
+        inline void load( Archive & ar, boost::dynamic_bitset< Block , Allocator > & t, const unsigned int /* version */ )
+        {
+                std::size_t size;
+                ar & size;
+                t.resize( size );
+
+                // Load vector
+                std::vector< Block > v;
+                ar & v;
+
+                // Convert vector into a bitset
+                boost::from_block_range( v.begin() , v.end() , t );
+        }
+
+        template <class Archive, typename Block, typename Allocator>
+        inline void serialize( Archive & ar, boost::dynamic_bitset<Block, Allocator> & t, const unsigned int version )
+        {
+                boost::serialization::split_free( ar, t, version );
+        }
+
+    }   //  namespace serialization
+}   //  namespace boost
+
+
 
 Edge::Edge(const bool road_edge, const int index, const EdgeMode type) : road_edge(road_edge), index(index), type(type)
 {
 }
-
-
 
 namespace Transport {
 
 Graph::Graph(const std::string & filename)
 {
     load(filename);
-    car_accessible = boost::dynamic_bitset<>(this->num_vertices());
 }
 
-Graph::Graph(int nb_nodes) : g(nb_nodes), car_accessible(nb_nodes)
+Graph::Graph(int nb_nodes) : g(nb_nodes), car_accessibility(nb_nodes)
 {
 }
 
@@ -160,6 +235,7 @@ void Graph::load(const std::string & filename)
     iArchive >> num_pt_edges;
     iArchive >> road_durations;
     iArchive >> pt_durations;
+    iArchive >> car_accessibility;
     iArchive >> g; //graph;   
     std::cout << "   " << boost::num_vertices(g) << " nodes" << std::endl;
     std::cout << "   " << boost::num_edges(g) << " edges" << std::endl;
@@ -175,6 +251,7 @@ void Graph::save(const std::string & filename) const
     oArchive << num_pt_edges;
     oArchive << road_durations;
     oArchive << pt_durations;
+    oArchive << car_accessibility;
     oArchive << g; //graph; 
 }
 

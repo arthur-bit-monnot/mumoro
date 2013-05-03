@@ -22,8 +22,9 @@ int main()
 {
     Debug( dc::notice.on() );             // Turn on the NOTICE Debug Channel.
     Debug( libcw_do.on() );               // Turn on the default Debug Object.
-    
-    Transport::GraphFactory gf("/home/arthur/LAAS/Data/Graphs/sud-ouest.dump");
+//     std::string file( "/home/arthur/LAAS/Data/Graphs/sud-ouest.dump" );
+    std::string file( "/home/arthur/LAAS/mumoro/7675957d47e52fb89300bb5dc47ef8e7.dump" );
+    Transport::GraphFactory gf( file );
     
     const Transport::Graph * g = gf.get();
     

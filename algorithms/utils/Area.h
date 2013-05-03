@@ -22,6 +22,7 @@ public:
     int center;
     int diameter;
     int radius;
+    int num_car_accessible;
     
     Area( const Transport::Graph * g, const int size ) : ns(size), g(g) {}
     ~Area() { delete bb; }
@@ -46,12 +47,14 @@ public:
     void init() {
         bb = rectangle_containing(g, nodes, 1.0);
         init_max_dist();
+        init_num_car_accessible();
     }
     
     VisualResult get_res() { return vres; }
     
 private:    
     void init_max_dist();
+    void init_num_car_accessible();
 
     VisualResult vres;
 };

@@ -16,7 +16,7 @@ GraphFactory::GraphFactory ( const int nb_nodes )
 
 GraphFactory::GraphFactory ( const std::string& filename )
 {
-    initialized = false;
+    initialized = true;
     this->graph = new Graph( filename );
 }
 
@@ -108,6 +108,8 @@ void GraphFactory::preproc_car_layer()
 {
     int node, count;
     RLC::Landmark * lm = NULL;
+    
+    graph->car_accessibility.resize( graph->num_vertices() );
     
     // Selects a landmark from which an important part of the graph is accessible
     do {

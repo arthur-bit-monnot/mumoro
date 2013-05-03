@@ -8,14 +8,14 @@
 #include "AspectMinCost.h"
 #include "AspectNoRun.h"
 #include "AspectNodePruning.h"
-#include "AspectTargetArea.h"
+#include "AspectTargetAreaStop.h"
 
 namespace Algo {
     
     typedef RLC::DRegLC Basic;
     typedef RLC::AspectTarget<RLC::DRegLC> PtToPt;
     typedef RLC::AspectNodePruning<RLC::DRegLC> Filtered;
-    typedef RLC::AspectTargetArea<RLC::DRegLC> TargetArea;
+    typedef RLC::AspectTargetAreaStop<RLC::DRegLC> TargetArea;
     
 }
 

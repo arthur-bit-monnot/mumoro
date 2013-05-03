@@ -79,7 +79,7 @@ CarSharing * car_sharing ( const Transport::Graph* trans, int src_ped, int src_c
     CarSharing::ParamType p(
         MuparoParams( trans, 5 ),
         AspectTargetParams( 4, dest_ped ),
-        AspectPropagationRuleParams( SumPlusWaitCost, MaxArrival, 2, 0, 1),
+        AspectPropagationRuleParams( SumCost, MaxArrival, 2, 0, 1),
         AspectPropagationRuleParams( SumCost, FirstLayerArrival, 4, 2, 3)
     );
     

@@ -14,7 +14,7 @@ db_params = data_dir + 'DB/toulouse-mixed.db'
 #Load street data from (compressed or not) osm file(s)
 #-----------------------------------------------------
 
-osm_data = import_street_data (data_dir + "OSM/toulouse-centre.osm")
+osm_data = import_street_data ( [ data_dir + "OSM/toulouse-centre.osm" ] )
 #osm_data = data_dir + "OSM/toulouse-centre.osm"
 
 

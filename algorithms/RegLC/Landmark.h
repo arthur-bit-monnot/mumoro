@@ -68,13 +68,11 @@ public:
      */
     int dist_lb( const int source, const Area & area, const bool is_forward ) const {
         if( is_forward ) {
-            if(!forward_reachable(source)) return INF; // dead end
             const int dplus = potential_plus_forward( source, area.center ) - area.radius;
             const int dminus = potential_minus_forward( source, area.center ) - area.radius;
             const int ret = dplus > dminus ? dplus : dminus;
             return ret > 0 ? ret : 0;
         } else {
-            if(!backward_reachable(source)) return INF; // dead end
             const int dplus = potential_plus_backward( source, area.center ) - area.radius;
             const int dminus = potential_minus_backward( source, area.center ) - area.radius;
             const int ret = dplus > dminus ? dplus : dminus;
@@ -91,31 +89,23 @@ private:
      */
     
     inline int potential_plus_forward( const int source, const int target ) const {
-        if( forward_reachable( source ) && forward_reachable( target ) )
-            return hplus[source] - hplus[target];
-        else
-            return 0;
+        BOOST_ASSERT( forward_reachable( source ) && forward_reachable( target ) );
+        return hplus[source] - hplus[target];
     }
 
     inline int potential_minus_forward( const int source, const int target ) const {
-        if( backward_reachable( source ) && backward_reachable( target ) )
-            return hminus[target] - hminus[source];
-        else
-            return 0;
+        BOOST_ASSERT( backward_reachable( source ) && backward_reachable( target ) );
+        return hminus[target] - hminus[source];
     }
     
     inline int potential_plus_backward( const int source, const int target ) const {
-        if( forward_reachable( source ) && forward_reachable( target ) )
-            return hplus[target] - hplus[source];
-        else
-            return 0;
+        BOOST_ASSERT( forward_reachable( source ) && forward_reachable( target ) );
+        return hplus[target] - hplus[source];
     }
     
     inline int potential_minus_backward( const int source, const int target ) const {
-        if( backward_reachable( source ) && backward_reachable( target ) )
-            return hminus[source] - hminus[target];
-        else
-            return 0;
+        BOOST_ASSERT( backward_reachable( source ) && backward_reachable( target ) );
+        return hminus[source] - hminus[target];
     }
     
 };

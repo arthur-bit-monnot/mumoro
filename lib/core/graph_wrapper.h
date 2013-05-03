@@ -46,63 +46,6 @@ typedef boost::tuple<float, float, Services> Time;
  */
 typedef boost::tuple<int, int, int, Services> Frequency;
 
-const char* edgeTypeToString(EdgeMode type);
-
-
-namespace boost { namespace serialization {
-template <class Archive>
-void save(Archive &ar, const Time &t, const unsigned int version)
-{
-    ar << boost::get<0>(t);
-    ar << boost::get<1>(t);
-    std::string s = boost::get<2>(t).to_string();
-    ar << s;
-}
-
-template <class Archive>
-void load(Archive &ar, Time &t, const unsigned int version)
-{
-    ar >> boost::get<0>(t);
-    ar >> boost::get<1>(t);
-    std::string s;
-    ar >> s;
-    boost::get<2>(t) = Services(s);
-}
-
-template <class Archive>
-void serialize(Archive &ar, Time &t, const unsigned int version)
-{
-        boost::serialization::split_free(ar, t, version);
-}
-
-template <class Archive>
-void save(Archive &ar, const Frequency &t, const unsigned int version)
-{
-    ar << boost::get<0>(t);
-    ar << boost::get<1>(t);
-    ar << boost::get<2>(t);
-    std::string s = boost::get<3>(t).to_string();
-    ar << s;
-}
-
-template <class Archive>
-void load(Archive &ar, Frequency &t, const unsigned int version)
-{
-    ar >> boost::get<0>(t);
-    ar >> boost::get<1>(t);
-    ar >> boost::get<2>(t);
-    std::string s;
-    ar >> s;
-    boost::get<3>(t) = Services(s);
-}
-
-template <class Archive>
-void serialize(Archive &ar, Frequency &t, const unsigned int version)
-{
-        boost::serialization::split_free(ar, t, version);
-}
-}
-} 
 
 typedef enum { NextDay = 1, PrevDay = 2 } AllowedLookup;
 
@@ -218,7 +161,7 @@ private:
      * Sets longitude and latitude to the node
      */
     void set_coord(int node, float lon, float lat);
-    void set_car_accessible( const int node ) { car_accessible.set( node ); }
+    void set_car_accessible( const int node ) { car_accessibility.set( node ); }
     
     void set_id(const std::string id) { this->id = id; }
     
@@ -309,6 +252,8 @@ public:
      * Returns the latitude of a node
      */
     inline float latitude(const int node) const { return g[node].lat; }
+    
+    inline bool car_accessible(const int node) const { return car_accessibility.test(node); }
   
 private:
     std::string id;
@@ -319,7 +264,7 @@ private:
     vector<DurationPT> pt_durations;
     
     std::vector<edge_t> edges_vec;
-    boost::dynamic_bitset<> car_accessible;
+    boost::dynamic_bitset<> car_accessibility;
     inline edge_t edge_descriptor(const int edge_id) const { return edges_vec[edge_id]; }
     
     void compute_min_durations();

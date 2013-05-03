@@ -33,6 +33,15 @@ class NoLength(Exception):
 class DataIncoherence(Exception):
     pass
 
+def max_speed_to_average(max_speed):
+    if max_speed <= 0:
+        return 0
+    elif max_speed <= 30:
+        return 15
+    elif max_speed <= 90:
+        return max_speed - 20
+    else:
+        return max_speed - 30
  
 def duration(length, property, type):
     if not length and length != 0.0:
@@ -49,20 +58,11 @@ def duration(length, property, type):
         else:
             return length * 3.6 / 15
     elif type == mumoro.CarEdge:
-        if property == 1:
-            return length * 3.6 / 15
-        elif property == 2:
-            return length * 3.6 / 20
-        elif property == 3:
-            return length * 3.6 / 30
-        elif property == 4:
-            return length * 3.6 / 70
-        elif property == 5:
-            return length * 3.6 / 80
-        elif property == 6:
-            return length * 3.6 / 100
-        else:
+        if property <= 0:
             raise NotAccessible()
+        speed = max_speed_to_average( property )
+
+        return length * 3.6 / speed
     else:
         raise NotAccessible()
  
