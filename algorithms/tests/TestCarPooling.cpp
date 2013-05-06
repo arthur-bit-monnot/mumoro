@@ -14,6 +14,7 @@ using std::ifstream;
 #include "node_filter_utils.h"
 #include "../RegLC/AlgoTypedefs.h"
 #include "Landmark.h"
+#include "LandmarkSet.h"
 
 #include "JsonWriter.h"
 
@@ -27,6 +28,7 @@ Area * toulouse;
 Area * bordeaux;
 Landmark * toulouse_lm;
 Landmark * bordeaux_lm;
+RLC::LandmarkSet * lmset;
 
 void run_test(std::string directory, const Transport::Graph * trans, int car_start_node, int passenger_start_node, int car_arrival_node,
               int passenger_arrival_node, int time, int day, RLC::DFA dfa_car, RLC::DFA dfa_passenger)
@@ -181,7 +183,7 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
         
         CarSharingTest cs( p );
         
-        init_car_sharing_with_areas<CarSharingTest>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, dfa_passenger, dfa_car, area_start, area_dest );
+        init_car_sharing_with_areas<CarSharingTest, Landmark>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, dfa_passenger, dfa_car, area_start, area_dest );
 
         STOP_TICKING;
         out->add("init-time", RUNTIME);
@@ -247,6 +249,66 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
         init_car_sharing_with_areas<CarSharingTest>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, 
                                                      dfa_passenger, dfa_car, area_start, area_dest, 
                                                      true, lm_start, lm_dest );
+
+        STOP_TICKING;
+        out->add("init-time", RUNTIME);
+        START_TICKING;
+        cs.run();
+        STOP_TICKING;
+        
+        out->add("runtime", RUNTIME);
+        out->add("visited-nodes", cs.count);
+        
+        std::vector<int> per_layer;
+        for(int i=0 ; i<cs.num_layers ; ++i) {
+            per_layer.push_back( cs.dij[i]->count );
+        }
+        out->add("visited-per-layer", per_layer);
+        
+        out->add("solution-cost", cs.solution_cost());
+        out->step_out();
+    }
+    
+    {
+        out->step_in("stop-conditions-landmarks-set");
+
+        START_TICKING;
+        CarSharingTest::ParamType p(
+            MuparoParams( trans, 5 ),
+            AspectTargetParams( 4, passenger_arrival_node ),
+            AspectPropagationRuleParams( SumCost, MaxArrival, 2, 0, 1),
+            AspectPropagationRuleParams( SumCost, FirstLayerArrival, 4, 2, 3)
+        );
+        
+        std::vector<NodeFilter*> filters;
+        RLC::Graph g1(trans, dfa_passenger );
+        RLC::BackwardGraph g2(&g1);
+        
+        Area * area_start, * area_dest;
+        
+        
+        if( toulouse->isIn(passenger_start_node) ) {
+            area_start = toulouse;
+        } else if( bordeaux->isIn(passenger_start_node) ) {
+            area_start = bordeaux;
+        } else {
+            return ;
+        }
+        
+        if( toulouse->isIn(passenger_arrival_node) ) {
+            area_dest = toulouse;
+        } else if( bordeaux->isIn(passenger_arrival_node) ) {
+            area_dest = bordeaux;
+        } else {
+            return ;
+        }
+
+        
+        CarSharingTest cs( p );
+        
+        init_car_sharing_with_areas<CarSharingTest, RLC::LandmarkSet>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, 
+                                                     dfa_passenger, dfa_car, area_start, area_dest, 
+                                                     true, lmset, lmset );
 
         STOP_TICKING;
         out->add("init-time", RUNTIME);
@@ -339,7 +401,7 @@ void new_test(const Transport::Graph * g)
 
 int main(void)
 {
-    bool small_areas = false;
+    bool small_areas = true;
     string config;
     if(small_areas) 
         config = "/home/arthur/LAAS/mumoro/algorithms/tests/smaller_areas.conf";
@@ -384,6 +446,14 @@ int main(void)
     }
     toulouse_lm = RLC::create_car_landmark(transport, toulouse->center);
     bordeaux_lm = RLC::create_car_landmark(transport, bordeaux->center);
+    
+    //                          tlse, bordeaux, albi
+    int landmarks_nodes[3] = { 269647, 546063, 294951 };
+    std::list<const Landmark *> lms;
+    BOOST_FOREACH( int n, landmarks_nodes ) {
+        lms.push_back( RLC::create_car_landmark(transport, n) );
+    }
+    lmset = new RLC::LandmarkSet( lms );
     
     cout << "R(Toulouse) : " << toulouse->radius << " ; R(Bordeaux) : " << bordeaux->radius <<endl;
 

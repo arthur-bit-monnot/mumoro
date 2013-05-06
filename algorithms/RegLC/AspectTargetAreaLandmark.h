@@ -8,27 +8,42 @@
 
 namespace RLC {
     
+template<typename H = Landmark>
 struct AspectTargetAreaLandmarkParams {
-    AspectTargetAreaLandmarkParams( const Area * area, const Landmark * lm ) : area(area), lm(lm) {}
+    AspectTargetAreaLandmarkParams( const Area * area, const H * h ) : area(area), h(h) {}
     const Area * area;
-    const Landmark * lm;
+    const H * h;
 };
 
 
-template<typename Base = DRegLC>
+template<typename Base = DRegLC, typename H = Landmark>
 class AspectTargetAreaLandmark : public Base
 {
-    const Area * area = NULL;
-    const Landmark * lm = NULL;
+    /**
+     * Provide a heuristic giving lower bound of distance to target from any point in the graph.
+     * Needs to be admissible.
+     */
+    const H * h = NULL;
+    
+    /**
+     * Stores an evaluation of the cost of nodes. This is the sum of:
+     *  - cost to reach the node from the start (exact)
+     *  - cost to reach the target from the node (lower bound provided by h)
+     */
     int ** evaluated_costs;
+    
+    /** 
+     * Area we're willing to reach
+     */
+    const Area * area = NULL;
         
 public:    
-    typedef LISTPARAM<AspectTargetAreaLandmarkParams, typename Base::ParamType> ParamType;
+    typedef LISTPARAM<AspectTargetAreaLandmarkParams<H>, typename Base::ParamType> ParamType;
     
     AspectTargetAreaLandmark( ParamType parameters ) : Base( parameters.next ) 
     {
         area = parameters.value.area;
-        lm = parameters.value.lm;
+        h = parameters.value.h;
         evaluated_costs = new int*[Base::dfa_num_vert];
         for(int i=0 ; i<Base::dfa_num_vert ; ++i) {
             evaluated_costs[i] = new int[Base::trans_num_vert];
@@ -49,13 +64,7 @@ public:
 
     virtual void set_cost(const RLC::Vertice v, const int cost) override { 
         Base::set_cost( v, cost );
-        int h = lm->dist_lb( v.first, *area, Base::graph->forward) * Base::cost_factor;
-        evaluated_costs[v.second][v.first] = cost + h;
-    }
-    
-    virtual inline int cost_eval( const Vertice & v, const int cost ) const override { 
-        int h = lm->dist_lb( v.first, *area, Base::graph->forward) * Base::cost_factor;
-        return  cost + h;
+        evaluated_costs[v.second][v.first] = cost + h->dist_lb( v.first, *area, Base::graph->forward) * Base::cost_factor;
     }
 
 };

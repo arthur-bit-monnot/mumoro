@@ -4,4 +4,7 @@ include_directories(../RegLC/)
 include_directories(../DataStructures/)
 
 set( TESTS ON PARENT_SCOPE )
-set( TESTS_MAIN ${CMAKE_CURRENT_SOURCE_DIR}/tests.cpp PARENT_SCOPE )
+set( TESTS_MAINS 
+     ${CMAKE_CURRENT_SOURCE_DIR}/TestCarPooling.cpp 
+     ${CMAKE_CURRENT_SOURCE_DIR}/TestLandmarkArea.cpp
+     PARENT_SCOPE )

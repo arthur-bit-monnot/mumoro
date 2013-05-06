@@ -36,13 +36,20 @@ IF(VERBOSE)
 ENDIF(VERBOSE)
 
 IF(TESTS)
-    set( TEST_SOURCES 
-         ${TESTS_MAIN}
-         ${SOURCES}
-       )
-    add_executable( tests ${TEST_SOURCES} )
-    target_link_libraries( tests boost_serialization ) 
-#     set_target_properties( tests PROPERTIES EXCLUDE_FROM_ALL ON)
+# GET_FILENAME_COMPONENT(TARGET_NAMES ${TESTS_MAINS} NAME_WE)
+# SET(ALL_NAMES ${TARGET_NAMES})
+# message(${ALL_NAMES})
+    foreach(TEST_MAIN ${TESTS_MAINS})
+        GET_FILENAME_COMPONENT(NAME ${TEST_MAIN} NAME_WE)
+        
+        set( TEST_SOURCES 
+            ${TEST_MAIN}
+            ${SOURCES}
+        )
+        add_executable( ${NAME} ${TEST_SOURCES} )
+        target_link_libraries( ${NAME} boost_serialization ) 
+#         set_target_properties( ${NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
+    endforeach(TEST_MAIN)
 ENDIF(TESTS)
 
 

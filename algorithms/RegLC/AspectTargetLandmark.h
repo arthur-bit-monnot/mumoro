@@ -7,22 +7,43 @@
 
 namespace RLC {
     
+template<typename H = Landmark>
 struct AspectTargetLandmarkParams {
-    AspectTargetLandmarkParams( const int target, const Landmark * lm ) : target(target), lm(lm) {}
+    AspectTargetLandmarkParams( const int target, const H * h ) : target(target), h(h) {}
     const int target;
-    const Landmark * lm;
+    const H * h;
 };
 
 
-template<typename Base = DRegLC>
+/**
+ * Aspect implementing an A* search towards a single target.
+ * 
+ * It needs a heuristic H (default is landmark) to provide a lower bound of the distance 
+ * between two vertices in the graph.
+ */
+template<typename Base = DRegLC, typename H = Landmark>
 class AspectTargetLandmark : public AspectTarget<Base> 
 {
-    const Landmark * lm = NULL;
+    /**
+     * Provide a heuristic giving lower bound of distance to target from any point in the graph.
+     * Needs to be admissible.
+     */
+    const H * h = NULL;
+    
+    /**
+     * Stores an evaluation of the cost of nodes. This is the sum of:
+     *  - cost to reach the node from the start (exact)
+     *  - cost to reach the target from the node (lower bound provided by h)
+     */
     int ** evaluated_costs;
+    
+    /** 
+     * Node we're willing to reach
+     */
     int target;
         
 public:    
-    typedef LISTPARAM<AspectTargetLandmarkParams, typename Base::ParamType> ParamType;
+    typedef LISTPARAM<AspectTargetLandmarkParams<H>, typename Base::ParamType> ParamType;
     
     AspectTargetLandmark( ParamType parameters ) : 
     AspectTarget<Base>(typename AspectTarget<Base>::ParamType(
@@ -30,13 +51,14 @@ public:
         AspectTargetParams( parameters.value.target )  )) 
     {
         target = parameters.value.target;
-        lm = parameters.value.lm;
+        h = parameters.value.h;
         
         evaluated_costs = new int*[Base::dfa_num_vert];
         for(int i=0 ; i<Base::dfa_num_vert ; ++i) {
             evaluated_costs[i] = new int[Base::trans_num_vert];
         }
 
+        // overrides the default heap and make it use the cost evaluation provided by h
         if( Base::heap != NULL )
             delete Base::heap;
         Base::heap = new DRegHeap( DRegCompare( evaluated_costs ) ) ;
@@ -51,7 +73,7 @@ public:
 
     virtual void set_cost(const RLC::Vertice v, const int cost) override { 
         Base::set_cost( v, cost );
-        evaluated_costs[v.second][v.first] = cost + lm->dist_lb( v.first, target, Base::graph->forward );
+        evaluated_costs[v.second][v.first] = cost + h->dist_lb( v.first, target, Base::graph->forward );
     }
 
 };

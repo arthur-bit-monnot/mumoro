@@ -85,11 +85,11 @@ void Area::init_num_car_accessible()
 }
 
 
-Area * build_area_around ( const Transport::Graph* trans, int start, int end, int max_cost )
+Area * build_area_around ( const Transport::Graph* trans, int start, int end, int max_cost, DFA dfa )
 {
     Area * area = new Area(trans, trans->num_vertices());
     
-    RLC::Graph g(trans, RLC::pt_foot_dfa());
+    RLC::Graph g(trans, dfa);
     
     
     typedef AspectMaxCostPruning<AspectMinCost<DRegLC> > Dij;

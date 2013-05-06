@@ -60,9 +60,9 @@ void init_car_sharing(T * cs, const Transport::Graph* trans, int src_ped, int sr
     cs->graphs.push_back( g4 );
     cs->graphs.push_back( g5 );
     cs->dij.push_back( new typename T::Dijkstra( typename T::Dijkstra::ParamType(RLC::DRegLCParams(g1, day, 1)) ) );
-    cs->dij.push_back( new typename T::Dijkstra( typename T::Dijkstra::ParamType(RLC::DRegLCParams(g2, day, 2)) ) );
-    cs->dij.push_back( new typename T::Dijkstra( typename T::Dijkstra::ParamType(RLC::DRegLCParams(g3, day, 4)) ) );
-    cs->dij.push_back( new typename T::Dijkstra( typename T::Dijkstra::ParamType(RLC::DRegLCParams(g4, day, 2)) ) );
+    cs->dij.push_back( new typename T::Dijkstra( typename T::Dijkstra::ParamType(RLC::DRegLCParams(g2, day, 1)) ) );
+    cs->dij.push_back( new typename T::Dijkstra( typename T::Dijkstra::ParamType(RLC::DRegLCParams(g3, day, 2)) ) );
+    cs->dij.push_back( new typename T::Dijkstra( typename T::Dijkstra::ParamType(RLC::DRegLCParams(g4, day, 1)) ) );
     cs->dij.push_back( new typename T::Dijkstra( typename T::Dijkstra::ParamType(RLC::DRegLCParams(g5, day, 1)) ) );
     
     cs->insert( StateFreeNode(0, src_ped), time, 0);
@@ -126,13 +126,13 @@ void init_car_sharing_filtered(T * cs, const Transport::Graph* trans, int src_pe
     cs->insert( StateFreeNode(3, dest_car), 0, 0);
 }
 
-template<typename T>
+template<typename T, typename H>
 void init_car_sharing_with_areas(T * cs, const Transport::Graph* trans, int src_ped, int src_car, int dest_ped, 
                  int dest_car, RLC::DFA dfa_ped, RLC::DFA dfa_car, Area * area_start, Area * area_dest, 
-                 bool use_landmarks = false, const Landmark * lm_start = NULL, const Landmark * lm_dest = NULL )
+                 bool use_landmarks = false, H * h_start = NULL, H * h_dest = NULL )
 {
     typedef RLC::AspectTargetAreaStop<RLC::AspectCount<RLC::DRegLC>> CarAlgo;
-    typedef RLC::AspectTargetAreaStop<RLC::AspectTargetAreaLandmark<RLC::AspectCount<RLC::DRegLC>>> CarAlgoLM;
+    typedef typename RLC::AspectTargetAreaStop<RLC::AspectTargetAreaLandmark<RLC::AspectCount<RLC::DRegLC>, H>> CarAlgoLM;
     typedef RLC::AspectNodePruning<RLC::AspectCount<RLC::DRegLC>> PassAlgo;
     
     cs->vres.a_nodes.push_back(src_ped);
@@ -180,19 +180,19 @@ void init_car_sharing_with_areas(T * cs, const Transport::Graph* trans, int src_
                 RLC::AspectTargetAreaStopParams(area_dest) ) ) );
     } else {
         cs->dij.push_back( new CarAlgoLM( 
-            CarAlgoLM::ParamType(
+            typename CarAlgoLM::ParamType(
                 RLC::DRegLCParams(g2, day, 1),
-                RLC::AspectTargetAreaLandmarkParams(area_start, lm_start),
+                RLC::AspectTargetAreaLandmarkParams<H>(area_start, h_start),
                 RLC::AspectTargetAreaStopParams(area_start) ) ) );
         cs->dij.push_back( new CarAlgoLM( 
-            CarAlgoLM::ParamType(
+            typename CarAlgoLM::ParamType(
                 RLC::DRegLCParams(g3, day, 2),
-                RLC::AspectTargetAreaLandmarkParams(area_dest, lm_dest),
+                RLC::AspectTargetAreaLandmarkParams<H>(area_dest, h_dest),
                 RLC::AspectTargetAreaStopParams(area_dest) ) ) );
         cs->dij.push_back( new CarAlgoLM( 
-            CarAlgoLM::ParamType(
+            typename CarAlgoLM::ParamType(
                 RLC::DRegLCParams(g4, day, 1),
-                RLC::AspectTargetAreaLandmarkParams(area_dest, lm_dest),
+                RLC::AspectTargetAreaLandmarkParams<H>(area_dest, h_dest),
                 RLC::AspectTargetAreaStopParams(area_dest) ) ) );
     }
     cs->dij.push_back( new PassAlgo( 

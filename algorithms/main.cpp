@@ -12,6 +12,7 @@
 #include "RegLC/AlgoTypedefs.h"
 #include "RegLC/AspectTargetLandmark.h"
 #include "RegLC/AspectTargetAreaLandmark.h"
+#include "RegLC/LandmarkSet.h"
 
 #include "MultipleParticipants/PotentialMeetingPoints.h"
 #include "DataStructures/GraphFactory.h"
@@ -22,8 +23,7 @@ int main()
 {
     Debug( dc::notice.on() );             // Turn on the NOTICE Debug Channel.
     Debug( libcw_do.on() );               // Turn on the default Debug Object.
-//     std::string file( "/home/arthur/LAAS/Data/Graphs/sud-ouest.dump" );
-    std::string file( "/home/arthur/LAAS/mumoro/7675957d47e52fb89300bb5dc47ef8e7.dump" );
+    std::string file( "/home/arthur/LAAS/Data/Graphs/sud-ouest.dump" );
     Transport::GraphFactory gf( file );
     
     const Transport::Graph * g = gf.get();
@@ -37,23 +37,46 @@ int main()
 
     int source = 218238; //580025;
     int target = 329194;
-    int landmark = target; //302296; //target;
+    int landmark = source;
+    int landmark2 = 302296; //target;
     
     {
-        typedef RLC::AspectCount<RLC::AspectTargetLandmark<RLC::DRegLC>> MyAlgo;
+        typedef RLC::AspectCount<RLC::AspectTargetLandmark<RLC::DRegLC, RLC::LandmarkSet>> MyAlgo;
         
-        Landmark * lm = create_car_landmark( g, landmark );
+        std::list<const Landmark *> lms;
+        lms.push_back( create_car_landmark( g, landmark ) );
+        lms.push_back( create_car_landmark( g, landmark2 ) );
+        lms.push_back( create_car_landmark( g, target ) );
+        LandmarkSet lmset(lms);
         
         MyAlgo::ParamType p(
             DRegLCParams(&rlc, 10),
-            AspectTargetLandmarkParams( target, lm )
+            AspectTargetLandmarkParams<RLC::LandmarkSet>( target, &lmset )
         );
         
         MyAlgo algo( p );
         algo.insert_node(RLC::Vertice(source, 0), 0, 0);
         algo.run();
         
-        cout << "Num vertices lm: " << algo.count <<" cost : "<< algo.cost(Vertice(target, 0))<<endl;
+        cout << "Num vertices LandmarkSet: " << algo.count <<" cost : "<< algo.cost(Vertice(target, 0))<<endl;
+    }
+    
+    {
+        typedef RLC::AspectCount<RLC::AspectTargetLandmark<RLC::DRegLC>> MyAlgo;
+        
+        
+        Landmark * lm = create_car_landmark( g, landmark ) ;
+        
+        MyAlgo::ParamType p(
+            DRegLCParams(&rlc, 10),
+            AspectTargetLandmarkParams<RLC::Landmark>( target, lm )
+        );
+        
+        MyAlgo algo( p );
+        algo.insert_node(RLC::Vertice(source, 0), 0, 0);
+        algo.run();
+        
+        cout << "Num vertices Landmark: " << algo.count <<" cost : "<< algo.cost(Vertice(target, 0))<<endl;
     }
     
     {

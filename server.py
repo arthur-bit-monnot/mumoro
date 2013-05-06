@@ -330,9 +330,9 @@ class Mumoro:
         return dij.get_result()
     
     def muparo(self, start, dest, secs, day, graph ):
-        #res = mumoro.show_point_to_point(graph, dest, start, mumoro.car_dfa() )
+        res = mumoro.show_point_to_point(graph, dest, start, mumoro.car_dfa() )
         #res = mumoro.show_shared_path( graph, start, dest, 306 )
-        res = mumoro.show_car_sharing(graph, start, dest, 473972, 555680, mumoro.pt_foot_dfa(), mumoro.car_dfa())
+        #res = mumoro.show_car_sharing(graph, start, dest, 473972, 555680, mumoro.pt_foot_dfa(), mumoro.car_dfa())
         #print "{} {} {} {} {} {} {} {}".format(start, dest, 278790, 112254, secs, 10, 1, 0)
         #g = mumoro.RLC_Graph( graph, mumoro.pt_foot_dfa() )
         #res = mumoro.show_isochrone( g, dest, 120 )

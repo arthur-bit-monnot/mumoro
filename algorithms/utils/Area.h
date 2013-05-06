@@ -24,7 +24,12 @@ public:
     int radius;
     int num_car_accessible;
     
-    Area( const Transport::Graph * g, const int size ) : ns(size), g(g) {}
+    int id;
+    
+    Area( const Transport::Graph * g, const int size ) : ns(size), g(g) {
+        static int next_id = 0;
+        id = next_id++;
+    }
     ~Area() { delete bb; }
     
     void add_node( const int n ) {
@@ -60,7 +65,7 @@ private:
 };
 
 
-Area * build_area_around ( const Transport::Graph * g, int start, int end, int max_cost );
+Area * build_area_around ( const Transport::Graph * g, int start, int end, int max_cost, RLC::DFA dfa = RLC::pt_foot_dfa() );
 
 Area * toulouse_area ( const Transport::Graph * g );
 Area * toulouse_area_small ( const Transport::Graph * g );
