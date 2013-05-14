@@ -54,6 +54,14 @@ public:
         
         return path;
     }
+    
+    int get_path_cost() const {
+        BOOST_FOREACH( RLC::Vertice v, dest_vertices ) {
+            if(Base::black(v))
+                return Base::cost( v );
+        }
+        return -1;
+    }
 };
 
 

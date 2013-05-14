@@ -108,6 +108,16 @@ public:
         delete[] predecessors;
     }
     
+    virtual void clear() {
+        heap->clear();
+        for(int i=0 ; i<dfa_num_vert ; ++i) {
+            has_predecessor[i]->clear();
+            // all vertices are white
+            memset(status[i], 0, trans_num_vert * sizeof(status[0][0]));
+        }
+        success = false;
+    }
+    
     virtual bool finished() const
     {
         return heap->empty();

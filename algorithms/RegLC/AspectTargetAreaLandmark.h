@@ -10,9 +10,9 @@ namespace RLC {
     
 template<typename H = Landmark>
 struct AspectTargetAreaLandmarkParams {
-    AspectTargetAreaLandmarkParams( const Area * area, const H * h ) : area(area), h(h) {}
+    AspectTargetAreaLandmarkParams( const Area * area, H * h ) : area(area), h(h) {}
     const Area * area;
-    const H * h;
+    H * h;
 };
 
 
@@ -23,7 +23,7 @@ class AspectTargetAreaLandmark : public Base
      * Provide a heuristic giving lower bound of distance to target from any point in the graph.
      * Needs to be admissible.
      */
-    const H * h = NULL;
+    H * h = NULL;
     
     /**
      * Stores an evaluation of the cost of nodes. This is the sum of:

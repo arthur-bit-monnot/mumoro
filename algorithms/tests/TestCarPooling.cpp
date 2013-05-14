@@ -269,8 +269,73 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
         out->step_out();
     }
     
+        {
+        out->step_in("stop-conditions-landmarks-set-maxmin");
+        
+        lmset->use_maxmin = true;
+
+        START_TICKING;
+        CarSharingTest::ParamType p(
+            MuparoParams( trans, 5 ),
+            AspectTargetParams( 4, passenger_arrival_node ),
+            AspectPropagationRuleParams( SumCost, MaxArrival, 2, 0, 1),
+            AspectPropagationRuleParams( SumCost, FirstLayerArrival, 4, 2, 3)
+        );
+        
+        std::vector<NodeFilter*> filters;
+        RLC::Graph g1(trans, dfa_passenger );
+        RLC::BackwardGraph g2(&g1);
+        
+        Area * area_start, * area_dest;
+        
+        
+        if( toulouse->isIn(passenger_start_node) ) {
+            area_start = toulouse;
+        } else if( bordeaux->isIn(passenger_start_node) ) {
+            area_start = bordeaux;
+        } else {
+            return ;
+        }
+        
+        if( toulouse->isIn(passenger_arrival_node) ) {
+            area_dest = toulouse;
+        } else if( bordeaux->isIn(passenger_arrival_node) ) {
+            area_dest = bordeaux;
+        } else {
+            return ;
+        }
+
+        
+        CarSharingTest cs( p );
+        
+        init_car_sharing_with_areas<CarSharingTest, RLC::LandmarkSet>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, 
+                                                     dfa_passenger, dfa_car, area_start, area_dest, 
+                                                     true, lmset, lmset );
+
+        STOP_TICKING;
+        out->add("init-time", RUNTIME);
+        START_TICKING;
+        cs.run();
+        STOP_TICKING;
+        
+        out->add("runtime", RUNTIME);
+        out->add("visited-nodes", cs.count);
+        
+        std::vector<int> per_layer;
+        for(int i=0 ; i<cs.num_layers ; ++i) {
+            per_layer.push_back( cs.dij[i]->count );
+        }
+        out->add("visited-per-layer", per_layer);
+        
+        out->add("solution-cost", cs.solution_cost());
+        out->step_out();
+    }
+    
+    
     {
-        out->step_in("stop-conditions-landmarks-set");
+        out->step_in("stop-conditions-landmarks-set-radius");
+        
+        lmset->use_maxmin = false;
 
         START_TICKING;
         CarSharingTest::ParamType p(
@@ -401,7 +466,7 @@ void new_test(const Transport::Graph * g)
 
 int main(void)
 {
-    bool small_areas = true;
+    bool small_areas = false;
     string config;
     if(small_areas) 
         config = "/home/arthur/LAAS/mumoro/algorithms/tests/smaller_areas.conf";
@@ -449,11 +514,11 @@ int main(void)
     
     //                          tlse, bordeaux, albi
     int landmarks_nodes[3] = { 269647, 546063, 294951 };
-    std::list<const Landmark *> lms;
+    std::vector<const Landmark *> lms;
     BOOST_FOREACH( int n, landmarks_nodes ) {
         lms.push_back( RLC::create_car_landmark(transport, n) );
     }
-    lmset = new RLC::LandmarkSet( lms );
+    lmset = new RLC::LandmarkSet( lms, transport );
     
     cout << "R(Toulouse) : " << toulouse->radius << " ; R(Bordeaux) : " << bordeaux->radius <<endl;
 
