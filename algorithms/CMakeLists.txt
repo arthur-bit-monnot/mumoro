@@ -1,6 +1,7 @@
 
 add_subdirectory( utils )
 add_subdirectory( RegLC )
+add_subdirectory( MultiObjectives )
 add_subdirectory( MultipleParticipants )
 add_subdirectory( DataStructures )
 add_subdirectory( tests )

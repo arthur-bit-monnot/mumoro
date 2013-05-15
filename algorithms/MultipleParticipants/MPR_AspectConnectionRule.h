@@ -5,6 +5,9 @@
 #include "MPR_AspectPropagationRule.h"
 #include "AspectTarget.h"
 
+// TODO: for definition of LAbel, shouldn't be done this way
+#include "../MultiObjectives/Martins.h"
+
 
 namespace MuPaRo {
 
@@ -133,15 +136,45 @@ public:
             conn_dij->insert_node( RLC::Vertice( node, 0 ), arr, cost );
             conn_dij->run();
             count++;
+            
+            signal_connection_point(node, arr, cost);
+            
             if( conn_dij->success && conn_dij->get_path_cost() < best_cost ) {
                 best_cost = conn_dij->get_path_cost();
+                
+                
+                cout << node <<" "<< arr <<" "<< cost <<" "<< conn_dij->get_path_cost() <<endl;
             }
             
         }   
         
         Base::apply_rules( node );
     }
+    
+    /**
+     * This method is called whenever a connection point is found
+     */
+    virtual void signal_connection_point(int node, int time, int cost) {}
 };
+
+
+template<typename Base>
+class AspectListConnections : public Base {
+public:    
+    typedef typename Base::ParamType ParamType;
+    AspectListConnections( ParamType p ) : Base(p) { }
+
+    std::list<Label> labels;
+    
+    virtual void signal_connection_point(int node, int time, int cost) override {
+        Label l(node, time, cost);
+        labels.push_back(l);
+    }
+    
+    std::list<Label> get_connection_points() const { return labels; }
+};
+
+
 
 } //end namespace MuPaRo
         

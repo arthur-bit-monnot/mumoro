@@ -11,6 +11,11 @@
 
 namespace RLC {
     
+    
+class LabelSettingAlgo {
+    
+};
+    
 
 
 struct DRegLCParams {
@@ -48,7 +53,7 @@ typedef boost::heap::d_ary_heap<
 /**
  * Implementation of DRegLC defined by Barret & al.
  */
-class DRegLC
+class DRegLC : public LabelSettingAlgo
 {
 public:
     typedef LISTPARAM<DRegLCParams> ParamType;
@@ -111,7 +116,7 @@ public:
     virtual void clear() {
         heap->clear();
         for(int i=0 ; i<dfa_num_vert ; ++i) {
-            has_predecessor[i]->clear();
+            has_predecessor[i]->reset();
             // all vertices are white
             memset(status[i], 0, trans_num_vert * sizeof(status[0][0]));
         }
@@ -156,6 +161,8 @@ public:
         BOOST_FOREACH(RLC::Edge e, n_out_edges) 
         {
             RLC::Vertice target = graph->target(e);
+            BOOST_ASSERT( target.first < graph->num_transport_vertices() );
+            BOOST_ASSERT( target.second < graph->num_dfa_vertices() );
             
             bool has_traffic;
             int edge_cost;
@@ -201,6 +208,9 @@ public:
     
     virtual bool insert_node(const Vertice & vert, const int arrival, const int vert_cost)
     {
+        BOOST_ASSERT( vert.first < graph->num_transport_vertices() );
+        BOOST_ASSERT( vert.second < graph->num_dfa_vertices() );
+        
         if( white(vert) )
         {
             set_arrival(vert, arrival);
