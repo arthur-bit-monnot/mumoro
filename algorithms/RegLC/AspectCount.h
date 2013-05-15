@@ -14,7 +14,7 @@ public:
     
     int count;
     
-    virtual RLC::Vertice treat_next() {
+    virtual RLC::Label treat_next() override {
         count++;
         return Base::treat_next();
     }

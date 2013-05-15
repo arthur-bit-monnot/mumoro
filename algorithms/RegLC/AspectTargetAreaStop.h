@@ -29,12 +29,12 @@ public:
         area = p.value.area;
     }
 
-    virtual Vertice treat_next() override {
-        RLC::Vertice v = Base::treat_next();
-        if( area->isIn( v.first ) && Base::graph->transport->car_accessible( v.first ) ) {
+    virtual Label treat_next() override {
+        RLC::Label l = Base::treat_next();
+        if( area->isIn( l.node.first ) && Base::graph->transport->car_accessible( l.node.first ) ) {
             ++car_nodes_set;                
         }
-        return v;
+        return l;
     }
     
     virtual bool finished() const override {

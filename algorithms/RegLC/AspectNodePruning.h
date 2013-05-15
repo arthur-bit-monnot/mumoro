@@ -23,7 +23,7 @@ public:
     }
     virtual ~AspectNodePruning() {}
     
-    virtual bool insert_node( const Vertice & node, const int arrival, const int cost ) {
+    virtual bool insert_node( const Vertice & node, const int arrival, const int cost ) override {
         if( ! nf->isIn(node.first) )
             return false;
         else

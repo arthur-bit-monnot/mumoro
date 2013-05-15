@@ -65,8 +65,8 @@ public:
     virtual bool finished() const override {
         int lower_cost = std::numeric_limits< int >::max();
         for(int i=0 ; i<Base::num_layers ; ++i) {
-            if( !Base::dij[i]->finished() && ( Base::dij[i]->cost( Base::dij[i]->heap->top() ) <= lower_cost ) ) {
-                lower_cost = Base::dij[i]->cost( Base::dij[i]->heap->top() );
+            if( !Base::dij[i]->finished() && ( Base::dij[i]->best_cost_in_heap() <= lower_cost ) ) {
+                lower_cost = Base::dij[i]->best_cost_in_heap();
             }
         }
         return Base::finished() || lower_cost > best_cost;
@@ -164,14 +164,14 @@ public:
     typedef typename Base::ParamType ParamType;
     AspectListConnections( ParamType p ) : Base(p) { }
 
-    std::list<Label> labels;
+    std::list<RLC::Label> labels;
     
     virtual void signal_connection_point(int node, int time, int cost) override {
-        Label l(node, time, cost);
+        RLC::Label l(RLC::Vertice(node, 0), time, cost);
         labels.push_back(l);
     }
     
-    std::list<Label> get_connection_points() const { return labels; }
+    std::list<RLC::Label> get_connection_points() const { return labels; }
 };
 
 

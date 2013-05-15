@@ -23,7 +23,6 @@ AlgoMPR::PtToPt * point_to_point( Transport::Graph * trans, int source, int dest
     }
     
     mup->start_nodes.push_back( StartNode( StateFreeNode(0, source), 50000) );
-    mup->goal_nodes.push_back( StateFreeNode(0, dest) );
     
     return mup;
 }

@@ -65,8 +65,8 @@ int main()
     {
         algo.dfas.push_back(RLC::car_dfa());
         algo.graphs.push_back( new RLC::Graph(algo.transport, algo.dfas[i] ));
-        Algo::Dijkstra::ParamType p( RLC::DRegLCParams( algo.graphs[i], day) );
-        algo.dij.push_back( new Algo::Dijkstra( p ) );
+        DRegLC::ParamType p( RLC::DRegLCParams( algo.graphs[i], day) );
+        algo.dij.push_back( new DRegLC( p ) );
     }
     
     algo.insert( StateFreeNode(0, src1), time, 0);
@@ -95,7 +95,7 @@ int main()
     BOOST_FOREACH( Label l, labels ) {
         dij.clear();
         cout << l << endl;
-        dij.insert_node(RLC::Vertice(l.node, 0), l.time, l.cost);
+        dij.insert_node(l.node, l.time, l.cost);
         dij.run();
         if( dij.get_path_cost() < best_cost )
             best_cost = dij.get_path_cost();
@@ -104,5 +104,7 @@ int main()
     
     cout << "Best cost over all connection points : " << best_cost <<endl;
     
-    martins( &rlc, labels, dest );
+//     martins( &rlc, labels, dest );
+    
+//     Martins m();
 }

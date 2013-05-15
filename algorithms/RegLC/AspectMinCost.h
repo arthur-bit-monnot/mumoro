@@ -12,7 +12,7 @@ public:
     AspectMinCost( ParamType parameters ) : Base(parameters) {}
     virtual ~AspectMinCost() {}
 
-    virtual std::pair <bool, int> duration( const RLC::Edge& edge, const float start_sec, const int day ) const {
+    virtual std::pair <bool, int> duration( const RLC::Edge& edge, const float start_sec, const int day ) const override {
         return Base::graph->min_duration( edge );
     }
     

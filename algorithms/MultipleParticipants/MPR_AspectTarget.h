@@ -24,7 +24,7 @@ public:
     
     StateFreeNode goal;
     
-    virtual bool finished() const {
+    virtual bool finished() const override {
         if( Base::finished() )
             return true;
         
@@ -34,13 +34,15 @@ public:
         return false;
     }
     
-    virtual void init_result_queue( std::list< CompleteNode > & queue ) {
+    virtual void init_result_queue( std::list< CompleteNode > & queue ) override {
+        /*
         if( Base::is_node_set( goal ) ) {
             queue.push_back( CompleteNode(goal.first, RLC::Vertice(goal.second, Base::flags[goal.first][goal.second].dfa_state )));
         }
+        */
     };
     
-    virtual int solution_cost() const {
+    virtual int solution_cost() const override {
         return Base::get_cost( goal );
     }
 };

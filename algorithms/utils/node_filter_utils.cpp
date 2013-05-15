@@ -22,8 +22,8 @@ NodeSet * isochrone ( const RLC::AbstractGraph * g, const int center, const int 
         dij.insert_node( RLC::Vertice(center, state), 0, 0 );
     }
     while( !dij.finished() ) {
-        RLC::Vertice vert = dij.treat_next();
-        ns->addNode( vert.first );
+        RLC::Label lab = dij.treat_next();
+        ns->addNode( lab.node.first );
     }
     
     return ns;

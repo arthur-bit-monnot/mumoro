@@ -61,7 +61,7 @@ public:
         // overrides the default heap and make it use the cost evaluation provided by h
         if( Base::heap != NULL )
             delete Base::heap;
-        Base::heap = new DRegHeap( DRegCompare( evaluated_costs ) ) ;
+        Base::heap = new DRegHeap(  ) ; //TODO: customize heap
     }
     
     virtual ~AspectTargetLandmark() {

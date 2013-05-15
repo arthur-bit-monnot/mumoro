@@ -7,31 +7,23 @@
 #include <boost/foreach.hpp> 
 #include <boost/dynamic_bitset.hpp>
 #include <reglc_graph.h>
+#include "LabelSettingAlgo.h"
 
 
 /**
  * This file contains an adaptation of the Many-to-one algorithm for time-dependent networks
  */
 
+struct NotImplemented {};
 
 using namespace std;
 
-struct Label {
-  Label( int node, int time, int cost) : cost(cost), time(time), node(node) {}
-  int cost;
-  int time;
-  int node;
-  
-  bool operator<(const Label & rhs) const { return cost > rhs.cost; }
-  bool dominated_by(const Label & other) const { 
-      return (cost >= other.cost && time >= other.time)
-          || ((cost >= other.cost) && (cost - other.cost > other.time - time));
-  }
-};
+namespace RLC {
+
 
 ostream & operator<<(ostream & os, Label l)
 {
-    os << "Label[" << l.node << " " << l.time<<" "<<l.cost<< "]";
+    os << "Label[" << l.node.first << " " << l.time<<" "<<l.cost<< "]";
     return os;
 }
 
@@ -41,7 +33,38 @@ typedef boost::heap::d_ary_heap<
     boost::heap::arity<4>,
     boost::heap::mutable_<true> > Heap;
 
+class Martins : public LabelSettingAlgo
+{
+    int total_iter = 0, undominated_iter = 0;
+    int day = 10;
+    
+    Heap heap;
+    std::vector<std::list<Label>> P;
+    
+    virtual bool finished() const override {
+        return heap.empty();
+    }
+    virtual bool run() override {
+        while( !finished() ) {
+            treat_next();
+        }
+        return true;
+    }
+    virtual Label treat_next() override { return Label(Vertice(0,0),0,0); } //TODO 
+    
+    virtual bool insert_node(const Vertice & vert, const int arrival, const int vert_cost) override {
+        Label l( vert, arrival, vert_cost);
+        //TODO: check domination
+        heap.push( l );
+        return true;
+    }
+    
 
+    
+    virtual int best_cost_in_heap() const override { return heap.top().cost; }
+    
+};
+/*
 int martins( RLC::AbstractGraph * graph, std::list<Label> starts, const int target ) {
     int total_iter = 0, undominated_iter = 0;
     int day = 10;
@@ -113,7 +136,8 @@ int martins( RLC::AbstractGraph * graph, std::list<Label> starts, const int targ
         
     }
 }
-
+*/
+}
 
 
 #endif

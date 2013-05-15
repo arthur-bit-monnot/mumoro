@@ -14,16 +14,30 @@ namespace MuPaRo
 
 
 /**
- * First : id of the layer the node belongs to
- * Second : id of the node in transport graph
+ * Basic node for Multiple Participants Routing. It simply consists in the 
+ * layer the node belongs to and the id of the node in the transportation graph.
+ * 
+ * Since no information about the NFA state is encoded, there might be several CompleteNode
+ * sharing the same StateFreeNode representation.
  */
-typedef pair<int, int> StateFreeNode;
+struct StateFreeNode {
+    StateFreeNode() : layer(-1), vertex(-1) {}
+    StateFreeNode(int layer, int node) : layer(layer), vertex(node) {}
+    
+    int layer;
+    int vertex;
+};
 
 /**
- * First : id of the layer the node belongs to
- * Second : Vertice of the RLC Graph
+ * Store the complete label of node (with information such as cost and time) as well as the layer 
+ * the node belongs to.
  */
-typedef pair<int, RLC::Vertice> CompleteNode;
+struct CompleteNode {
+    CompleteNode(int layer, RLC::Label label) : layer(layer), label(label) {}
+    
+    int layer;
+    RLC::Label label;
+};
 
 
 /**
@@ -60,6 +74,18 @@ class Muparo
 public:
     typedef Algo Dijkstra;
     typedef LISTPARAM<MuparoParams> ParamType;
+        
+    const int num_layers;
+    const Transport::Graph * transport;
+    vector<RLC::DFA> dfas;
+    vector<RLC::AbstractGraph*> graphs;
+    vector<RLC::LabelSettingAlgo*> dij;
+    
+    boost::dynamic_bitset<> ** is_set;
+    Flag **flags;
+    
+    list<StartNode> start_nodes;    
+
     
     Muparo( ParamType p ) :
     num_layers(p.value.num_layers),
@@ -85,37 +111,26 @@ public:
         delete is_set;
         delete[] flags;
     }
-    
-    const int num_layers;
-    const Transport::Graph * transport;
-    vector<RLC::DFA> dfas;
-    vector<RLC::AbstractGraph*> graphs;
-    vector<Algo*> dij;
-    
-    boost::dynamic_bitset<> ** is_set;
-    Flag **flags;
-    
-    list<StartNode> start_nodes;
-    list<StateFreeNode> goal_nodes;
+
     
     virtual CompleteNode proceed_one_step() 
     {
         const int layer = select_layer();
             
-        RLC::Vertice vert = dij[layer]->treat_next();
-        StateFreeNode node(layer, vert.first);
-        CompleteNode c_node(layer, vert);
+        RLC::Label lab = dij[layer]->treat_next();
+        StateFreeNode node(layer, lab.node.first);
+        CompleteNode c_node(layer, lab);
         
-        if( graphs[layer]->is_accepting( vert ) && !is_node_set( node ) ) {
+        if( graphs[layer]->is_accepting( lab.node ) && !is_node_set( node ) ) {
             set( c_node );
-            apply_rules( node.second );
+            apply_rules( node.vertex );
         }
         
         return c_node;
     }
 
     
-    bool run()
+    virtual bool run()
     {
         BOOST_FOREACH(StartNode sn, start_nodes) {
             insert(sn.first, sn.second, 0);
@@ -128,26 +143,24 @@ public:
         return true;
     }
     
-    void clear_pred_layers(const StateFreeNode n) const { flags[n.first][n.second].pred_layers = 0; }
-    void add_pred_layer(const StateFreeNode n, const int layer) { flags[n.first][n.second].pred_layers |= (1 << layer); }
-    
-    void check_connections( const int modified_layer );
+    void clear_pred_layers( const StateFreeNode n ) const { flags[n.layer][n.vertex].pred_layers = 0; }
+    void add_pred_layer( const StateFreeNode n, const int layer ) { flags[n.layer][n.vertex].pred_layers |= (1 << layer); }
     
     /**
      * Returns True if this node was set (i.e. there is an accepting state in the dfa that was recahed for this 
      * node
      */
-    bool is_node_set(const StateFreeNode n) const { return is_set[n.first]->test( n.second ); }
+    bool is_node_set( const StateFreeNode n ) const { return is_set[n.layer]->test( n.vertex ); }
     
     /**
      * Whan an accepting state is reached, this used to store the dfa state and arrival 
      * time at this node.
      */
-    void set( const CompleteNode n) {
-        is_set[n.first]->set( n.second.first );
-        flags[n.first][n.second.first].dfa_state = n.second.second;
-        flags[n.first][n.second.first].arrival = dij[n.first]->arrival(n.second);
-        flags[n.first][n.second.first].cost = dij[n.first]->cost(n.second);
+    void set( const CompleteNode n ) {
+        is_set[n.layer]->set( n.label.node.first );
+        flags[n.layer][n.label.node.first].dfa_state = n.label.node.second;
+        flags[n.layer][n.label.node.first].arrival = n.label.time;
+        flags[n.layer][n.label.node.first].cost = n.label.cost;
     }
     
     /**
@@ -155,12 +168,12 @@ public:
      */
     int arrival(const StateFreeNode n) const { 
         BOOST_ASSERT(is_node_set(n));
-        return flags[n.first][n.second].arrival;
+        return flags[n.layer][n.vertex].arrival;
     }
     
     int get_cost(const StateFreeNode n) const { 
         BOOST_ASSERT(is_node_set(n));
-        return flags[n.first][n.second].cost;
+        return flags[n.layer][n.vertex].cost;
     }
     
     /**
@@ -177,7 +190,7 @@ public:
     {
         bool heap_empties = true;
         
-        BOOST_FOREACH(RLC::DRegLC *d, dij) {
+        BOOST_FOREACH(RLC::LabelSettingAlgo *d, dij) {
             if(! d->finished() ) {
                 heap_empties = false;
                 break;
@@ -197,8 +210,8 @@ public:
         int best_layer = -1;
         
         for(int i=0 ; i<num_layers ; ++i) {
-            if( !dij[i]->finished() && ( dij[i]->cost( dij[i]->heap->top() ) <= best_cost ) ) {
-                best_cost = dij[i]->cost( dij[i]->heap->top() );
+            if( !dij[i]->finished() && ( dij[i]->best_cost_in_heap() <= best_cost ) ) {
+                best_cost = dij[i]->best_cost_in_heap();
                 best_layer = i;
             }
         }
@@ -215,8 +228,8 @@ public:
     bool insert(const StateFreeNode & n, const int arrival, const int cost)
     {
         bool inserted = false;
-        int layer = n.first;
-        int node = n.second;
+        int layer = n.layer;
+        int node = n.vertex;
         BOOST_FOREACH(int dfa_start, graphs[layer]->dfa_start_states())  
         {
             RLC::Vertice rlc_node;
@@ -246,7 +259,7 @@ public:
     virtual void init_result_queue( std::list< CompleteNode > & queue ) { /* does nothing */ };
     
     void build_result() 
-    {
+    {/*
         std::list< CompleteNode > queue;
         
         init_result_queue( queue );
@@ -254,8 +267,8 @@ public:
             CompleteNode curr = queue.back();
             queue.pop_back();
             
-            int l = curr.first;
-            RLC::Vertice vert = curr.second;
+            int l = curr.layer;
+            RLC::Vertice vert = curr.label.node;
             
             if( dij[l]->has_pred(vert) ) {
                 vres.edges.push_back(transport->edgeIndex( dij[l]->get_pred(vert).first ));
@@ -274,6 +287,7 @@ public:
                 }
             }
         }
+        */
     }
     VisualResult get_result() const { return vres; };
 };

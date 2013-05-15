@@ -8,13 +8,10 @@
 
 #include "utils.h"
 #include "reglc_graph.h"
+#include "LabelSettingAlgo.h"
 
 namespace RLC {
     
-    
-class LabelSettingAlgo {
-    
-};
     
 
 
@@ -29,25 +26,12 @@ struct DRegLCParams {
     const int cost_factor;
 };
 
-
-struct DRegCompare
-{
-    int ** & costs;
-    DRegCompare( int ** & dist ) : costs(dist) {}
-    bool operator()(RLC::Vertice a, RLC::Vertice b) const
-    {
-        return costs[a.second][a.first] > costs[b.second][b.first];
-    }
-    
-};
-
     
 // typedef boost::heap::fibonacci_heap<RLC::Vertice, boost::heap::compare<DRegCompare> > DRegHeap;
 typedef boost::heap::d_ary_heap<
-    RLC::Vertice, 
+    Label, 
     boost::heap::arity<4>,
-    boost::heap::mutable_<true>, 
-    boost::heap::compare<DRegCompare> > DRegHeap;
+    boost::heap::mutable_<true> > DRegHeap;
 
 
 /**
@@ -65,7 +49,7 @@ public:
         
         if( heap != NULL )
             delete heap;
-        heap = new DRegHeap( DRegCompare( this-> costs ) );
+        heap = new DRegHeap(  );
         
         this->graph = p.graph;
         day = p.day;
@@ -74,15 +58,11 @@ public:
         trans_num_vert = graph->num_transport_vertices();
         dfa_num_vert = graph->num_dfa_vertices();
         
-        arr_times = new float*[dfa_num_vert];
-        costs = new int*[dfa_num_vert];
         references = new DRegHeap::handle_type*[dfa_num_vert];
         status = new uint*[dfa_num_vert];
         has_predecessor = new boost::dynamic_bitset<>*[dfa_num_vert];
         predecessors = new RLC::Edge*[dfa_num_vert];
         for(int i=0 ; i<dfa_num_vert ; ++i) {
-            arr_times[i] = new float[trans_num_vert];
-            costs[i] = new int[trans_num_vert];
             references[i] = new DRegHeap::handle_type[trans_num_vert];
             status[i] = new uint[trans_num_vert];
             has_predecessor[i] = new boost::dynamic_bitset<>(trans_num_vert);
@@ -98,15 +78,11 @@ public:
     virtual ~DRegLC()
     {
         for(int i=0 ; i<dfa_num_vert ; ++i) {
-            delete[] arr_times[i];
-            delete[] costs[i];
             delete[] references[i];
             delete[] status[i];
             delete has_predecessor[i];
             delete[] predecessors[i];
         }
-        delete[] arr_times;
-        delete[] costs;
         delete[] references;
         delete[] status;
         delete[] has_predecessor;
@@ -123,17 +99,17 @@ public:
         success = false;
     }
     
-    virtual bool finished() const
+    virtual bool finished() const override
     {
         return heap->empty();
     }
     
-    virtual bool check_termination( const RLC::Vertice & vert ) const { return false; }
+    virtual bool check_termination( const RLC::Label & vert ) { return false; }
     
     /**
      * Run the dijkstra algorithm until a stop condition is met
      */
-    virtual bool run()
+    virtual bool run() override
     {    
         while( !finished() ) 
         {
@@ -146,18 +122,18 @@ public:
     /**
      * Pop the vertice with minimum cost in heap and expand its outgoing edges.
      */
-    virtual Vertice treat_next()
+    virtual Label treat_next() override
     {
-        RLC::Vertice curr = heap->top();
+        Label curr = heap->top();
         heap->pop();
-        set_black(curr);
+        set_black(curr.node);
         
         if( check_termination(curr) ) {
             success = true;
             return curr;
         }
         
-        std::list<RLC::Edge> n_out_edges = graph->out_edges(curr);
+        std::list<RLC::Edge> n_out_edges = graph->out_edges(curr.node);
         BOOST_FOREACH(RLC::Edge e, n_out_edges) 
         {
             RLC::Vertice target = graph->target(e);
@@ -166,22 +142,22 @@ public:
             
             bool has_traffic;
             int edge_cost;
-            boost::tie(has_traffic, edge_cost) = duration(e, arrival(curr), day);
+            boost::tie(has_traffic, edge_cost) = duration(e, curr.time, day);
 
-            int target_cost = cost(curr) + edge_cost * cost_factor;
+            int target_cost = curr.cost + edge_cost * cost_factor;
             
 //             if(!(!has_traffic || (edge_cost * cost_factor - cost_eval(curr, 0)  + cost_eval(target, 0) >= 0) ))
-            BOOST_ASSERT(!has_traffic || (edge_cost * cost_factor - cost_eval(curr, 0)  + cost_eval(target, 0) >= 0) );
+            BOOST_ASSERT(!has_traffic || (edge_cost * cost_factor - (curr.cost + curr.h)  + cost_eval(target, 0) >= 0) );
             
             // ignore the edge if it provokes an overflow
-            if(target_cost < cost(curr))
+            if(target_cost < curr.cost)
                 has_traffic = false;
             
             float target_arr;
             if(graph->forward)
-                target_arr = arrival(curr) + edge_cost;
+                target_arr = curr.time + edge_cost;
             else 
-                target_arr = arrival(curr) - edge_cost;
+                target_arr = curr.time - edge_cost;
             
             if(has_traffic) {
                 if(edge_cost >= 0) {
@@ -206,28 +182,24 @@ public:
         return was_inserted;
     }
     
-    virtual bool insert_node(const Vertice & vert, const int arrival, const int vert_cost)
+    virtual bool insert_node(const Vertice & vert, const int arrival, const int vert_cost) override
     {
-        BOOST_ASSERT( vert.first < graph->num_transport_vertices() );
-        BOOST_ASSERT( vert.second < graph->num_dfa_vertices() );
+        Label lab(vert, arrival, vert_cost);
+        BOOST_ASSERT( lab.node.first < graph->num_transport_vertices() );
+        BOOST_ASSERT( lab.node.second < graph->num_dfa_vertices() );
         
-        if( white(vert) )
+        if( white(lab.node) )
         {
-            set_arrival(vert, arrival);
-            set_cost(vert, vert_cost);
-            put_dij_node(vert);
-            set_gray(vert);
+            put_dij_node(lab);
+            set_gray(lab.node);
             
             return true;
         }
-        else if( vert_cost < cost(vert) )
+        else if( vert_cost < lab.cost )
         {
-            if(black(vert))
-                BOOST_ASSERT(!black(vert));
+            BOOST_ASSERT(!black(lab.node));
             
-            set_arrival(vert, arrival);
-            set_cost(vert, vert_cost);
-            heap->update(handle(vert));
+            heap->update(handle(lab.node));
 
             return true;
         }
@@ -242,14 +214,18 @@ public:
     }
     
     /**
+     * Creates a new label with the given information.
+     * 
+     * This method should always be used in place of the constructor to allow automatic fill up (for instance for A*)
+     */
+    virtual Label label(RLC::Vertice vert, int time, int cost, int source = -1) {
+        return Label(vert, time, cost, source);
+    }
+    
+    /**
      * Heap in which the Vertices will be stored
      */
     DRegHeap * heap = NULL;
-
-    inline float arrival(const RLC::Vertice v) { return arr_times[v.second][v.first]; }
-    inline void set_arrival(const RLC::Vertice v, float time) { arr_times[v.second][v.first] = time; }
-    inline float cost(const RLC::Vertice v) const { return costs[v.second][v.first]; }
-    inline virtual void set_cost(const RLC::Vertice v, const int cost) { costs[v.second][v.first] = cost; }
     
     /**
      * Used to provide an evaluation of the cost of node v.
@@ -257,9 +233,11 @@ public:
      */
     virtual inline int cost_eval( const Vertice & v, const int cost ) const { return cost; }
     
+    virtual inline int best_cost_in_heap() const { return heap->top().cost; }
+    
     inline DRegHeap::handle_type dij_node(const RLC::Vertice v) const { return references[v.second][v.first]; }
-    inline void put_dij_node(const RLC::Vertice v) { 
-        references[v.second][v.first] = heap->push(v);
+    inline void put_dij_node(const Label l) { 
+        references[l.node.second][l.node.first] = heap->push(l);
     }
     inline void clear_pred(const RLC::Vertice v) { has_predecessor[v.second]->reset(v.first); }
     inline void set_pred(const RLC::Vertice v, const RLC::Edge & pred) { 
@@ -296,8 +274,6 @@ protected:
     int day;
     int cost_factor;
     
-    float **arr_times;
-    int **costs;
     DRegHeap::handle_type **references;
     boost::dynamic_bitset<> ** has_predecessor;
     RLC::Edge **predecessors;

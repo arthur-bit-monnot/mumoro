@@ -51,7 +51,7 @@ public:
         
         if( Base::heap != NULL )
             delete Base::heap;
-        Base::heap = new DRegHeap( DRegCompare( evaluated_costs ) ) ;
+        Base::heap = new DRegHeap(  ) ; //TODO: change heap  and cost!!!
         
         
     }
@@ -60,11 +60,6 @@ public:
             delete evaluated_costs[i];
         }
         delete evaluated_costs;
-    }
-
-    virtual void set_cost(const RLC::Vertice v, const int cost) override { 
-        Base::set_cost( v, cost );
-        evaluated_costs[v.second][v.first] = cost + h->dist_lb( v.first, *area, Base::graph->forward) * Base::cost_factor;
     }
 
 };

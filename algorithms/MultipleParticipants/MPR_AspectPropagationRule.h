@@ -97,7 +97,7 @@ public:
     
     void apply(const int node);
     
-    virtual void apply_rules( const int node )
+    virtual void apply_rules( const int node ) override
     {
         if( applicable(node) ) {
             int arr = arrival_in_insertion_layer( node );

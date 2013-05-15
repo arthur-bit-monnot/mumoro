@@ -19,12 +19,15 @@ Landmark * create_car_landmark ( const Transport::Graph* trans, const int node )
         algo.insert_node(Vertice(node, 0), 0, 0 );
         algo.run();
         
+        //TODO
+        /*
         for(int i=0 ; i<g.num_transport_vertices() ; ++i ) {
             if( algo.black(Vertice(i, 0) ) ) {
                 int cost = algo.cost(Vertice(i, 0));
                 lm->set_hminus(i, cost);
             }
         }
+        */
     }
     {
         DRegLCParams p( &bg, day );
@@ -32,12 +35,15 @@ Landmark * create_car_landmark ( const Transport::Graph* trans, const int node )
         algo.insert_node(Vertice(node, 0), 0, 0 );
         algo.run();
         
+        //TODO
+        /*
         for(int i=0 ; i<g.num_transport_vertices() ; ++i ) {
             if( algo.black(Vertice(i, 0) ) ) {
                 int cost = algo.cost(Vertice(i, 0));
                 lm->set_hplus(i, cost);
             }
         }
+        */
     }
     
     return lm;

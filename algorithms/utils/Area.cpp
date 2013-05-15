@@ -15,7 +15,7 @@ void Area::init_max_dist()
     RLC::BackwardGraph rlc_back(&rlc);
     
     int max_cost_forward, max_cost_backward;
-    Vertice max_node;
+    RLC::Label max_node;
     {
         Algo::Filtered::ParamType p(
             RLC::DRegLCParams(&rlc, 0),
@@ -25,26 +25,27 @@ void Area::init_max_dist()
         Algo::Filtered dij(p);
         dij.insert_node(Vertice(center, 0), 0, 0);
         
-        RLC::Vertice last;
+        RLC::Label last;
         max_cost_forward = 0;
         
         while( !dij.finished() ) {
             last = dij.treat_next();
             
-            if(ns.isIn(last.first) && dij.cost(last) > max_cost_forward) {
-                max_cost_forward = dij.cost(last);
+            if(ns.isIn(last.node.first) && last.cost > max_cost_forward) {
+                max_cost_forward = last.cost;
                 max_node = last;
             }
         }
         
-        RLC::Vertice curr = max_node;
+        RLC::Label curr = max_node;
         
+        /*
         vres.edges.push_front(curr.first);
         while( dij.has_pred(curr) ) {
             vres.edges.push_front(g->edgeIndex( dij.get_pred( curr ).first ));
             curr = rlc.source(dij.get_pred( curr ));
         }
-        
+        */
     }    
     
     {
@@ -56,13 +57,13 @@ void Area::init_max_dist()
         Algo::Filtered dij(p);
         dij.insert_node(Vertice(center, 0), 0, 0);
         
-        RLC::Vertice last;
+        RLC::Label last;
         max_cost_backward = 0;
         
         while( !dij.finished() ) {
             last = dij.treat_next();
-            if(ns.isIn(last.first) && dij.cost(last) > max_cost_backward) {
-                max_cost_backward = dij.cost(last);
+            if(ns.isIn(last.node.first) && last.cost > max_cost_backward) {
+                max_cost_backward = last.cost;
             }
             
         }
@@ -106,8 +107,8 @@ Area * build_area_around ( const Transport::Graph* trans, int start, int end, in
         }
     }
     while( !dij.finished() ) {
-        RLC::Vertice vert = dij.treat_next();
-        area->add_node( vert.first );
+        RLC::Label lab = dij.treat_next();
+        area->add_node( lab.node.first );
     }
     
     return area;

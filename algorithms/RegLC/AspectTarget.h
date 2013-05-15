@@ -18,6 +18,10 @@ class AspectTarget : public Base
 {
 public:    
     typedef LISTPARAM<AspectTargetParams, typename Base::ParamType> ParamType;
+    
+    std::set<RLC::Vertice> dest_vertices;
+    int target_cost = -1;
+    
     AspectTarget( ParamType parameters ) : Base(parameters.next) {
         AspectTargetParams & p = parameters.value;
         
@@ -27,13 +31,18 @@ public:
     }
     virtual ~AspectTarget() {}
 
-    std::set<RLC::Vertice> dest_vertices;
     
-    virtual bool check_termination( const RLC::Vertice & vert ) const { 
-        return dest_vertices.find(vert) != dest_vertices.end();
+    
+    virtual bool check_termination( const RLC::Label & lab ) override { 
+        if( !(dest_vertices.find(lab.node) != dest_vertices.end()) ) {
+            return false;
+        } else {
+            target_cost = lab.cost;
+            return true;
+        }
     }
     
-    virtual bool finished() const {
+    virtual bool finished() const override {
         return Base::finished() || Base::success;
     }
     
@@ -56,11 +65,11 @@ public:
     }
     
     int get_path_cost() const {
-        BOOST_FOREACH( RLC::Vertice v, dest_vertices ) {
-            if(Base::black(v))
-                return Base::cost( v );
-        }
-        return -1;
+//         BOOST_FOREACH( RLC::Vertice v, dest_vertices ) {
+//             if(Base::black(v))
+//                 return Base::cost( v );
+//         }
+        return target_cost;
     }
 };
 
