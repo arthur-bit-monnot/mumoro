@@ -52,6 +52,8 @@ int main()
     int time = 50000;
     int day = 10;
     
+    /*
+    
     typedef AspectListConnections<AspectConnectionRule<Muparo<DRegLC>>> Algo;
     
     Algo::ParamType p(
@@ -76,7 +78,7 @@ int main()
     cout <<"Num connections : "<< algo.get_connection_points().size() <<endl;
     
     
-    
+    */
     typedef RLC::AspectTarget<RLC::DRegLC> Dij;
     
     Dij::ParamType dij_params( 
@@ -84,9 +86,9 @@ int main()
             RLC::AspectTargetParams( dest ) );
     Dij dij ( dij_params );
 
-    std::list<Label> labels = algo.get_connection_points();
+    std::list<Label> labels; // = algo.get_connection_points();
     
-//     labels.push_back( Label(612, 50079, 158) );
+    labels.push_back( Label(RLC::Vertice(612, 0), 50079, 158) );
 //     labels.push_back( Label(620, 50134, 268) );
 //     labels.push_back( Label(707, 50148, 296) );
     

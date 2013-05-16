@@ -81,7 +81,7 @@ public:
             delete[] references[i];
             delete[] status[i];
             delete has_predecessor[i];
-            delete[] predecessors[i];
+            free( predecessors[i] );
         }
         delete[] references;
         delete[] status;
@@ -146,8 +146,7 @@ public:
 
             int target_cost = curr.cost + edge_cost * cost_factor;
             
-//             if(!(!has_traffic || (edge_cost * cost_factor - cost_eval(curr, 0)  + cost_eval(target, 0) >= 0) ))
-            BOOST_ASSERT(!has_traffic || (edge_cost * cost_factor - (curr.cost + curr.h)  + cost_eval(target, 0) >= 0) );
+            BOOST_ASSERT(!has_traffic || (edge_cost * cost_factor - curr.cost  + target_cost >= 0) );
             
             // ignore the edge if it provokes an overflow
             if(target_cost < curr.cost)
@@ -191,13 +190,15 @@ public:
         if( white(lab.node) )
         {
             put_dij_node(lab);
-            set_gray(lab.node);
+            set_grey(lab.node);
             
             return true;
         }
-        else if( vert_cost < lab.cost )
+        else if ( grey(lab.node) && lab.cost < (*handle(lab.node)).cost )
         {
-            BOOST_ASSERT(!black(lab.node));
+            BOOST_ASSERT( (*handle(lab.node)).node == lab.node );
+            (*handle(lab.node)) = lab;
+            BOOST_ASSERT( (*handle(lab.node)).cost == lab.cost );
             
             heap->update(handle(lab.node));
 
@@ -251,10 +252,10 @@ public:
     inline DRegHeap::handle_type handle(const RLC::Vertice v) const { return references[v.second][v.first]; }
     
     inline bool white(const RLC::Vertice v) const { return status[v.second][v.first] == 0; }
-    inline bool gray(const RLC::Vertice v) const { return status[v.second][v.first] == 1; }
+    inline bool grey(const RLC::Vertice v) const { return status[v.second][v.first] == 1; }
     inline bool black(const RLC::Vertice v) const { return status[v.second][v.first] == 2; }
     inline void set_white(const RLC::Vertice v) { status[v.second][v.first] = 0; }
-    inline void set_gray(const RLC::Vertice v) { status[v.second][v.first] = 1; }
+    inline void set_grey(const RLC::Vertice v) { status[v.second][v.first] = 1; }
     inline void set_black(const RLC::Vertice v) { status[v.second][v.first] = 2; }
     
     
