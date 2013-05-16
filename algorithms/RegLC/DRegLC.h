@@ -10,6 +10,10 @@
 #include "reglc_graph.h"
 #include "LabelSettingAlgo.h"
 
+using std::cout;
+using std::cerr;
+using std::endl;
+
 namespace RLC {
     
     
@@ -119,6 +123,8 @@ public:
         return success;
     }
     
+    int prev_cost_eval = -1;
+    
     /**
      * Pop the vertice with minimum cost in heap and expand its outgoing edges.
      */
@@ -128,6 +134,10 @@ public:
         heap->pop();
         set_black(curr.node);
         
+        if(!( curr.cost + curr.h >= prev_cost_eval ))
+            cerr << "cost is not strictly growing ... strange for a label setting algorithm.\n" ;
+        prev_cost_eval = curr.cost + curr.h;
+
         if( check_termination(curr) ) {
             success = true;
             return curr;
@@ -146,8 +156,6 @@ public:
 
             int target_cost = curr.cost + edge_cost * cost_factor;
             
-            BOOST_ASSERT(!has_traffic || (edge_cost * cost_factor - curr.cost  + target_cost >= 0) );
-            
             // ignore the edge if it provokes an overflow
             if(target_cost < curr.cost)
                 has_traffic = false;
@@ -159,12 +167,12 @@ public:
                 target_arr = curr.time - edge_cost;
             
             if(has_traffic) {
-                if(edge_cost >= 0) {
-                    insert_node_with_predecessor(target, target_arr, target_cost, e);
-                }
+                BOOST_ASSERT( edge_cost >= 0 );
+                BOOST_ASSERT( target_cost >= 0 );
+                BOOST_ASSERT( (edge_cost * cost_factor - (curr.cost + curr.h)  + (target_cost + label(target, target_arr, target_cost).h) >= 0) );
+                
+                insert_node_with_predecessor(target, target_arr, target_cost, e);
             }
-            
-            
         }
         return curr;
     }
@@ -181,9 +189,12 @@ public:
         return was_inserted;
     }
     
-    virtual bool insert_node(const Vertice & vert, const int arrival, const int vert_cost) override
+    virtual bool insert_node(const Vertice & vert, const int arrival, const int vert_cost) override {
+        return insert_node_impl(label(vert, arrival, vert_cost));
+    }
+    
+    virtual bool insert_node_impl(const Label & lab)
     {
-        Label lab(vert, arrival, vert_cost);
         BOOST_ASSERT( lab.node.first < graph->num_transport_vertices() );
         BOOST_ASSERT( lab.node.second < graph->num_dfa_vertices() );
         
@@ -219,7 +230,10 @@ public:
      * 
      * This method should always be used in place of the constructor to allow automatic fill up (for instance for A*)
      */
-    virtual Label label(RLC::Vertice vert, int time, int cost, int source = -1) {
+    virtual Label label(RLC::Vertice vert, int time, int cost, int source = -1) const {
+        BOOST_ASSERT( vert.first >= 0 );
+        BOOST_ASSERT( vert.second >= 0 );
+        BOOST_ASSERT( cost >= 0 );
         return Label(vert, time, cost, source);
     }
     
@@ -228,18 +242,9 @@ public:
      */
     DRegHeap * heap = NULL;
     
-    /**
-     * Used to provide an evaluation of the cost of node v.
-     * This is to be replaced with an evaluation of the current cost + cost to target
-     */
-    virtual inline int cost_eval( const Vertice & v, const int cost ) const { return cost; }
-    
     virtual inline int best_cost_in_heap() const { return heap->top().cost; }
     
-    inline DRegHeap::handle_type dij_node(const RLC::Vertice v) const { return references[v.second][v.first]; }
-    inline void put_dij_node(const Label l) { 
-        references[l.node.second][l.node.first] = heap->push(l);
-    }
+    inline void put_dij_node(const Label l) { references[l.node.second][l.node.first] = heap->push(l); }
     inline void clear_pred(const RLC::Vertice v) { has_predecessor[v.second]->reset(v.first); }
     inline void set_pred(const RLC::Vertice v, const RLC::Edge & pred) { 
         has_predecessor[v.second]->set(v.first);

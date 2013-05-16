@@ -41,7 +41,14 @@ public:
         hminus.resize( size, -1 );
     }
     
+    /**
+     * Is there a path from the node to this landmark
+     */
     inline bool forward_reachable( const int node ) const { return hplus[node] >= 0; }
+    
+    /**
+     * Is there a path from this landmark to the node
+     */
     inline bool backward_reachable( const int node ) const { return hminus[node] >= 0; }
     
     void set_hplus( const int node, const int dist ) {  hplus[node] = dist; }

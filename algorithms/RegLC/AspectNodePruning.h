@@ -23,11 +23,11 @@ public:
     }
     virtual ~AspectNodePruning() {}
     
-    virtual bool insert_node( const Vertice & node, const int arrival, const int cost ) override {
-        if( ! nf->isIn(node.first) )
+    virtual bool insert_node_impl( const Label & lab ) override {
+        if( ! nf->isIn(lab.node.first) )
             return false;
         else
-            return Base::insert_node( node, arrival, cost );
+            return Base::insert_node_impl( lab );
     }
     
 private:

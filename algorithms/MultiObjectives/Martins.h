@@ -21,13 +21,6 @@ using namespace std;
 namespace RLC {
 
 
-ostream & operator<<(ostream & os, Label l)
-{
-    os << "Label[" << l.node.first << " " << l.time<<" "<<l.cost<< "]";
-    return os;
-}
-
-
 typedef boost::heap::d_ary_heap<
     Label, 
     boost::heap::arity<4>,

@@ -25,13 +25,6 @@ class AspectTargetAreaLandmark : public Base
      */
     H * h = NULL;
     
-    /**
-     * Stores an evaluation of the cost of nodes. This is the sum of:
-     *  - cost to reach the node from the start (exact)
-     *  - cost to reach the target from the node (lower bound provided by h)
-     */
-    int ** evaluated_costs;
-    
     /** 
      * Area we're willing to reach
      */
@@ -44,22 +37,15 @@ public:
     {
         area = parameters.value.area;
         h = parameters.value.h;
-        evaluated_costs = new int*[Base::dfa_num_vert];
-        for(int i=0 ; i<Base::dfa_num_vert ; ++i) {
-            evaluated_costs[i] = new int[Base::trans_num_vert];
-        }
-        
-        if( Base::heap != NULL )
-            delete Base::heap;
-        Base::heap = new DRegHeap(  ) ; //TODO: change heap  and cost!!!
-        
-        
     }
-    virtual ~AspectTargetAreaLandmark() {
-        for(int i=0 ; i<Base::dfa_num_vert ; ++i) {
-            delete evaluated_costs[i];
-        }
-        delete evaluated_costs;
+    virtual ~AspectTargetAreaLandmark() {}
+    
+    virtual Label label(RLC::Vertice vert, int time, int cost, int source = -1) const override {
+        Label l = Base::label(vert, time, cost, source);
+        l.h = h->dist_lb( vert.first, *area, Base::graph->forward ) * Base::cost_factor;
+        
+        BOOST_ASSERT( l.valid() );
+        return l;
     }
 
 };

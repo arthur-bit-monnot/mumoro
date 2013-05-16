@@ -1,13 +1,18 @@
 #ifndef LABEL_SETTING_ALGO_H
 #define LABEL_SETTING_ALGO_H
 
+#include <iostream>
+
 #include "reglc_graph.h"
 
 namespace RLC {
     
     
 struct Label {
-  Label( RLC::Vertice node, int time, int cost, int source = -1) : node(node), cost(cost), h(0), time(time), source(source) {}
+  Label( RLC::Vertice node, int time, int cost, int source = -1) : node(node), cost(cost), h(0), time(time), source(source) {
+      BOOST_ASSERT( valid() );
+  }
+  
   Label() : node(RLC::Vertice(-1, -1)), cost(-1), h(0), time(-1), source(-1) {}
   
   /**
@@ -37,9 +42,18 @@ struct Label {
   
   
   bool operator<(const Label & rhs) const { return cost + h > rhs.cost + rhs.h; }
+  
   bool dominated_by(const Label & other) const { 
       return (cost >= other.cost && time >= other.time)
           || ((cost >= other.cost) && (cost - other.cost > other.time - time));
+  }
+  
+  bool valid() const { 
+      BOOST_ASSERT( this->cost >= 0 );
+      BOOST_ASSERT( this->node.first >= 0 );
+      BOOST_ASSERT( this->node.second >= 0 );
+      BOOST_ASSERT( this->h >= 0 );
+      return true;
   }
 };
 
@@ -54,7 +68,7 @@ public:
     virtual bool finished() const = 0;
     virtual bool run() = 0;
     virtual Label treat_next() = 0;
-    virtual bool insert_node(const Vertice & vert, const int arrival, const int vert_cost) = 0;
+    virtual bool insert_node(const Vertice & vert, const int arrival, const int vert_cost ) = 0;
     
 //     virtual float arrival(const RLC::Vertice v) const = 0;
 //     virtual float cost(const RLC::Vertice v) const = 0;
@@ -75,6 +89,7 @@ public:
 
 } // end namespace RLC
 
+std::ostream & operator<<(std::ostream & os, const RLC::Label l);
 
 #endif
 

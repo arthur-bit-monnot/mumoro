@@ -9,13 +9,11 @@ template<typename Base>
 class AspectCount : public Base {
 public:    
     typedef typename Base::ParamType ParamType;
-    AspectCount( ParamType parameters ) : Base(parameters) { count = 0; }
+    AspectCount( ParamType parameters ) : Base(parameters) { Base::count = 0; }
     virtual ~AspectCount() {}
     
-    int count;
-    
     virtual RLC::Label treat_next() override {
-        count++;
+        Base::count++;
         return Base::treat_next();
     }
     

@@ -14,6 +14,7 @@ using std::ifstream;
 #include "node_filter_utils.h"
 #include "../RegLC/AlgoTypedefs.h"
 #include "Landmark.h"
+#include "LandmarkSet.h"
 
 #include "../RegLC/AspectTarget.h"
 #include "../RegLC/AlgoTypedefs.h"
@@ -26,6 +27,8 @@ using std::ifstream;
 using namespace RLC;
 
 CsvWriter * out;
+RLC::LandmarkSet * lmset;
+Area * area;
 
 void run_test(const Transport::Graph * g, const int start, const int dest_center, const int area_radius, Landmark * lm)
 {
@@ -92,6 +95,46 @@ bool run_test(const Transport::Graph * g, const int start, const int dest_center
     }
 }
 
+void run_static_test(const Transport::Graph * g, const int start) 
+{
+    int with_landmarks, without_landmarks;
+    
+    RLC::Graph rlc(g, car_dfa());
+    {
+        typedef RLC::AspectCount<RLC::AspectTargetAreaStop<AspectTargetAreaLandmark<RLC::DRegLC, RLC::LandmarkSet>>> Algo;
+
+        Algo::ParamType p(
+            DRegLCParams(&rlc, 10),
+            AspectTargetAreaLandmarkParams<RLC::LandmarkSet>( area, lmset ),
+            AspectTargetAreaStopParams( area )        
+        );
+        
+        Algo algo( p );
+        algo.insert_node(RLC::Vertice(start, 0), 0, 0);
+        algo.run();
+        
+        with_landmarks = algo.count;
+    }
+    {
+        typedef RLC::AspectCount<RLC::AspectTargetAreaStop<RLC::DRegLC>> Algo;
+
+        Algo::ParamType p(
+            DRegLCParams(&rlc, 10),
+            AspectTargetAreaStopParams( area )            
+        );
+        
+        Algo algo( p );
+        algo.insert_node(RLC::Vertice(start, 0), 0, 0);
+        algo.run();
+        
+        without_landmarks = algo.count;
+    }
+    
+    cout << area->radius <<" "<< with_landmarks <<" "<< without_landmarks <<" "<< (float) with_landmarks / (float) without_landmarks << endl;
+    out->add_line( area->radius, (float) with_landmarks / (float) without_landmarks );
+    
+}
+
 
 int main(void)
 {
@@ -100,12 +143,28 @@ int main(void)
     
     srand (time(NULL));
     
+    
     std::string file( "/home/arthur/LAAS/Data/Graphs/sud-ouest.dump" );
     Transport::GraphFactory gf( file );
     
     const Transport::Graph * g = gf.get();
     
-    for(int i=0 ; i<50 ;) {
+    int landmarks_nodes[3] = { 269647, 546063, 294951 };
+    std::vector<const Landmark *> lms;
+    BOOST_FOREACH( int n, landmarks_nodes ) {
+        lms.push_back( RLC::create_car_landmark(g, n) );
+    }
+    lmset = new RLC::LandmarkSet( lms, g );
+    area = bordeaux_area_small(g);
+    
+    int start_nodes[5] = { 15603, 290561, 199586, 257976, 162626 };
+    
+    BOOST_FOREACH( int start, start_nodes ) {
+        run_static_test(g, start);
+    }
+    
+    /*
+    for(int i=0 ; i<10 ;) {
         int source = -1;
         int dest = -1;
         while( dest < 0 ) {
@@ -121,6 +180,6 @@ int main(void)
             ++i;
         cout << i<<endl;
     }
-    
+    */
     
 }

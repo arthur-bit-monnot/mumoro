@@ -3,6 +3,7 @@
 #include "reglc_graph.h"
 #include "graph_wrapper.h"
 #include "DRegLC.h"
+#include <graph_wrapper.h>
 
 namespace RLC {
 
@@ -17,35 +18,36 @@ Landmark * create_car_landmark ( const Transport::Graph* trans, const int node )
         DRegLCParams p( &g, day );
         DRegLC algo( p );
         algo.insert_node(Vertice(node, 0), 0, 0 );
-        algo.run();
         
-        //TODO
-        /*
-        for(int i=0 ; i<g.num_transport_vertices() ; ++i ) {
-            if( algo.black(Vertice(i, 0) ) ) {
-                int cost = algo.cost(Vertice(i, 0));
-                lm->set_hminus(i, cost);
-            }
+        while( !algo.finished() ) {
+            RLC::Label lab = algo.treat_next();
+            if( !lm->backward_reachable( lab.node.first ) )
+                lm->set_hminus(lab.node.first, lab.cost);
         }
-        */
     }
     {
         DRegLCParams p( &bg, day );
         DRegLC algo( p );
         algo.insert_node(Vertice(node, 0), 0, 0 );
-        algo.run();
         
-        //TODO
-        /*
-        for(int i=0 ; i<g.num_transport_vertices() ; ++i ) {
-            if( algo.black(Vertice(i, 0) ) ) {
-                int cost = algo.cost(Vertice(i, 0));
-                lm->set_hplus(i, cost);
-            }
+        while( !algo.finished() ) {
+            RLC::Label lab = algo.treat_next();
+            if( !lm->forward_reachable( lab.node.first ) )
+                lm->set_hplus(lab.node.first, lab.cost);
         }
-        */
     }
     
+    /*
+    for(int i=0 ; i<trans->num_vertices() ; ++i) {
+        if( trans->car_accessible( i ) ) {
+            std::cerr <<node<<" "<<i<<" "<< lm->hplus[i] << " " << lm->hminus[i] <<endl;
+            if( !lm->backward_reachable( i ) || !lm->forward_reachable( i ) ) {
+                
+                std::cerr<< "Coverage is not full\n";
+            }
+        }
+    }
+    */
     return lm;
 }
 
