@@ -13,11 +13,9 @@ AlgoMPR::PtToPt * point_to_point( Transport::Graph * trans, int source, int dest
     PtToPt * mup = new PtToPt( p );
     int day = 10;
     
-    mup->dfas.push_back(dfa);
-    
     for(int i=0; i<mup->num_layers ; ++i)
     {
-        mup->graphs.push_back( new RLC::Graph(mup->transport, mup->dfas[i] ));
+        mup->graphs.push_back( new RLC::Graph(mup->transport, dfa ));
         PtToPt::Dijkstra::ParamType p( RLC::DRegLCParams( mup->graphs[i], day) );
         mup->dij.push_back( new PtToPt::Dijkstra( p ) );
     }
@@ -35,7 +33,7 @@ VisualResult show_point_to_point ( Transport::Graph* trans, int source, int dest
     return ptp->get_result();
 }
 
-SharedPath* shared_path ( Transport::Graph* trans, int src1, int src2, int dest )
+SharedPath* shared_path ( Transport::Graph* trans, int src1, int src2, int dest, RLC::DFA dfa )
 {
     int day = 10;
     SharedPath::ParamType p(
@@ -49,8 +47,7 @@ SharedPath* shared_path ( Transport::Graph* trans, int src1, int src2, int dest 
     
     for(int i=0; i<sp->num_layers ; ++i)
     {
-        sp->dfas.push_back(RLC::bike_pt_dfa());
-        sp->graphs.push_back( new RLC::Graph(sp->transport, sp->dfas[i] ));
+        sp->graphs.push_back( new RLC::Graph(sp->transport, dfa ));
         PtToPt::Dijkstra::ParamType p( RLC::DRegLCParams( sp->graphs[i], day) );
         sp->dij.push_back( new PtToPt::Dijkstra( p ) );
     }

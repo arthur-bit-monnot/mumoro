@@ -101,6 +101,7 @@ public:
             memset(status[i], 0, trans_num_vert * sizeof(status[0][0]));
         }
         success = false;
+        prev_cost_eval = -1;
     }
     
     virtual bool finished() const override
@@ -242,7 +243,7 @@ public:
      */
     DRegHeap * heap = NULL;
     
-    virtual inline int best_cost_in_heap() const { return heap->top().cost; }
+    virtual inline int best_cost_in_heap() { return heap->top().cost; }
     
     inline void put_dij_node(const Label l) { references[l.node.second][l.node.first] = heap->push(l); }
     inline void clear_pred(const RLC::Vertice v) { has_predecessor[v.second]->reset(v.first); }

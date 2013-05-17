@@ -76,7 +76,7 @@ public:
 //     virtual RLC::Edge get_pred(const RLC::Vertice v) const = 0;
 //     virtual bool has_pred(const RLC::Vertice v) const = 0;
     
-    virtual int best_cost_in_heap() const = 0;
+    virtual int best_cost_in_heap() = 0;
     
     int count;
     

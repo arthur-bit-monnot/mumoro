@@ -5,9 +5,6 @@
 #include "MPR_AspectPropagationRule.h"
 #include "AspectTarget.h"
 
-// TODO: for definition of LAbel, shouldn't be done this way
-#include "../MultiObjectives/Martins.h"
-
 
 namespace MuPaRo {
 

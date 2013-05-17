@@ -77,7 +77,6 @@ public:
         
     const int num_layers;
     const Transport::Graph * transport;
-    vector<RLC::DFA> dfas;
     vector<RLC::AbstractGraph*> graphs;
     vector<RLC::LabelSettingAlgo*> dij;
     

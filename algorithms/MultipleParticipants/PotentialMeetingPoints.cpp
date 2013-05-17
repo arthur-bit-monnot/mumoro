@@ -22,16 +22,10 @@ VisualResult show_meeting_points( const Transport::Graph * g, int source, int ti
     RLC::DFA dfa_pt = RLC::pt_foot_dfa();
     RLC::DFA dfa_car = RLC::car_dfa();
     
-    mp.dfas.push_back(dfa_pt);
-    mp.dfas.push_back(dfa_car);
-    mp.dfas.push_back(dfa_car);
-    mp.dfas.push_back(dfa_car);
-
-    
-    RLC::Graph *g1 = new RLC::Graph(mp.transport, mp.dfas[0] );
-    RLC::Graph *g2 = new RLC::Graph(mp.transport, mp.dfas[1] );
+    RLC::Graph *g1 = new RLC::Graph(mp.transport, dfa_pt );
+    RLC::Graph *g2 = new RLC::Graph(mp.transport, dfa_car );
     RLC::BackwardGraph *g3 = new RLC::BackwardGraph(g2);
-    RLC::Graph *g4 = new RLC::Graph(mp.transport, mp.dfas[3] );
+    RLC::Graph *g4 = new RLC::Graph(mp.transport, dfa_car );
     
     mp.graphs.push_back( g1 );
     mp.graphs.push_back( g2 );
@@ -103,13 +97,8 @@ NodeSet * meeting_points( const Transport::Graph * g, int source, Area * area )
     RLC::DFA dfa_pt = RLC::pt_foot_dfa();
     RLC::DFA dfa_car = RLC::car_dfa();
     
-    mp.dfas.push_back(dfa_pt);
-    mp.dfas.push_back(dfa_car);
-    mp.dfas.push_back(dfa_car);
-
-    
-    RLC::Graph *g1 = new RLC::Graph(mp.transport, mp.dfas[0] );
-    RLC::Graph *g2 = new RLC::Graph(mp.transport, mp.dfas[1] );
+    RLC::Graph *g1 = new RLC::Graph(mp.transport, dfa_pt );
+    RLC::Graph *g2 = new RLC::Graph(mp.transport, dfa_car );
     RLC::BackwardGraph *g3 = new RLC::BackwardGraph(g2);
     
     mp.graphs.push_back( g1 );

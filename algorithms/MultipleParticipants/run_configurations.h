@@ -16,9 +16,9 @@ namespace MuPaRo {
 
 AlgoMPR::PtToPt * point_to_point( Transport::Graph * trans, int source, int dest, RLC::DFA dfa = RLC::pt_foot_dfa() );
 
-VisualResult show_point_to_point( Transport::Graph * trans, int source, int dest, RLC::DFA dfa = RLC::pt_foot_dfa());
+VisualResult show_point_to_point( Transport::Graph * trans, int source, int dest, RLC::DFA dfa = RLC::pt_foot_dfa() );
 
-AlgoMPR::SharedPath * shared_path(Transport::Graph * trans, int src1, int src2, int dest);
+AlgoMPR::SharedPath * shared_path(Transport::Graph * trans, int src1, int src2, int dest, RLC::DFA dfa = RLC::bike_pt_dfa() );
 
 VisualResult show_shared_path(Transport::Graph * trans, int src1, int src2, int dest);
 
@@ -41,18 +41,11 @@ void init_car_sharing(T * cs, const Transport::Graph* trans, int src_ped, int sr
     int day = 10;
     int time = 50000;
     
-    cs->dfas.push_back(dfa_ped);
-    cs->dfas.push_back(dfa_car);
-    cs->dfas.push_back(dfa_car);
-    cs->dfas.push_back(dfa_car);
-    cs->dfas.push_back(dfa_ped);
-
-    
-    RLC::Graph *g1 = new RLC::Graph(cs->transport, cs->dfas[0] );
-    RLC::Graph *g2 = new RLC::Graph(cs->transport, cs->dfas[1] );
-    RLC::Graph *g3 = new RLC::Graph(cs->transport, cs->dfas[2] );
+    RLC::Graph *g1 = new RLC::Graph(cs->transport, dfa_ped );
+    RLC::Graph *g2 = new RLC::Graph(cs->transport, dfa_car );
+    RLC::Graph *g3 = new RLC::Graph(cs->transport, dfa_car );
     RLC::BackwardGraph *g4 = new RLC::BackwardGraph(g2);
-    RLC::Graph *g5 = new RLC::Graph(cs->transport, cs->dfas[4] );
+    RLC::Graph *g5 = new RLC::Graph(cs->transport, dfa_ped );
     
     cs->graphs.push_back( g1 );
     cs->graphs.push_back( g2 );
@@ -82,18 +75,11 @@ void init_car_sharing_filtered(T * cs, const Transport::Graph* trans, int src_pe
     int day = 10;
     int time = 50000;
     
-    cs->dfas.push_back(dfa_ped);
-    cs->dfas.push_back(dfa_car);
-    cs->dfas.push_back(dfa_car);
-    cs->dfas.push_back(dfa_car);
-    cs->dfas.push_back(dfa_ped);
-
-    
-    RLC::Graph *g1 = new RLC::Graph(cs->transport, cs->dfas[0] );
-    RLC::Graph *g2 = new RLC::Graph(cs->transport, cs->dfas[1] );
-    RLC::Graph *g3 = new RLC::Graph(cs->transport, cs->dfas[2] );
+    RLC::Graph *g1 = new RLC::Graph(cs->transport, dfa_ped );
+    RLC::Graph *g2 = new RLC::Graph(cs->transport, dfa_car );
+    RLC::Graph *g3 = new RLC::Graph(cs->transport, dfa_car );
     RLC::BackwardGraph *g4 = new RLC::BackwardGraph(g2);
-    RLC::Graph *g5 = new RLC::Graph(cs->transport, cs->dfas[4] );
+    RLC::Graph *g5 = new RLC::Graph(cs->transport, dfa_ped );
     
     cs->graphs.push_back( g1 );
     cs->graphs.push_back( g2 );
@@ -143,18 +129,11 @@ void init_car_sharing_with_areas(T * cs, const Transport::Graph* trans, int src_
     int day = 10;
     int time = 50000;
     
-    cs->dfas.push_back(dfa_ped);
-    cs->dfas.push_back(dfa_car);
-    cs->dfas.push_back(dfa_car);
-    cs->dfas.push_back(dfa_car);
-    cs->dfas.push_back(dfa_ped);
-
-    
-    RLC::Graph *g1 = new RLC::Graph(cs->transport, cs->dfas[0] );
-    RLC::Graph *g2 = new RLC::Graph(cs->transport, cs->dfas[1] );
-    RLC::Graph *g3 = new RLC::Graph(cs->transport, cs->dfas[2] );
+    RLC::Graph *g1 = new RLC::Graph(cs->transport, dfa_ped );
+    RLC::Graph *g2 = new RLC::Graph(cs->transport, dfa_car );
+    RLC::Graph *g3 = new RLC::Graph(cs->transport, dfa_car );
     RLC::BackwardGraph *g4 = new RLC::BackwardGraph(g2);
-    RLC::Graph *g5 = new RLC::Graph(cs->transport, cs->dfas[4] );
+    RLC::Graph *g5 = new RLC::Graph(cs->transport, dfa_ped );
     
     cs->graphs.push_back( g1 );
     cs->graphs.push_back( g2 );
