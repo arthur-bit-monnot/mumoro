@@ -63,6 +63,7 @@ struct Label {
 class LabelSettingAlgo 
 {
 public:
+    LabelSettingAlgo() : count(0) {}
     virtual ~LabelSettingAlgo() {}
     
     virtual bool finished() const = 0;

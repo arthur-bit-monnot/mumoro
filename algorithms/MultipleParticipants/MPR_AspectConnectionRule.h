@@ -10,8 +10,8 @@ namespace MuPaRo {
 
 struct AspectConnectionRuleParams {
     AspectConnectionRuleParams( CostCombination cost, ArrivalCombination arr, RLC::AbstractGraph * graph, 
-                                int cond1, int cond2, int target ) :
-    cost_comb(cost), arr_comb(arr), graph(graph), target(target)
+                            int cond1, int cond2, int target, const Area * area = NULL ) :
+    cost_comb(cost), arr_comb(arr), graph(graph), area(area), target(target)
     {
         condition_layers.push_back(cond1);
         condition_layers.push_back(cond2);
@@ -19,7 +19,8 @@ struct AspectConnectionRuleParams {
     CostCombination cost_comb;
     ArrivalCombination arr_comb;
     std::vector<int> condition_layers;
-    RLC::AbstractGraph * graph;
+    const RLC::AbstractGraph * graph;
+    const Area * area;
     const int target;
 };
 
@@ -33,7 +34,8 @@ public:
     ArrivalCombination arr_comb;
     int insertion_layer;
     vector<int> condition_layers;
-    RLC::AbstractGraph * graph;
+    const RLC::AbstractGraph * graph;
+    const Area * area;
     int target;
     
     Dij * conn_dij;
@@ -48,6 +50,7 @@ public:
     arr_comb(p.value.arr_comb),
     condition_layers(p.value.condition_layers),
     graph(p.value.graph),
+    area(p.value.area),
     target(p.value.target)
     {
         int day = 10;
@@ -114,6 +117,11 @@ public:
     
     bool applicable(const int node) const
     {
+        if(area == NULL)
+            cout << "NULLL\n";
+        if( area != NULL && !area->isIn( node ) )
+            return false;
+        
         BOOST_FOREACH( int layer, condition_layers ) {
             if( !Base::is_node_set( StateFreeNode(layer, node) ) ) {
                 return false;

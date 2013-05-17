@@ -44,18 +44,10 @@ public:
     void summary() {
         int count_set = 0;
         int tot_labels = 0;
-        int printed = 0;
         BOOST_FOREACH( std::list<Label> & labels, P ) {
             if( ! labels.empty() ) {
                 count_set++;
                 tot_labels += labels.size();
-                if( printed < 1) {
-                    BOOST_FOREACH( Label l, labels ) {
-                        cout << l <<endl;
-                    }
-                    cout << endl <<endl;
-                    printed ++;
-                }
             }
         }
         
@@ -84,21 +76,17 @@ public:
     }
     
     virtual Label treat_next() override { 
-        total_iter++;
+        count++;
         Label lab = next_undominated();
         heap.pop();
         
         BOOST_ASSERT( !is_dominated(lab) );
-        
-//         if( (total_iter % 100000) == 0 )
-//             summary();
         
         P[lab.node.first].push_back( lab );
         
         if( lab.node.first == target ) {
             success = true;
             cout << "Found destination with cost " << lab.cost <<endl;
-            cout << undominated_iter <<" / " << total_iter <<endl;
             summary();
             return lab;
         }

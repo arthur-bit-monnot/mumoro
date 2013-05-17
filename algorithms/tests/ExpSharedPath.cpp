@@ -41,13 +41,13 @@ void run_test(const Transport::Graph * trans, int car_start_node, int passenger_
     RLC::BackwardGraph car_back_graph(&car_for_graph);
     RLC::BackwardGraph ped_back_graph(&ped_for_graph);
     
-    /*
+    
     {   
         typedef AspectListConnections<AspectConnectionRule<Muparo<DRegLC>>> AlgoBrute;
         
         AlgoBrute::ParamType p(
             MuparoParams( trans, 2 ),
-            AspectConnectionRuleParams( SumCost, FirstLayerArrival, &ped_for_graph, 0, 1, passenger_start_node )
+            AspectConnectionRuleParams( SumCost, FirstLayerArrival, &ped_for_graph, 0, 1, passenger_start_node, bordeaux )
         );
         
         AlgoBrute algo( p );
@@ -60,7 +60,7 @@ void run_test(const Transport::Graph * trans, int car_start_node, int passenger_
         
         { // layer 1 backward search from toulouse (car)
             algo.graphs.push_back( new RLC::BackwardGraph(&car_for_graph) );
-            DRegLC::ParamType p( RLC::DRegLCParams( algo.graphs[1], day) );
+            DRegLC::ParamType p( RLC::DRegLCParams( algo.graphs[1], day, 2) );
             algo.dij.push_back( new DRegLC( p ) );
         }
         
@@ -70,14 +70,14 @@ void run_test(const Transport::Graph * trans, int car_start_node, int passenger_
         
         cout <<"Num connections : "<< algo.get_connection_points().size() <<endl;
     }
-    */
+    
     
     {
         typedef AspectPropagationRule<Muparo<DRegLC>> AlgoMulti;
         
         AlgoMulti::ParamType p(
             MuparoParams( trans, 3),
-            AspectPropagationRuleParams( SumPlusWaitCost, MaxArrival, 2, 0, 1 )
+            AspectPropagationRuleParams( SumCost, FirstLayerArrival, 2, 0, 1 )
         );
         
         AlgoMulti algo( p );

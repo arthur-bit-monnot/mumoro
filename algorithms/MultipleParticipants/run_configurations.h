@@ -6,6 +6,7 @@
 #include "node_filter_utils.h"
 #include <AspectTargetAreaLandmark.h>
 #include "AspectTargetAreaStop.h"
+#include "../MultiObjectives/Martins.h"
 
 using RLC::DRegLC;
 using RLC::AspectCount;
@@ -184,6 +185,80 @@ void init_car_sharing_with_areas(T * cs, const Transport::Graph* trans, int src_
     cs->insert( StateFreeNode(3, dest_car), 0, 0);
 }
 
+template<typename T, typename H>
+void init_multi_car_sharing_with_areas(T * cs, const Transport::Graph* trans, int src_ped, int src_car, int dest_ped, 
+                 int dest_car, RLC::DFA dfa_ped, RLC::DFA dfa_car, Area * area_start, Area * area_dest, 
+                 bool use_landmarks = false, H * h_start = NULL, H * h_dest = NULL )
+{
+    typedef RLC::AspectTargetAreaStop<RLC::AspectCount<RLC::DRegLC>> CarAlgo;
+    typedef typename RLC::AspectTargetAreaStop<RLC::AspectTargetAreaLandmark<RLC::AspectCount<RLC::DRegLC>, H>> CarAlgoLM;
+    typedef RLC::AspectNodePruning<RLC::AspectCount<RLC::DRegLC>> PassAlgo;
+    
+    cs->vres.a_nodes.push_back(src_ped);
+    cs->vres.a_nodes.push_back(src_car);
+    cs->vres.b_nodes.push_back(dest_ped);
+    cs->vres.b_nodes.push_back(dest_car);
+    
+    int day = 10;
+    int time = 50000;
+    
+    RLC::Graph *g1 = new RLC::Graph(cs->transport, dfa_ped );
+    RLC::Graph *g2 = new RLC::Graph(cs->transport, dfa_car );
+    RLC::Graph *g3 = new RLC::Graph(cs->transport, dfa_car );
+    RLC::BackwardGraph *g4 = new RLC::BackwardGraph(g2);
+    RLC::Graph *g5 = new RLC::Graph(cs->transport, dfa_ped );
+    
+    cs->graphs.push_back( g1 );
+    cs->graphs.push_back( g2 );
+    cs->graphs.push_back( g3 );
+    cs->graphs.push_back( g4 );
+    cs->graphs.push_back( g5 );
+    cs->dij.push_back( new PassAlgo( 
+        PassAlgo::ParamType(
+            RLC::DRegLCParams(g1, day, 1),
+            RLC::AspectNodePruningParams( &area_start->ns ) ) ) );
+    if(!use_landmarks) {
+        cs->dij.push_back( new CarAlgo( 
+            CarAlgo::ParamType(
+                RLC::DRegLCParams(g2, day, 1),
+                RLC::AspectTargetAreaStopParams(area_start) ) ) );
+        cs->dij.push_back( new CarAlgo( 
+            CarAlgo::ParamType(
+                RLC::DRegLCParams(g3, day, 2),
+                RLC::AspectTargetAreaStopParams(area_dest) ) ) );
+        cs->dij.push_back( new CarAlgo( 
+            CarAlgo::ParamType(
+                RLC::DRegLCParams(g4, day, 1),
+                RLC::AspectTargetAreaStopParams(area_dest) ) ) );
+    } else {
+        cs->dij.push_back( new CarAlgoLM( 
+            typename CarAlgoLM::ParamType(
+                RLC::DRegLCParams(g2, day, 1),
+                RLC::AspectTargetAreaLandmarkParams<H>(area_start, h_start),
+                RLC::AspectTargetAreaStopParams(area_start) ) ) );
+        cs->dij.push_back( new CarAlgoLM( 
+            typename CarAlgoLM::ParamType(
+                RLC::DRegLCParams(g3, day, 2),
+                RLC::AspectTargetAreaLandmarkParams<H>(area_dest, h_dest),
+                RLC::AspectTargetAreaStopParams(area_dest) ) ) );
+        cs->dij.push_back( new CarAlgoLM( 
+            typename CarAlgoLM::ParamType(
+                RLC::DRegLCParams(g4, day, 1),
+                RLC::AspectTargetAreaLandmarkParams<H>(area_dest, h_dest),
+                RLC::AspectTargetAreaStopParams(area_dest) ) ) );
+    }
+    /*
+    cs->dij.push_back( new PassAlgo( 
+        PassAlgo::ParamType(
+            RLC::DRegLCParams(g5, day, 1),
+            RLC::AspectNodePruningParams( &area_dest->ns ) ) ) );
+    */
+    cs->dij.push_back( new RLC::Martins(g5, dest_ped, day, area_dest) );
+    
+    cs->insert( StateFreeNode(0, src_ped), time, 0);
+    cs->insert( StateFreeNode(1, src_car), time, 0);
+    cs->insert( StateFreeNode(3, dest_car), 0, 0);
+}
 
 
 }
