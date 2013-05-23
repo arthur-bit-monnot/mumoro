@@ -51,10 +51,6 @@ public:
     {
         DRegLCParams & p = parameters.value;
         
-        if( heap != NULL )
-            delete heap;
-        heap = new DRegHeap(  );
-        
         this->graph = p.graph;
         day = p.day;
         cost_factor = p.cost_factor;
@@ -64,13 +60,9 @@ public:
         
         references = new DRegHeap::handle_type*[dfa_num_vert];
         status = new uint*[dfa_num_vert];
-        has_predecessor = new boost::dynamic_bitset<>*[dfa_num_vert];
-        predecessors = new RLC::Edge*[dfa_num_vert];
         for(int i=0 ; i<dfa_num_vert ; ++i) {
             references[i] = new DRegHeap::handle_type[trans_num_vert];
             status[i] = new uint[trans_num_vert];
-            has_predecessor[i] = new boost::dynamic_bitset<>(trans_num_vert);
-            predecessors[i] = (RLC::Edge *) malloc(trans_num_vert * sizeof(RLC::Edge));
 
             // all vertices are white
             memset(status[i], 0, trans_num_vert * sizeof(status[0][0]));
@@ -84,19 +76,14 @@ public:
         for(int i=0 ; i<dfa_num_vert ; ++i) {
             delete[] references[i];
             delete[] status[i];
-            delete has_predecessor[i];
-            free( predecessors[i] );
         }
         delete[] references;
         delete[] status;
-        delete[] has_predecessor;
-        delete[] predecessors;
     }
     
     virtual void clear() {
-        heap->clear();
+        heap.clear();
         for(int i=0 ; i<dfa_num_vert ; ++i) {
-            has_predecessor[i]->reset();
             // all vertices are white
             memset(status[i], 0, trans_num_vert * sizeof(status[0][0]));
         }
@@ -106,7 +93,7 @@ public:
     
     virtual bool finished() const override
     {
-        return heap->empty();
+        return heap.empty();
     }
     
     virtual bool check_termination( const RLC::Label & vert ) { return false; }
@@ -131,8 +118,8 @@ public:
      */
     virtual Label treat_next() override
     {
-        Label curr = heap->top();
-        heap->pop();
+        Label curr = heap.top();
+        heap.pop();
         set_black(curr.node);
         
         if(!( curr.cost + curr.h >= prev_cost_eval ))
@@ -184,10 +171,7 @@ public:
      */
     virtual bool insert_node_with_predecessor(const Vertice & vert, const int arrival, const int cost, const RLC::Edge & pred)
     {
-        bool was_inserted = insert_node( vert, arrival, cost );
-        if( was_inserted )
-            set_pred( vert, pred );
-        return was_inserted;
+        return insert_node( vert, arrival, cost );
     }
     
     virtual bool insert_node(const Vertice & vert, const int arrival, const int vert_cost) override {
@@ -212,7 +196,7 @@ public:
             (*handle(lab.node)) = lab;
             BOOST_ASSERT( (*handle(lab.node)).cost == lab.cost );
             
-            heap->update(handle(lab.node));
+            heap.update(handle(lab.node));
 
             return true;
         }
@@ -241,19 +225,11 @@ public:
     /**
      * Heap in which the Vertices will be stored
      */
-    DRegHeap * heap = NULL;
+    DRegHeap heap;
     
-    virtual inline int best_cost_in_heap() { return heap->top().cost; }
+    virtual inline int best_cost_in_heap() { return heap.top().cost; }
     
-    inline void put_dij_node(const Label l) { references[l.node.second][l.node.first] = heap->push(l); }
-    inline void clear_pred(const RLC::Vertice v) { has_predecessor[v.second]->reset(v.first); }
-    inline void set_pred(const RLC::Vertice v, const RLC::Edge & pred) { 
-        has_predecessor[v.second]->set(v.first);
-        predecessors[v.second][v.first] = pred; 
-    }
-
-    inline RLC::Edge get_pred(const RLC::Vertice v) const { return predecessors[v.second][v.first]; }
-    inline bool has_pred(const RLC::Vertice v) const { return has_predecessor[v.second]->test(v.first); }
+    inline void put_dij_node(const Label l) { references[l.node.second][l.node.first] = heap.push(l); }
     
     inline DRegHeap::handle_type handle(const RLC::Vertice v) const { return references[v.second][v.first]; }
     
@@ -282,8 +258,6 @@ protected:
     int cost_factor;
     
     DRegHeap::handle_type **references;
-    boost::dynamic_bitset<> ** has_predecessor;
-    RLC::Edge **predecessors;
     uint **status; //TODO : very big for only two bits ...
 };
 
