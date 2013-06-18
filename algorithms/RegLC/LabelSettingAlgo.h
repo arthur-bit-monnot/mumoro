@@ -44,8 +44,8 @@ struct Label {
   bool operator<(const Label & rhs) const { return cost + h > rhs.cost + rhs.h; }
   
   bool dominated_by(const Label & other) const { 
-      return (cost >= other.cost && time >= other.time)
-          || ((cost >= other.cost) && (cost - other.cost > other.time - time));
+      return (cost >= other.cost && time >= other.time);
+//           || ((cost >= other.cost) && (cost - other.cost > other.time - time));
   }
   
   bool valid() const { 

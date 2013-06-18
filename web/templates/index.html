@@ -86,59 +86,71 @@
     </head>
 
     <body onload="init();">
-        <div id="header">
-            <h1>Mumoro demonstration on the city of Rennes</h1>
-            <h2>Multimodal and multiobjective routing <a href="/info">Read more here</a></h2>
-        </div>  
-
-        <div id="main">
-            <div id="lefting">      
-                Date and time: <input id="datepicker" type="text"/><br/>
-                <div id="address_form">
-                    <form method="get" action="javascript:validateAddresses(this);">
-                        <label for="startAdr">Start location:</label>
-                        <span id="formError_start"></span>
-                        <br/>           
-                        <input type="text" name="startAdr" id="startAdr" tabindex="10" size="50" />
-                        <br/>
-                        <label for="endAdr">Destination:</label>
-                        <span id="formError_dest"></span>
-                        <br/>
-                        <input type="text" name="endAdr" id="endAdr" tabindex="20" size="50" />
-                        <br/>
-                        <span class="tinyText">Example: 23 rue de la Chalotais 35000 Rennes France</span>
-                        <br/>
-                        <input type="button" value="Reverse" onclick="return reverseLocations(this)"/>
-                        <input type="submit" value="Calculate route" />
-                    </form>
-                </div>
+         
+         
+        
+        <div id="map" class="box-wrapper" style="left: 0px; right:0px; visibility: visible;">
+            
                 
-                <!--  -->
-                <div id="layer_display_form">
-                    <form method="get" action="javascript:displayMode(this);">
-                        <label for="modeDisp">Mode:</label>
-                        <span id="formError_mode"></span>
-                        <br/>           
-                        <input type="text" name="modeDisp" id="modeDisp" tabindex="30" size="50" />
-                        <br/>
-                        <span class="tinyText">Allowed: Bus Subway Transfer ...</span>
-                        <br/>
-                        <input type="submit" value="Display mode" />
-                    </form>
+            
+                <div id="licences">
+                    Data: <a href="http://www.openstreetmap.org/">OpenStreetMap</a>(CC by-sa)
                 </div>
-                
-                <div id="info">
-                    <p id="path_costs"></p>
-                    <p id="routing_description"></p>
-                    <p id="hash_url"></p>
+        </div>
+        
+            <!--<div id="header">
+                <h1>Mumoro demonstration on the city of Rennes</h1>
+                <h2>Multimodal and multiobjective routing <a href="/info">Read more here</a></h2>
+            </div> -->
+        
+            <div id="main" class="box-wrapper" style="left: 55px; top:10px; width: 250px; height: 300px; visibility: visible;"> <!--</div>-->
+                <div id="lefting">      
+                    Date and time: <input id="datepicker" type="text"/><br/>
+                    <div id="address_form">
+                        <form method="get" action="javascript:validateAddresses(this);">
+                            <label for="startAdr">Start location:</label>
+                            <span id="formError_start"></span>
+                            <br/>           
+                            <input type="text" name="startAdr" id="startAdr" tabindex="10" size="25" />
+                            <br/>
+                            <label for="endAdr">Destination:</label>
+                            <span id="formError_dest"></span>
+                            <br/>
+                            <input type="text" name="endAdr" id="endAdr" tabindex="20" size="25" />
+                            <br/>
+                            <span class="tinyText">Example: 23 rue de la Chalotais 35000 Rennes France</span>
+                            <br/>
+                            <input type="button" value="Reverse" onclick="return reverseLocations(this)"/>
+                            <input type="submit" value="Calculate route" />
+                        </form>
+                    </div>
+                    
+                    <!--  -->
+                    <div id="layer_display_form">
+                        <form method="get" action="javascript:displayMode(this);">
+                            <label for="modeDisp">Mode:</label>
+                            <span id="formError_mode"></span>
+                            <br/>           
+                            <input type="text" name="modeDisp" id="modeDisp" tabindex="30" size="15" />
+                            <br/>
+                            <span class="tinyText">Allowed: Bus Subway Transfer ...</span>
+                            <br/>
+                            <input type="submit" value="Display mode" />
+                        </form>
+                    </div>
+                    
+                    
                 </div>
             </div>
-            <div id="map">
-                <div id="licences">
-                   Data: <a href="http://www.openstreetmap.org/">Openstreetmap</a>(CC by-sa), <a href="http://data.keolis-rennes.com">VéloStar</a>(CC by-nc-nd), Routing algorithms(GPLv3)
-                </div>
-            </div>        
+        
+        <div id="info" style="visibility: hidden;">
+            <p id="path_costs"></p>
+            <p id="routing_description"></p>
+            <p id="hash_url"></p>
         </div>
+        
+ 
+
         <ul id="myMenu" class="contextMenu"> 
             <li class="start"><a href="#start">Set Start</a></li> 
             <li class="dest"><a href="#dest">Set Destination</a></li> 

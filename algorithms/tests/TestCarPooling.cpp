@@ -32,7 +32,36 @@ RLC::LandmarkSet * lmset;
 
 void run_test(std::string directory, const Transport::Graph * trans, int car_start_node, int passenger_start_node, int car_arrival_node,
               int passenger_arrival_node, int time, int day, RLC::DFA dfa_car, RLC::DFA dfa_passenger)
-{
+{        
+    Area * area_start;
+    Area * area_dest;
+    
+    if( toulouse->isIn(passenger_start_node) ) {
+        area_start = toulouse;
+        car_start_node = 209194;
+    } else if( bordeaux->isIn(passenger_start_node) ) {
+        area_start = bordeaux;
+    } else {
+        return ;
+    }
+    
+    if( toulouse->isIn(passenger_arrival_node) ) {
+        area_dest = toulouse;
+        car_arrival_node = 209194;
+    } else if( bordeaux->isIn(passenger_arrival_node) )
+        area_dest = bordeaux;
+    else
+        return ;
+    
+    /* For very small areas around the passenger
+    area_start = build_area_around(trans, passenger_start_node, passenger_start_node, 10 * 60);
+    area_start->center = passenger_start_node;
+    area_start->init();
+    area_dest =  build_area_around(trans, passenger_arrival_node, passenger_arrival_node, 10 * 60);
+    area_dest->center = passenger_arrival_node;
+    area_dest->init();
+    */
+    
     out->step_in();
     
     out->add("car-start", car_start_node);
@@ -46,13 +75,13 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
     {
         typedef CarSharingTest CurrAlgo;
         
-        out->step_in("unrestricted");
+        out->step_in("original");
 
         START_TICKING;
         CurrAlgo::ParamType p(
             MuparoParams( trans, 5 ),
             AspectTargetParams( 4, passenger_arrival_node ),
-            AspectPropagationRuleParams( SumCost, MaxArrival, 2, 0, 1),
+            AspectPropagationRuleParams( SumPlusWaitCost, MaxArrival, 2, 0, 1),
             AspectPropagationRuleParams( SumCost, FirstLayerArrival, 4, 2, 3)
         );
         
@@ -79,6 +108,7 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
         
         out->step_out();
     }
+    
     
     /*
     {
@@ -154,36 +184,17 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
         CarSharingTest::ParamType p(
             MuparoParams( trans, 5 ),
             AspectTargetParams( 4, passenger_arrival_node ),
-            AspectPropagationRuleParams( SumCost, MaxArrival, 2, 0, 1),
+            AspectPropagationRuleParams( SumPlusWaitCost, MaxArrival, 2, 0, 1),
             AspectPropagationRuleParams( SumCost, FirstLayerArrival, 4, 2, 3)
         );
         
         std::vector<NodeFilter*> filters;
         RLC::Graph g1(trans, dfa_passenger );
         RLC::BackwardGraph g2(&g1);
-        
-        Area * area_start;
-        Area * area_dest;
-        
-        if( toulouse->isIn(passenger_start_node) )
-            area_start = toulouse;
-        else if( bordeaux->isIn(passenger_start_node) )
-            area_start = bordeaux;
-        else
-            return ;
-        
-        
-        if( toulouse->isIn(passenger_arrival_node) )
-            area_dest = toulouse;
-        else if( bordeaux->isIn(passenger_arrival_node) )
-            area_dest = bordeaux;
-        else
-            return ;
 
-        
         CarSharingTest cs( p );
         
-        init_car_sharing_with_areas<CarSharingTest, Landmark>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, dfa_passenger, dfa_car, area_start, area_dest );
+        init_multi_car_sharing_with_areas<CarSharingTest, Landmark>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, dfa_passenger, dfa_car, area_start, area_dest );
 
         STOP_TICKING;
         out->add("init-time", RUNTIME);
@@ -205,6 +216,7 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
     }
     
     
+    /*
     {
         out->step_in("stop-conditions-landmarks");
 
@@ -268,7 +280,9 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
         out->add("solution-cost", cs.solution_cost());
         out->step_out();
     }
+    */
     
+    /*
     {
         out->step_in("stop-conditions-landmarks-set-maxmin");
         
@@ -330,8 +344,9 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
         out->add("solution-cost", cs.solution_cost());
         out->step_out();
     }
+    */
     
-    
+    /*
     {
         out->step_in("stop-conditions-landmarks-set-radius");
         
@@ -393,9 +408,10 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
         out->add("solution-cost", cs.solution_cost());
         out->step_out();
     }
+    */
     
     {
-        out->step_in("stop-conditions-landmarks-set-maxmin-multi");
+        out->step_in("stop-conditions-landmarks");
         
         lmset->use_maxmin = true;
 
@@ -403,32 +419,13 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
         CarSharingTest::ParamType p(
             MuparoParams( trans, 5 ),
             AspectTargetParams( 4, passenger_arrival_node ),
-            AspectPropagationRuleParams( SumCost, MaxArrival, 2, 0, 1),
+            AspectPropagationRuleParams( SumPlusWaitCost, MaxArrival, 2, 0, 1),
             AspectPropagationRuleParams( SumCost, FirstLayerArrival, 4, 2, 3)
         );
         
         std::vector<NodeFilter*> filters;
         RLC::Graph g1(trans, dfa_passenger );
         RLC::BackwardGraph g2(&g1);
-        
-        Area * area_start, * area_dest;
-        
-        
-        if( toulouse->isIn(passenger_start_node) ) {
-            area_start = toulouse;
-        } else if( bordeaux->isIn(passenger_start_node) ) {
-            area_start = bordeaux;
-        } else {
-            return ;
-        }
-        
-        if( toulouse->isIn(passenger_arrival_node) ) {
-            area_dest = toulouse;
-        } else if( bordeaux->isIn(passenger_arrival_node) ) {
-            area_dest = bordeaux;
-        } else {
-            return ;
-        }
 
         
         CarSharingTest cs( p );
@@ -470,7 +467,7 @@ void hundred_inits(Transport::Graph * trans) {
 void new_test(const Transport::Graph * g)
 {
     int bordeaux1=-1, bordeaux2=-1, toulouse1=-1, toulouse2=-1;
-    
+    int albi = 209194;
     
     
     bordeaux1 = bordeaux->get( rand() % bordeaux->size() );
@@ -520,9 +517,9 @@ void new_test(const Transport::Graph * g)
     
     
     if( (rand()  % 2) == 0 )
-        cout << bordeaux1 <<" "<< bordeaux2 <<" "<< toulouse1 <<" "<< toulouse2 <<" 32140 10 1 0" <<endl;
+        cout << bordeaux1 <<" "<< bordeaux2 <<" "<< toulouse1 <<" "<< albi <<" 32140 10 1 0" <<endl;
     else
-        cout << toulouse1 <<" "<< toulouse2 <<" "<< bordeaux1 <<" "<< bordeaux2 <<" 32140 10 1 0" <<endl;
+        cout << toulouse1 <<" "<< albi <<" "<< bordeaux1 <<" "<< bordeaux2 <<" 32140 10 1 0" <<endl;
 }
 
 
@@ -591,8 +588,9 @@ int main(void)
                  time, day, *dfas[dfa_car], *dfas[dfa_passenger]);
     }
     
+    cout << endl << endl;
     
-//      for(int i=0 ; i<20 ; ++i)
+//      for(int i=0 ; i<50 ; ++i)
 //          new_test(transport);
     
     

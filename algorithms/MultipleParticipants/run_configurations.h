@@ -57,7 +57,8 @@ void init_car_sharing(T * cs, const Transport::Graph* trans, int src_ped, int sr
     cs->dij.push_back( new typename T::Dijkstra( typename T::Dijkstra::ParamType(RLC::DRegLCParams(g2, day, 1)) ) );
     cs->dij.push_back( new typename T::Dijkstra( typename T::Dijkstra::ParamType(RLC::DRegLCParams(g3, day, 2)) ) );
     cs->dij.push_back( new typename T::Dijkstra( typename T::Dijkstra::ParamType(RLC::DRegLCParams(g4, day, 1)) ) );
-    cs->dij.push_back( new typename T::Dijkstra( typename T::Dijkstra::ParamType(RLC::DRegLCParams(g5, day, 1)) ) );
+//     cs->dij.push_back( new typename T::Dijkstra( typename T::Dijkstra::ParamType(RLC::DRegLCParams(g5, day, 1)) ) );
+    cs->dij.push_back( new RLC::Martins(g5, dest_ped, day) );
     
     cs->insert( StateFreeNode(0, src_ped), time, 0);
     cs->insert( StateFreeNode(1, src_car), time, 0);
