@@ -310,8 +310,7 @@ class Mumoro:
         #res = mumoro.rectangle_containing( self.g.graph(), start, dest, 0.015 ).visualization()
         
         res = self.muparo( start, dest, date['seconds'], date['days'], self.g.graph() )
-        print res.edges.size()
-        return self.resultToGeoJson( res )
+        return self.pathToGeoJson( res )
     
     def regular_dij_path(self, start, dest, secs, day, graph ):
         return mumoro.dijkstra( start, dest, secs, day, graph )
@@ -330,7 +329,7 @@ class Mumoro:
         return dij.get_result()
     
     def muparo(self, start, dest, secs, day, graph ):
-        res = mumoro.show_point_to_point(graph, dest, start, mumoro.car_dfa() )
+        res = mumoro.point_to_point(graph, start, dest, secs, mumoro.car_dfa() )
         #res = mumoro.show_shared_path( graph, start, dest, 306 )
         #res = mumoro.show_car_sharing(graph, start, dest, 473972, 555680, mumoro.pt_foot_dfa(), mumoro.car_dfa())
         #print "{} {} {} {} {} {} {} {}".format(start, dest, 278790, 112254, secs, 10, 1, 0)
@@ -541,59 +540,7 @@ class Mumoro:
             edges = self.g.graph().listEdges(mumoro.TramEdge)
         return self.edgesToFeatures(edges)
 
-    def edgesToFeatures(self, edges):
-        ret = {
-                'objectives': '',
-                'paths': []
-                }
-        p_str = {
-                'cost': [],
-                'type': 'FeatureCollection',
-                'crs': {
-                    'type': 'EPSG',
-                    'properties': {
-                        'code': 4326,
-                        'coordinate_order': [1,0]
-                        }
-                    }
-                }
-        features = []
-        feature = {'type': 'feature'}
-        geometry = {'type': 'Linestring'}
-        coordinates = []
-        for edge_id in edges:
-            src_coord = self.g.coordinates(self.g.graph().source(edge_id))
-            target_coord = self.g.coordinates(self.g.graph().target(edge_id))
-            feature = {'type': 'feature'}
-            geometry = {'type': 'Linestring'}
-            coordinates = []
-
-            connection = {
-                    'type': 'feature',
-                    'geometry': {
-                        'type': 'Linestring',
-                        'coordinates': [[src_coord[0], src_coord[1]], [target_coord[0], target_coord[1]]]
-                        },
-                    'properties': { 'layer': EdgeTypesToString[self.g.graph().map(edge_id).type] }
-                    }
-            features.append(connection);
-        
-        point = {
-            'type': 'feature',
-            'geometry': {
-                'type': 'Point',
-                'coordinates': [1.28873327891, 43.6730240687]
-                },
-            'properties': { 'layer': 'MeetingPt' }
-        }
-                
-        features.append(point)
-        p_str['features'] = features
-        ret['paths'].append(p_str)
-        print ret
-        return json.dumps(ret)    
-    
-    def resultToGeoJson(self, res):
+    def pathToGeoJson(self, res):
         ret = {
                 'objectives': '',
                 'paths': []
@@ -630,23 +577,24 @@ class Mumoro:
                     }
             features.append(connection);
         
-        for (nodes, layer) in ((res.a_nodes, 'PointA'), (res.b_nodes, 'PointB'), (res.c_nodes, 'PointC')):
-            for node_id in nodes:
-                node = self.g.graph().mapNode(node_id)
-                feature = {
-                    'type': 'feature',
-                    'geometry': {
-                        'type': 'Point',
-                        'coordinates': [node.lon, node.lat]
-                        },
-                    'properties': { 'layer': layer }
-                    }
-                features.append(feature)
+        #for (nodes, layer) in ((res.a_nodes, 'PointA'), (res.b_nodes, 'PointB'), (res.c_nodes, 'PointC')):
+        for node_id in [ res.start_node, res.end_node ]:
+            node = self.g.graph().mapNode(node_id)
+            feature = {
+                'type': 'feature',
+                'geometry': {
+                    'type': 'Point',
+                    'coordinates': [node.lon, node.lat]
+                    },
+                'properties': { 'layer': 'PointA' }
+                }
+            features.append(feature)
                     
 
         p_str['features'] = features
         ret['paths'].append(p_str)
-        return json.dumps(ret)    
+        print ret
+        return json.dumps(ret)
 
 EdgeTypesToString = [ 'Foot', 'Bike', 'Car', 'Subway', 'Bus', 'Tram', 'Transfer', 'Unknown', 'All' ]
 StringToEdgeType = { 'Foot': mumoro.FootEdge, 'Bike': mumoro.BikeEdge, 'Car': mumoro.CarEdge, 

@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "reglc_graph.h"
+#include "../Interface/Path.h"
 
 namespace RLC {
     
@@ -83,6 +84,8 @@ public:
     virtual int best_cost_in_heap() = 0;
     
     int count;
+    
+    virtual Path get_path_to( const int node ) const { return Path(); };
 };
 
 

@@ -29,6 +29,8 @@
 
 using std::vector;
 
+typedef enum { Foot, Bike, Car, PublicTransport } Mode;
+
 typedef enum { FootEdge = 0, BikeEdge = 1, CarEdge = 2, SubwayEdge = 3, 
                BusEdge = 4, TramEdge = 5, TransferEdge = 6, UnknownEdgeType = 7, 
                WhateverEdge = 8 } EdgeMode;

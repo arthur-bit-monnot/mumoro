@@ -5,6 +5,7 @@ add_subdirectory( MultiObjectives )
 add_subdirectory( MultipleParticipants )
 add_subdirectory( DataStructures )
 add_subdirectory( tests )
+add_subdirectory( Interface )
 
 ## This might be used to add module with no change in build configuration. However it makes it hard for IDEs to track which directories 
 ## are in build configuration

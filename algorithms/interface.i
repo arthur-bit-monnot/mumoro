@@ -5,3 +5,4 @@
 %include RegLC/interface.i
 %include MultipleParticipants/interface.i
 %include utils/interface.i
+%include Interface/interface.i
