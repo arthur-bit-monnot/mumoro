@@ -29,12 +29,31 @@
 
 using std::vector;
 
-typedef enum { Foot, Bike, Car, PublicTransport } Mode;
 typedef enum { FootEdge = 0, BikeEdge = 1, CarEdge = 2, SubwayEdge = 3, 
                BusEdge = 4, TramEdge = 5, TransferEdge = 6, UnknownEdgeType = 7, 
                WhateverEdge = 8 } EdgeMode;
-typedef enum { ConstDur = 1, TimetableDur = 2, FrequencyDur = 3 } DurationType;
+
+/**
+ * Type of the duration object attached to an edge 
+ */
+typedef enum { 
+    ConstDur = 1, // traversing the edge takes a constant duration
+    TimetableDur = 2, // duration is defined as timetable (ex: bus leaves at 5:00 and arrives at 5:06
+    FrequencyDur = 3 // duration is defined as frequency (ex: between 5:00 and 6:00, one bus every two minutes)
+} DurationType;
+
+
+/**
+ * Attaches a boolean to every day
+ */
 typedef std::bitset<128> Services;
+
+/**
+ * Defines a timetable line:
+ *  - float: departure
+ *  - float: arrival
+ *  - Services: days of availability
+ */
 typedef boost::tuple<float, float, Services> Time;
 
 /**
@@ -165,7 +184,14 @@ private:
     
     void set_id(const std::string id) { this->id = id; }
     
+    /**
+     * Saves the whole graph to a file
+     */
     void save(const std::string & filename) const;
+    
+    /**
+     * Loads graph from a file
+     */
     void load(const std::string & filename);
 
     

@@ -160,7 +160,7 @@ public:
     
     /**
      * Insert/update a node in the heap.
-     * Return True if the node was updated, false otherwise.
+     * Return True if the node was updated or inserted, false otherwise.
      */
     virtual bool insert_node_with_predecessor(const Vertice & vert, const int arrival, const int cost, const RLC::Edge & pred, const int source)
     {

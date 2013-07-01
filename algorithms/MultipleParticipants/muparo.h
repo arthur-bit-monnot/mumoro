@@ -49,7 +49,7 @@ typedef pair<StateFreeNode, int> StartNode;
 
 struct Flag
 {
-//     int dfa_state;
+    int dfa_state;
     int arrival;
     int cost;
     int source;
@@ -161,7 +161,7 @@ public:
      */
     void set( const CompleteNode n ) {
         is_set[n.layer]->set( n.label.node.first );
-//         flags[n.layer][n.label.node.first].dfa_state = n.label.node.second;
+        flags[n.layer][n.label.node.first].dfa_state = n.label.node.second;
         flags[n.layer][n.label.node.first].arrival = n.label.time;
         flags[n.layer][n.label.node.first].cost = n.label.cost;
         flags[n.layer][n.label.node.first].source = n.label.source;

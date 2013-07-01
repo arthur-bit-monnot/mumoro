@@ -184,8 +184,8 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
             out->add("num-pick-up", cs.num_pick_up);
             out->add("num-drop-off", cs.num_drop_off);
             
-            out->add("nodes-set-in-MOM", cs.dij[4]->count_set);
-            out->add("avg-label-in-MOM", cs.dij[4]->average_label);
+//             out->add("nodes-set-in-MOM", cs.dij[4]->count_set);
+//             out->add("avg-label-in-MOM", cs.dij[4]->average_label);
         }
         
         out->step_out();
@@ -295,8 +295,8 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
             out->add("num-pick-up", cs.num_pick_up);
             out->add("num-drop-off", cs.num_drop_off);
             
-            out->add("nodes-set-in-MOM", cs.dij[4]->count_set);
-            out->add("avg-label-in-MOM", cs.dij[4]->average_label);
+//             out->add("nodes-set-in-MOM", cs.dij[4]->count_set);
+//             out->add("avg-label-in-MOM", cs.dij[4]->average_label);
         }
         out->step_out();
     }
@@ -410,8 +410,8 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
             out->add("num-pick-up", cs.num_pick_up);
             out->add("num-drop-off", cs.num_drop_off);
             
-            out->add("nodes-set-in-MOM", cs.dij[4]->count_set);
-            out->add("avg-label-in-MOM", cs.dij[4]->average_label);
+//             out->add("nodes-set-in-MOM", cs.dij[4]->count_set);
+//             out->add("avg-label-in-MOM", cs.dij[4]->average_label);
         }
         
         out->step_out();
@@ -529,8 +529,8 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
             out->add("num-pick-up", cs.num_pick_up);
             out->add("num-drop-off", cs.num_drop_off);
             
-            out->add("nodes-set-in-MOM", cs.dij[4]->count_set);
-            out->add("avg-label-in-MOM", cs.dij[4]->average_label);
+//             out->add("nodes-set-in-MOM", cs.dij[4]->count_set);
+//             out->add("avg-label-in-MOM", cs.dij[4]->average_label);
         }
         
         out->step_out();
@@ -645,8 +645,8 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
             out->add("num-pick-up", cs.num_pick_up);
             out->add("num-drop-off", cs.num_drop_off);
             
-            out->add("nodes-set-in-MOM", cs.dij[4]->count_set);
-            out->add("avg-label-in-MOM", cs.dij[4]->average_label);
+//             out->add("nodes-set-in-MOM", cs.dij[4]->count_set);
+//             out->add("avg-label-in-MOM", cs.dij[4]->average_label);
         }
         
         out->step_out();

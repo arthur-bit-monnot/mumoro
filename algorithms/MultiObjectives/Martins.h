@@ -44,22 +44,6 @@ public:
     // results
     Label target_label;
     
-    void summary() {
-        int count_set = 0;
-        int tot_labels = 0;
-        BOOST_FOREACH( std::list<Label> & labels, P ) {
-            if( ! labels.empty() ) {
-                count_set++;
-                tot_labels += labels.size();
-            }
-        }
-        
-//         cout << "Num set: " << count_set <<" - tot labels: "<<tot_labels<<" - moy labels: " <<((float)tot_labels / (float)count_set) << endl;
-        this->count_set = count_set;
-        this->average_label = ((float)tot_labels / (float)count_set);
-    }
-    
-    
     Martins( const RLC::AbstractGraph * rlc, const int target, const int day, const Area * area = NULL ) : 
     graph(rlc), 
     target(target), 
@@ -93,7 +77,6 @@ public:
             success = true;
             target_label = lab;
 //             cout << "Found destination with cost " << lab.cost <<endl;
-            summary();
             return lab;
         }
         
@@ -130,7 +113,6 @@ public:
     bool insert_node(const Vertice & vert, const int arrival, const int vert_cost, const int source ) override {
         if(area == NULL || area->isIn( vert.first ) ) {
             Label l( vert, arrival, vert_cost, source);
-            //TODO: check domination
             heap.push( l );
             return true;
         } else {

@@ -83,8 +83,6 @@ public:
     virtual int best_cost_in_heap() = 0;
     
     int count;
-    float average_label = 0.0;
-    int count_set = 0;
 };
 
 

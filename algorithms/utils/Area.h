@@ -51,14 +51,12 @@ public:
 
     void init() {
         bb = rectangle_containing(g, nodes, 1.0);
-        init_max_dist();
         init_num_car_accessible();
     }
     
     VisualResult get_res() { return vres; }
     
 private:    
-    void init_max_dist();
     void init_num_car_accessible();
 
     VisualResult vres;
@@ -75,7 +73,6 @@ Area * bordeaux_area ( const Transport::Graph * g );
 Area * bordeaux_area_small ( const Transport::Graph * g );
 Area * small_area ( const Transport::Graph * g );
 
-NodeSet * meeting_points_in_area( Area * area );
 
 
 

@@ -3,7 +3,6 @@ include_directories(../utils)
 
 SET(LOCAL_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/run_configurations.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/PotentialMeetingPoints.cpp
     )
     
 SET(SWIG_SOURCES 

@@ -18,7 +18,7 @@ public:
     GraphFactory(const int nb_nodes);
     
     /**
-     * Loads the graph from the archive
+     * Loads the graph from an archive
      */
     GraphFactory(const std::string & filename);
     
@@ -50,7 +50,7 @@ private:
     
     /**
      * This method is used to remove edges that make some nodes sinks from where it is impossible to go back.
-     * There is typically car-labeled incoming edges but no car-labeled outgoing edges. It is mainly due to import/dataset
+     * There is typically car-labeled incoming edges but no car-labeled outgoing edges. It is mainly a dataset
      * problem in OSM.
      * 
      * This method therefore spot the dead-end nodes and removes any outgoing/incoming car-labeled edges from them.

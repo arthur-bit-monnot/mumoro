@@ -14,7 +14,6 @@
 #include "RegLC/AspectTargetAreaLandmark.h"
 #include "RegLC/LandmarkSet.h"
 
-#include "MultipleParticipants/PotentialMeetingPoints.h"
 #include "DataStructures/GraphFactory.h"
 
 #include "MultipleParticipants/MPR_AspectConnectionRule.h"

@@ -38,7 +38,9 @@ public:
     {
         
     }
-    virtual ~AspectPropagationRule() {}
+    virtual ~AspectPropagationRule() {
+        delete was_inserted;
+    }
     
     CostCombination cost_comb;
     ArrivalCombination arr_comb;
