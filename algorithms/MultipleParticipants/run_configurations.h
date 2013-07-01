@@ -15,13 +15,13 @@ using RLC::Landmark;
 
 namespace MuPaRo {
 
-AlgoMPR::PtToPt * point_to_point( Transport::Graph * trans, int source, int dest, RLC::DFA dfa = RLC::pt_foot_dfa() );
+AlgoMPR::PtToPt * point_to_point( const Transport::Graph * trans, int source, int dest, RLC::DFA dfa = RLC::pt_foot_dfa() );
 
-VisualResult show_point_to_point( Transport::Graph * trans, int source, int dest, RLC::DFA dfa = RLC::pt_foot_dfa() );
+VisualResult show_point_to_point( const Transport::Graph * trans, int source, int dest, RLC::DFA dfa = RLC::pt_foot_dfa() );
 
-AlgoMPR::SharedPath * shared_path(Transport::Graph * trans, int src1, int src2, int dest, RLC::DFA dfa = RLC::bike_pt_dfa() );
+AlgoMPR::SharedPath * shared_path( const Transport::Graph * trans, int src1, int src2, int dest, RLC::DFA dfa = RLC::bike_pt_dfa() );
 
-VisualResult show_shared_path(Transport::Graph * trans, int src1, int src2, int dest);
+VisualResult show_shared_path( const Transport::Graph * trans, int src1, int src2, int dest);
 
 AlgoMPR::CarSharing * car_sharing(const Transport::Graph * trans, int src_ped, int src_car, int dest_ped, int dest_car,
                                   RLC::DFA dfa_ped, RLC::DFA dfa_car);

@@ -77,6 +77,16 @@ public:
         out << value;
     }
     
+    void add(string name, float value) {
+        add(name);
+        out << value;
+    }
+    
+    void add(string name, double value) {
+        add(name);
+        out << value;
+    }
+    
     void add(string name, std::vector<int> values) {
         add(name);
         out << "[";
@@ -86,6 +96,10 @@ public:
                 out <<", ";
         }
         out << "]";
+    }
+    
+    void skip_line() {
+        out << endl;
     }
     
     

@@ -49,9 +49,10 @@ typedef pair<StateFreeNode, int> StartNode;
 
 struct Flag
 {
-    int dfa_state;
+//     int dfa_state;
     int arrival;
     int cost;
+    int source;
     /**
      * If node was inserted after application of rule, this list
      * contains the layers the predecessors must be searched in.
@@ -72,6 +73,9 @@ template<typename Algo>
 class Muparo
 {
 public:
+    int num_pick_up = 0;
+    int num_drop_off = 0;
+    
     typedef Algo Dijkstra;
     typedef LISTPARAM<MuparoParams> ParamType;
         
@@ -157,23 +161,38 @@ public:
      */
     void set( const CompleteNode n ) {
         is_set[n.layer]->set( n.label.node.first );
-        flags[n.layer][n.label.node.first].dfa_state = n.label.node.second;
+//         flags[n.layer][n.label.node.first].dfa_state = n.label.node.second;
         flags[n.layer][n.label.node.first].arrival = n.label.time;
         flags[n.layer][n.label.node.first].cost = n.label.cost;
+        flags[n.layer][n.label.node.first].source = n.label.source;
     }
     
     /**
      * Earliest arrival to an accepting state of this node.
      */
-    int arrival(const StateFreeNode n) const { 
+    int arrival(const int layer, const int vertex) const { 
         BOOST_ASSERT(is_node_set(n));
-        return flags[n.layer][n.vertex].arrival;
+        return flags[layer][vertex].arrival;
     }
+    int arrival(const StateFreeNode n) const { return arrival(n.layer, n.vertex); }
     
-    int get_cost(const StateFreeNode n) const { 
+    /**
+     * Best known cost in this layer
+     */
+    int get_cost(const int layer, const int vertex) const { 
         BOOST_ASSERT(is_node_set(n));
-        return flags[n.layer][n.vertex].cost;
+        return flags[layer][vertex].cost;
     }
+    int get_cost(const StateFreeNode n) const { return get_cost(n.layer, n.vertex); }
+    
+    /**
+     * Source (oldest predecessor) providing the best cost in this layer
+     */
+    int get_source(const int layer, const int vertex) const { 
+        BOOST_ASSERT(is_node_set(n));
+        return flags[layer][vertex].source;
+    }
+    int get_source(const StateFreeNode n) const { return get_source(n.layer, n.vertex); }
     
     /**
      * Returns True if there is nothing left to do :
@@ -235,14 +254,14 @@ public:
             rlc_node.first = node;
             rlc_node.second = dfa_start;
             
-            if( dij[layer]->insert_node( rlc_node, arrival, cost ) ) {
+            if( dij[layer]->insert_node( rlc_node, arrival, cost, rlc_node.first ) ) {
                 inserted = true;
                 clear_pred_layers( n );
             }
         }
         
         return inserted;
-    }    
+    }
     
     /**
      * For a given node, check all rules if it is appicable for this node.

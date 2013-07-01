@@ -69,7 +69,10 @@ public:
     virtual bool finished() const = 0;
     virtual bool run() = 0;
     virtual Label treat_next() = 0;
-    virtual bool insert_node(const Vertice & vert, const int arrival, const int vert_cost ) = 0;
+    bool add_source_node( const Vertice & vert, const int arrival, const int vert_cost ) {
+        return insert_node(vert, arrival, vert_cost, vert.first );
+    }
+    virtual bool insert_node(const Vertice & vert, const int arrival, const int vert_cost, const int source ) = 0;
     
 //     virtual float arrival(const RLC::Vertice v) const = 0;
 //     virtual float cost(const RLC::Vertice v) const = 0;
@@ -80,7 +83,8 @@ public:
     virtual int best_cost_in_heap() = 0;
     
     int count;
-    
+    float average_label = 0.0;
+    int count_set = 0;
 };
 
 

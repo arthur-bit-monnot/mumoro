@@ -6,7 +6,7 @@ namespace MuPaRo {
     
 using namespace AlgoMPR;
 
-AlgoMPR::PtToPt * point_to_point( Transport::Graph * trans, int source, int dest, RLC::DFA dfa )
+AlgoMPR::PtToPt * point_to_point( const Transport::Graph * trans, int source, int dest, RLC::DFA dfa )
 {
     PtToPt::ParamType p( MuparoParams(trans, 1), AspectTargetParams( 0, dest ) );
     std::cout << "Dest ::: "<<dest <<endl;
@@ -25,7 +25,7 @@ AlgoMPR::PtToPt * point_to_point( Transport::Graph * trans, int source, int dest
     return mup;
 }
 
-VisualResult show_point_to_point ( Transport::Graph* trans, int source, int dest, RLC::DFA dfa )
+VisualResult show_point_to_point ( const Transport::Graph* trans, int source, int dest, RLC::DFA dfa )
 {
     PtToPt * ptp = point_to_point( trans, source, dest, dfa );
     ptp->run();
@@ -33,7 +33,7 @@ VisualResult show_point_to_point ( Transport::Graph* trans, int source, int dest
     return ptp->get_result();
 }
 
-SharedPath* shared_path ( Transport::Graph* trans, int src1, int src2, int dest, RLC::DFA dfa )
+SharedPath* shared_path ( const Transport::Graph* trans, int src1, int src2, int dest, RLC::DFA dfa )
 {
     int day = 10;
     SharedPath::ParamType p(
@@ -58,7 +58,7 @@ SharedPath* shared_path ( Transport::Graph* trans, int src1, int src2, int dest,
     return sp;
 }
 
-VisualResult show_shared_path ( Transport::Graph* trans, int src1, int src2, int dest )
+VisualResult show_shared_path ( const Transport::Graph* trans, int src1, int src2, int dest )
 {
     SharedPath * sp = shared_path( trans, src1, src2, dest );
     sp->run();

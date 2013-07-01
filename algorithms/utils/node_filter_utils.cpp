@@ -19,7 +19,7 @@ NodeSet * isochrone ( const RLC::AbstractGraph * g, const int center, const int 
     
     Dij dij( p );
     BOOST_FOREACH( int state, g->dfa_start_states() ) {
-        dij.insert_node( RLC::Vertice(center, state), 0, 0 );
+        dij.add_source_node( RLC::Vertice(center, state), 0, 0 );
     }
     while( !dij.finished() ) {
         RLC::Label lab = dij.treat_next();

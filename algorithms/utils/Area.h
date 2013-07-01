@@ -67,6 +67,8 @@ private:
 
 Area * build_area_around ( const Transport::Graph * g, int start, int end, int max_cost, RLC::DFA dfa = RLC::pt_foot_dfa() );
 
+Area * build_area_around_with_start_time ( const Transport::Graph * g, int start, int end, int start_time, int max_cost, RLC::DFA dfa = RLC::pt_foot_dfa() );
+
 Area * toulouse_area ( const Transport::Graph * g );
 Area * toulouse_area_small ( const Transport::Graph * g );
 Area * bordeaux_area ( const Transport::Graph * g );

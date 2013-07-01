@@ -26,6 +26,8 @@ struct AspectPropagationRuleParams {
 template<typename Base>
 class AspectPropagationRule : public Base {
 public:    
+    boost::dynamic_bitset<> * was_inserted = new boost::dynamic_bitset<>(Base::transport->num_vertices());
+    
     typedef LISTPARAM<AspectPropagationRuleParams, typename Base::ParamType> ParamType;
     AspectPropagationRule( ParamType p ) : 
     Base(p.next),
@@ -34,7 +36,7 @@ public:
     insertion_layer(p.value.insertion_layer),
     condition_layers(p.value.condition_layers)
     {
-
+        
     }
     virtual ~AspectPropagationRule() {}
     
@@ -103,10 +105,19 @@ public:
             int arr = arrival_in_insertion_layer( node );
             int cost = cost_in_insertion_layer( node );
 
-            if( Base::insert( StateFreeNode(insertion_layer, node), arr, cost ) ) {
-                Base::clear_pred_layers( StateFreeNode(insertion_layer, node) );
-                BOOST_FOREACH( int cond_layer, condition_layers ) 
-                    Base::add_pred_layer( StateFreeNode(insertion_layer, node), cond_layer);
+            if( !was_inserted->test(node) ) {
+                if( Base::insert( StateFreeNode(insertion_layer, node), arr, cost ) ) {
+                    Base::clear_pred_layers( StateFreeNode(insertion_layer, node) );
+                    BOOST_FOREACH( int cond_layer, condition_layers ) 
+                        Base::add_pred_layer( StateFreeNode(insertion_layer, node), cond_layer);
+                        
+                    if( cost_comb == SumCost ) //drop_off
+                        Base::num_drop_off++;
+                    if( cost_comb == SumPlusWaitCost ) // pick up
+                        Base::num_pick_up++;
+                    
+                    was_inserted->set(node);
+                }
             }
         }   
         

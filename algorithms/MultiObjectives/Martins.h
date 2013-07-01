@@ -41,6 +41,9 @@ public:
     Heap heap;
     std::vector<std::list<Label>> P;
     
+    // results
+    Label target_label;
+    
     void summary() {
         int count_set = 0;
         int tot_labels = 0;
@@ -51,7 +54,9 @@ public:
             }
         }
         
-        cout << "Num set: " << count_set <<" - tot labels: "<<tot_labels<<" - moy labels: " <<((float)tot_labels / (float)count_set) << endl;
+//         cout << "Num set: " << count_set <<" - tot labels: "<<tot_labels<<" - moy labels: " <<((float)tot_labels / (float)count_set) << endl;
+        this->count_set = count_set;
+        this->average_label = ((float)tot_labels / (float)count_set);
     }
     
     
@@ -86,7 +91,8 @@ public:
         
         if( lab.node.first == target ) {
             success = true;
-            cout << "Found destination with cost " << lab.cost <<endl;
+            target_label = lab;
+//             cout << "Found destination with cost " << lab.cost <<endl;
             summary();
             return lab;
         }
@@ -121,11 +127,7 @@ public:
         return lab;
     }
     
-    virtual bool insert_node(const Vertice & vert, const int arrival, const int vert_cost) override {
-        return insert_node( vert, arrival, vert_cost, vert.first );
-    }
-    
-    bool insert_node(const Vertice & vert, const int arrival, const int vert_cost, const int source ) {
+    bool insert_node(const Vertice & vert, const int arrival, const int vert_cost, const int source ) override {
         if(area == NULL || area->isIn( vert.first ) ) {
             Label l( vert, arrival, vert_cost, source);
             //TODO: check domination

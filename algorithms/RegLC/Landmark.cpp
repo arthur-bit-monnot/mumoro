@@ -17,7 +17,7 @@ Landmark * create_car_landmark ( const Transport::Graph* trans, const int node )
     {
         DRegLCParams p( &g, day );
         DRegLC algo( p );
-        algo.insert_node(Vertice(node, 0), 0, 0 );
+        algo.add_source_node(Vertice(node, 0), 0, 0 );
         
         while( !algo.finished() ) {
             RLC::Label lab = algo.treat_next();
@@ -28,7 +28,7 @@ Landmark * create_car_landmark ( const Transport::Graph* trans, const int node )
     {
         DRegLCParams p( &bg, day );
         DRegLC algo( p );
-        algo.insert_node(Vertice(node, 0), 0, 0 );
+        algo.add_source_node(Vertice(node, 0), 0, 0 );
         
         while( !algo.finished() ) {
             RLC::Label lab = algo.treat_next();

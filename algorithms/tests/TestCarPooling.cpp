@@ -36,6 +36,8 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
     Area * area_start;
     Area * area_dest;
     
+    time = 50000;
+    
     if( toulouse->isIn(passenger_start_node) ) {
         area_start = toulouse;
         car_start_node = 209194;
@@ -53,14 +55,14 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
     else
         return ;
     
-    /* For very small areas around the passenger
-    area_start = build_area_around(trans, passenger_start_node, passenger_start_node, 10 * 60);
-    area_start->center = passenger_start_node;
-    area_start->init();
-    area_dest =  build_area_around(trans, passenger_arrival_node, passenger_arrival_node, 10 * 60);
-    area_dest->center = passenger_arrival_node;
-    area_dest->init();
-    */
+// //      For very small areas around the passenger
+//     area_start = build_area_around(trans, passenger_start_node, passenger_start_node, 10 * 60);
+//     area_start->center = passenger_start_node;
+//     area_start->init();
+//     area_dest =  build_area_around(trans, passenger_arrival_node, passenger_arrival_node, 10 * 60);
+//     area_dest->center = passenger_arrival_node;
+//     area_dest->init();
+    
     
     out->step_in();
     
@@ -70,6 +72,11 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
     out->add("passenger-arrival", passenger_arrival_node);
     out->add("time", time);
     out->add("day", day);
+    
+    AlgoMPR::PtToPt * mup =  point_to_point( trans, car_start_node, car_arrival_node, dfa_car );
+    mup->run();
+    out->add("driver-alone-cost", mup->get_cost(0, car_arrival_node));
+    delete mup;
     
     
     {
@@ -99,86 +106,93 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
         out->add("runtime", RUNTIME);
         out->add("visited-nodes", cs.count);
         std::vector<int> per_layer;
+        int tot = 0;
         for(int i=0 ; i<cs.num_layers ; ++i) {
             per_layer.push_back( cs.dij[i]->count );
+            tot += cs.dij[i]->count;
         }
+        cout << cs.count <<" "<< tot <<endl;
         out->add("visited-per-layer", per_layer);
         out->add("solution-cost", cs.solution_cost());
-
+        
+        
+        out->step_in("node-details");
+        {
+            out->step_in("pass-arr");
+            out->add("node", passenger_arrival_node);
+            out->step_in("5");
+            out->add("cost", cs.get_cost(4, passenger_arrival_node));
+            out->add("arrival", cs.arrival(4, passenger_arrival_node));
+            
+            out->step_out(); out->step_out();
+        }
+        
+        int drop_off = cs.get_source(4, passenger_arrival_node);
+        {
+            out->step_in("drop_off");
+            out->add("node", drop_off);
+            
+            out->step_in("5");
+            out->add("cost", cs.get_cost(4, drop_off));
+            out->add("arrival", cs.arrival(4, drop_off));
+            out->step_out(); 
+            
+            out->step_in("4");
+            out->add("cost", cs.get_cost(3, drop_off));
+            out->add("arrival", cs.arrival(3, drop_off));
+            out->step_out(); 
+            
+            out->step_in("3");
+            out->add("cost", cs.get_cost(2, drop_off));
+            out->add("arrival", cs.arrival(2, drop_off));
+            out->step_out(); 
+            
+            out->step_out();
+        }
+        
+        int pick_up = cs.get_source(2, drop_off);
+        {
+            out->step_in("pick-up");
+            out->add("node", drop_off);
+            
+            out->step_in("3");
+            out->add("cost", cs.get_cost(2, pick_up));
+            out->add("arrival", cs.arrival(2, pick_up));
+            out->step_out(); 
+            
+            out->step_in("2");
+            out->add("cost", cs.get_cost(1, pick_up));
+            out->add("arrival", cs.arrival(1, pick_up));
+            out->step_out(); 
+            
+            out->step_in("1");
+            out->add("cost", cs.get_cost(0, pick_up));
+            out->add("arrival", cs.arrival(0, pick_up));
+            out->step_out(); 
+            
+            out->step_out();
+        }
+        out->step_out(); //node details
+        
+        {
+            out->add("1-length", cs.arrival(0, pick_up) - time);
+            out->add("2-length", cs.arrival(1, pick_up) - time);
+            out->add("3-length", cs.arrival(2, drop_off) - cs.arrival(2, pick_up));
+            out->add("4-length", cs.get_cost(3, drop_off));
+            out->add("5-length", cs.arrival(4, passenger_arrival_node) - cs.arrival(4, drop_off));
+            out->add("wait-time", abs(cs.arrival(0, pick_up) - cs.arrival(1, pick_up)) );
+            out->add("num-pick-up", cs.num_pick_up);
+            out->add("num-drop-off", cs.num_drop_off);
+            
+            out->add("nodes-set-in-MOM", cs.dij[4]->count_set);
+            out->add("avg-label-in-MOM", cs.dij[4]->average_label);
+        }
         
         out->step_out();
     }
     
-    
-    /*
     {
-        BBNodeFilter * toulouse = toulouse_bb(trans);
-        BBNodeFilter * bordeaux = bordeaux_bb(trans);
-        
-        out->step_in("restricted");
-
-        START_TICKING;
-        CarSharingFilteredTest::ParamType p(
-            MuparoParams( trans, 5 ),
-            AspectTargetParams( 4, passenger_arrival_node ),
-            AspectPropagationRuleParams( SumCost, MaxArrival, 2, 0, 1),
-            AspectPropagationRuleParams( SumCost, FirstLayerArrival, 4, 2, 3)
-        );
-        
-        std::vector<NodeFilter*> filters;
-        RLC::Graph g1(trans, dfa_passenger );
-        RLC::BackwardGraph g2(&g1);
-        
-        if( toulouse->isIn(passenger_start_node) )
-            filters.push_back( toulouse_bb(trans) );
-        else if( bordeaux->isIn(passenger_start_node) )
-            filters.push_back( bordeaux_bb(trans) );
-        else
-            filters.push_back(isochrone(&g1, passenger_start_node, 600));
-        
-        filters.push_back( rectangle_containing( trans, car_start_node, car_arrival_node, 0.02) );
-        filters.push_back( rectangle_containing( trans, car_start_node, car_arrival_node, 0.02) );
-        filters.push_back( rectangle_containing( trans, car_start_node, car_arrival_node, 0.02) );
-        
-        if( toulouse->isIn(passenger_arrival_node) )
-            filters.push_back( toulouse_bb(trans) );
-        else if( bordeaux->isIn(passenger_arrival_node) )
-            filters.push_back( bordeaux_bb(trans) );
-        else
-            filters.push_back(isochrone(&g2, passenger_arrival_node, 600));
-        
-        delete toulouse;
-        delete bordeaux;
-        
-        CarSharingFilteredTest cs( p );
-        
-        init_car_sharing_filtered<CarSharingFilteredTest>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, dfa_passenger, dfa_car, filters );
-
-        STOP_TICKING;
-        out->add("init-time", RUNTIME);
-        START_TICKING;
-        cs.run();
-        STOP_TICKING;
-        
-        out->add("runtime", RUNTIME);
-        out->add("visited-nodes", cs.count);
-        
-        std::vector<int> per_layer;
-        for(int i=0 ; i<cs.num_layers ; ++i) {
-            per_layer.push_back( cs.dij[i]->count );
-        }
-        out->add("visited-per-layer", per_layer);
-        
-        out->add("solution-cost", cs.solution_cost());
-        out->step_out();
-    }
-    */
-    
-    
-    
-    
-    {
-        out->step_in("stop-conditions");
+        out->step_in("cities-stop-conditions");
 
         START_TICKING;
         CarSharingTest::ParamType p(
@@ -212,206 +226,83 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
         out->add("visited-per-layer", per_layer);
         
         out->add("solution-cost", cs.solution_cost());
+        
+        out->step_in("node-details");
+        {
+            out->step_in("pass-arr");
+            out->add("node", passenger_arrival_node);
+            out->step_in("5");
+            out->add("cost", cs.get_cost(4, passenger_arrival_node));
+            out->add("arrival", cs.arrival(4, passenger_arrival_node));
+            
+            out->step_out(); out->step_out();
+        }
+        
+        int drop_off = cs.get_source(4, passenger_arrival_node);
+        {
+            out->step_in("drop_off");
+            out->add("node", drop_off);
+            
+            out->step_in("5");
+            out->add("cost", cs.get_cost(4, drop_off));
+            out->add("arrival", cs.arrival(4, drop_off));
+            out->step_out(); 
+            
+            out->step_in("4");
+            out->add("cost", cs.get_cost(3, drop_off));
+            out->add("arrival", cs.arrival(3, drop_off));
+            out->step_out(); 
+            
+            out->step_in("3");
+            out->add("cost", cs.get_cost(2, drop_off));
+            out->add("arrival", cs.arrival(2, drop_off));
+            out->step_out(); 
+            
+            out->step_out();
+        }
+        
+        int pick_up = cs.get_source(2, drop_off);
+        {
+            out->step_in("pick-up");
+            out->add("node", drop_off);
+            
+            out->step_in("3");
+            out->add("cost", cs.get_cost(2, pick_up));
+            out->add("arrival", cs.arrival(2, pick_up));
+            out->step_out(); 
+            
+            out->step_in("2");
+            out->add("cost", cs.get_cost(1, pick_up));
+            out->add("arrival", cs.arrival(1, pick_up));
+            out->step_out(); 
+            
+            out->step_in("1");
+            out->add("cost", cs.get_cost(0, pick_up));
+            out->add("arrival", cs.arrival(0, pick_up));
+            out->step_out(); 
+            
+            out->step_out();
+        }
+        out->step_out(); //node details
+        
+        {
+            out->add("1-length", cs.arrival(0, pick_up) - time);
+            out->add("2-length", cs.arrival(1, pick_up) - time);
+            out->add("3-length", cs.arrival(2, drop_off) - cs.arrival(2, pick_up));
+            out->add("4-length", cs.get_cost(3, drop_off));
+            out->add("5-length", cs.arrival(4, passenger_arrival_node) - cs.arrival(4, drop_off));
+            out->add("wait-time", abs(cs.arrival(0, pick_up) - cs.arrival(1, pick_up)) );
+            out->add("num-pick-up", cs.num_pick_up);
+            out->add("num-drop-off", cs.num_drop_off);
+            
+            out->add("nodes-set-in-MOM", cs.dij[4]->count_set);
+            out->add("avg-label-in-MOM", cs.dij[4]->average_label);
+        }
         out->step_out();
     }
     
-    
-    /*
     {
-        out->step_in("stop-conditions-landmarks");
-
-        START_TICKING;
-        CarSharingTest::ParamType p(
-            MuparoParams( trans, 5 ),
-            AspectTargetParams( 4, passenger_arrival_node ),
-            AspectPropagationRuleParams( SumCost, MaxArrival, 2, 0, 1),
-            AspectPropagationRuleParams( SumCost, FirstLayerArrival, 4, 2, 3)
-        );
-        
-        std::vector<NodeFilter*> filters;
-        RLC::Graph g1(trans, dfa_passenger );
-        RLC::BackwardGraph g2(&g1);
-        
-        Area * area_start, * area_dest;
-        Landmark * lm_start, * lm_dest;
-        
-        if( toulouse->isIn(passenger_start_node) ) {
-            area_start = toulouse;
-            lm_start = toulouse_lm;
-        } else if( bordeaux->isIn(passenger_start_node) ) {
-            area_start = bordeaux;
-            lm_start = bordeaux_lm;
-        } else {
-            return ;
-        }
-        
-        if( toulouse->isIn(passenger_arrival_node) ) {
-            area_dest = toulouse;
-            lm_dest = toulouse_lm;
-        } else if( bordeaux->isIn(passenger_arrival_node) ) {
-            area_dest = bordeaux;
-            lm_dest = bordeaux_lm;
-        } else {
-            return ;
-        }
-
-        
-        CarSharingTest cs( p );
-        
-        init_car_sharing_with_areas<CarSharingTest>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, 
-                                                     dfa_passenger, dfa_car, area_start, area_dest, 
-                                                     true, lm_start, lm_dest );
-
-        STOP_TICKING;
-        out->add("init-time", RUNTIME);
-        START_TICKING;
-        cs.run();
-        STOP_TICKING;
-        
-        out->add("runtime", RUNTIME);
-        out->add("visited-nodes", cs.count);
-        
-        std::vector<int> per_layer;
-        for(int i=0 ; i<cs.num_layers ; ++i) {
-            per_layer.push_back( cs.dij[i]->count );
-        }
-        out->add("visited-per-layer", per_layer);
-        
-        out->add("solution-cost", cs.solution_cost());
-        out->step_out();
-    }
-    */
-    
-    /*
-    {
-        out->step_in("stop-conditions-landmarks-set-maxmin");
-        
-        lmset->use_maxmin = true;
-
-        START_TICKING;
-        CarSharingTest::ParamType p(
-            MuparoParams( trans, 5 ),
-            AspectTargetParams( 4, passenger_arrival_node ),
-            AspectPropagationRuleParams( SumCost, MaxArrival, 2, 0, 1),
-            AspectPropagationRuleParams( SumCost, FirstLayerArrival, 4, 2, 3)
-        );
-        
-        std::vector<NodeFilter*> filters;
-        RLC::Graph g1(trans, dfa_passenger );
-        RLC::BackwardGraph g2(&g1);
-        
-        Area * area_start, * area_dest;
-        
-        
-        if( toulouse->isIn(passenger_start_node) ) {
-            area_start = toulouse;
-        } else if( bordeaux->isIn(passenger_start_node) ) {
-            area_start = bordeaux;
-        } else {
-            return ;
-        }
-        
-        if( toulouse->isIn(passenger_arrival_node) ) {
-            area_dest = toulouse;
-        } else if( bordeaux->isIn(passenger_arrival_node) ) {
-            area_dest = bordeaux;
-        } else {
-            return ;
-        }
-
-        
-        CarSharingTest cs( p );
-        
-        init_car_sharing_with_areas<CarSharingTest, RLC::LandmarkSet>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, 
-                                                     dfa_passenger, dfa_car, area_start, area_dest, 
-                                                     true, lmset, lmset );
-
-        STOP_TICKING;
-        out->add("init-time", RUNTIME);
-        START_TICKING;
-        cs.run();
-        STOP_TICKING;
-        
-        out->add("runtime", RUNTIME);
-        out->add("visited-nodes", cs.count);
-        
-        std::vector<int> per_layer;
-        for(int i=0 ; i<cs.num_layers ; ++i) {
-            per_layer.push_back( cs.dij[i]->count );
-        }
-        out->add("visited-per-layer", per_layer);
-        
-        out->add("solution-cost", cs.solution_cost());
-        out->step_out();
-    }
-    */
-    
-    /*
-    {
-        out->step_in("stop-conditions-landmarks-set-radius");
-        
-        lmset->use_maxmin = false;
-
-        START_TICKING;
-        CarSharingTest::ParamType p(
-            MuparoParams( trans, 5 ),
-            AspectTargetParams( 4, passenger_arrival_node ),
-            AspectPropagationRuleParams( SumCost, MaxArrival, 2, 0, 1),
-            AspectPropagationRuleParams( SumCost, FirstLayerArrival, 4, 2, 3)
-        );
-        
-        std::vector<NodeFilter*> filters;
-        RLC::Graph g1(trans, dfa_passenger );
-        RLC::BackwardGraph g2(&g1);
-        
-        Area * area_start, * area_dest;
-        
-        
-        if( toulouse->isIn(passenger_start_node) ) {
-            area_start = toulouse;
-        } else if( bordeaux->isIn(passenger_start_node) ) {
-            area_start = bordeaux;
-        } else {
-            return ;
-        }
-        
-        if( toulouse->isIn(passenger_arrival_node) ) {
-            area_dest = toulouse;
-        } else if( bordeaux->isIn(passenger_arrival_node) ) {
-            area_dest = bordeaux;
-        } else {
-            return ;
-        }
-
-        
-        CarSharingTest cs( p );
-        
-        init_car_sharing_with_areas<CarSharingTest, RLC::LandmarkSet>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, 
-                                                     dfa_passenger, dfa_car, area_start, area_dest, 
-                                                     true, lmset, lmset );
-
-        STOP_TICKING;
-        out->add("init-time", RUNTIME);
-        START_TICKING;
-        cs.run();
-        STOP_TICKING;
-        
-        out->add("runtime", RUNTIME);
-        out->add("visited-nodes", cs.count);
-        
-        std::vector<int> per_layer;
-        for(int i=0 ; i<cs.num_layers ; ++i) {
-            per_layer.push_back( cs.dij[i]->count );
-        }
-        out->add("visited-per-layer", per_layer);
-        
-        out->add("solution-cost", cs.solution_cost());
-        out->step_out();
-    }
-    */
-    
-    {
-        out->step_in("stop-conditions-landmarks");
+        out->step_in("cities-stop-conditions-landmarks");
         
         lmset->use_maxmin = true;
 
@@ -450,21 +341,325 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
         out->add("visited-per-layer", per_layer);
         
         out->add("solution-cost", cs.solution_cost());
+        
+        out->step_in("node-details");
+        {
+            out->step_in("pass-arr");
+            out->add("node", passenger_arrival_node);
+            out->step_in("5");
+            out->add("cost", cs.get_cost(4, passenger_arrival_node));
+            out->add("arrival", cs.arrival(4, passenger_arrival_node));
+            
+            out->step_out(); out->step_out();
+        }
+        
+        int drop_off = cs.get_source(4, passenger_arrival_node);
+        {
+            out->step_in("drop_off");
+            out->add("node", drop_off);
+            
+            out->step_in("5");
+            out->add("cost", cs.get_cost(4, drop_off));
+            out->add("arrival", cs.arrival(4, drop_off));
+            out->step_out(); 
+            
+            out->step_in("4");
+            out->add("cost", cs.get_cost(3, drop_off));
+            out->add("arrival", cs.arrival(3, drop_off));
+            out->step_out(); 
+            
+            out->step_in("3");
+            out->add("cost", cs.get_cost(2, drop_off));
+            out->add("arrival", cs.arrival(2, drop_off));
+            out->step_out(); 
+            
+            out->step_out();
+        }
+        
+        int pick_up = cs.get_source(2, drop_off);
+        {
+            out->step_in("pick-up");
+            out->add("node", drop_off);
+            
+            out->step_in("3");
+            out->add("cost", cs.get_cost(2, pick_up));
+            out->add("arrival", cs.arrival(2, pick_up));
+            out->step_out(); 
+            
+            out->step_in("2");
+            out->add("cost", cs.get_cost(1, pick_up));
+            out->add("arrival", cs.arrival(1, pick_up));
+            out->step_out(); 
+            
+            out->step_in("1");
+            out->add("cost", cs.get_cost(0, pick_up));
+            out->add("arrival", cs.arrival(0, pick_up));
+            out->step_out(); 
+            
+            out->step_out();
+        }
+        out->step_out(); //node details
+        
+        {
+            out->add("1-length", cs.arrival(0, pick_up) - time);
+            out->add("2-length", cs.arrival(1, pick_up) - time);
+            out->add("3-length", cs.arrival(2, drop_off) - cs.arrival(2, pick_up));
+            out->add("4-length", cs.get_cost(3, drop_off));
+            out->add("5-length", cs.arrival(4, passenger_arrival_node) - cs.arrival(4, drop_off));
+            out->add("wait-time", abs(cs.arrival(0, pick_up) - cs.arrival(1, pick_up)) );
+            out->add("num-pick-up", cs.num_pick_up);
+            out->add("num-drop-off", cs.num_drop_off);
+            
+            out->add("nodes-set-in-MOM", cs.dij[4]->count_set);
+            out->add("avg-label-in-MOM", cs.dij[4]->average_label);
+        }
+        
+        out->step_out();
+    }
+    
+    //      For very small areas around the passenger
+    area_start = build_area_around_with_start_time(trans, passenger_start_node, passenger_start_node, time, 10 * 60);
+    area_start->center = passenger_start_node;
+    area_start->init();
+    area_dest =  build_area_around(trans, passenger_arrival_node, passenger_arrival_node, 10 * 60);
+    area_dest->center = passenger_arrival_node;
+    area_dest->init();
+    
+    {
+        out->step_in("10-min-stop-conditions");
+
+        START_TICKING;
+        CarSharingTest::ParamType p(
+            MuparoParams( trans, 5 ),
+            AspectTargetParams( 4, passenger_arrival_node ),
+            AspectPropagationRuleParams( SumPlusWaitCost, MaxArrival, 2, 0, 1),
+            AspectPropagationRuleParams( SumCost, FirstLayerArrival, 4, 2, 3)
+        );
+        
+        std::vector<NodeFilter*> filters;
+        RLC::Graph g1(trans, dfa_passenger );
+        RLC::BackwardGraph g2(&g1);
+
+        CarSharingTest cs( p );
+        
+        init_multi_car_sharing_with_areas<CarSharingTest, Landmark>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, dfa_passenger, dfa_car, area_start, area_dest );
+
+        STOP_TICKING;
+        out->add("init-time", RUNTIME);
+        START_TICKING;
+        cs.run();
+        STOP_TICKING;
+        
+        out->add("runtime", RUNTIME);
+        out->add("visited-nodes", cs.count);
+        
+        std::vector<int> per_layer;
+        for(int i=0 ; i<cs.num_layers ; ++i) {
+            per_layer.push_back( cs.dij[i]->count );
+        }
+        out->add("visited-per-layer", per_layer);
+        
+        out->add("solution-cost", cs.solution_cost());
+        
+        out->step_in("node-details");
+        {
+            out->step_in("pass-arr");
+            out->add("node", passenger_arrival_node);
+            out->step_in("5");
+            out->add("cost", cs.get_cost(4, passenger_arrival_node));
+            out->add("arrival", cs.arrival(4, passenger_arrival_node));
+            
+            out->step_out(); out->step_out();
+        }
+        
+        int drop_off = cs.get_source(4, passenger_arrival_node);
+        {
+            out->step_in("drop_off");
+            out->add("node", drop_off);
+            
+            out->step_in("5");
+            out->add("cost", cs.get_cost(4, drop_off));
+            out->add("arrival", cs.arrival(4, drop_off));
+            out->step_out(); 
+            
+            out->step_in("4");
+            out->add("cost", cs.get_cost(3, drop_off));
+            out->add("arrival", cs.arrival(3, drop_off));
+            out->step_out(); 
+            
+            out->step_in("3");
+            out->add("cost", cs.get_cost(2, drop_off));
+            out->add("arrival", cs.arrival(2, drop_off));
+            out->step_out(); 
+            
+            out->step_out();
+        }
+        
+        int pick_up = cs.get_source(2, drop_off);
+        {
+            out->step_in("pick-up");
+            out->add("node", drop_off);
+            
+            out->step_in("3");
+            out->add("cost", cs.get_cost(2, pick_up));
+            out->add("arrival", cs.arrival(2, pick_up));
+            out->step_out(); 
+            
+            out->step_in("2");
+            out->add("cost", cs.get_cost(1, pick_up));
+            out->add("arrival", cs.arrival(1, pick_up));
+            out->step_out(); 
+            
+            out->step_in("1");
+            out->add("cost", cs.get_cost(0, pick_up));
+            out->add("arrival", cs.arrival(0, pick_up));
+            out->step_out(); 
+            
+            out->step_out();
+        }
+        out->step_out(); //node details
+        
+        {
+            out->add("1-length", cs.arrival(0, pick_up) - time);
+            out->add("2-length", cs.arrival(1, pick_up) - time);
+            out->add("3-length", cs.arrival(2, drop_off) - cs.arrival(2, pick_up));
+            out->add("4-length", cs.get_cost(3, drop_off));
+            out->add("5-length", cs.arrival(4, passenger_arrival_node) - cs.arrival(4, drop_off));
+            out->add("wait-time", abs(cs.arrival(0, pick_up) - cs.arrival(1, pick_up)) );
+            out->add("num-pick-up", cs.num_pick_up);
+            out->add("num-drop-off", cs.num_drop_off);
+            
+            out->add("nodes-set-in-MOM", cs.dij[4]->count_set);
+            out->add("avg-label-in-MOM", cs.dij[4]->average_label);
+        }
+        
+        out->step_out();
+    }
+    
+    {
+        out->step_in("10min-stop-conditions-landmarks");
+        
+        lmset->use_maxmin = true;
+
+        START_TICKING;
+        CarSharingTest::ParamType p(
+            MuparoParams( trans, 5 ),
+            AspectTargetParams( 4, passenger_arrival_node ),
+            AspectPropagationRuleParams( SumPlusWaitCost, MaxArrival, 2, 0, 1),
+            AspectPropagationRuleParams( SumCost, FirstLayerArrival, 4, 2, 3)
+        );
+        
+        std::vector<NodeFilter*> filters;
+        RLC::Graph g1(trans, dfa_passenger );
+        RLC::BackwardGraph g2(&g1);
+
+        
+        CarSharingTest cs( p );
+        
+        init_multi_car_sharing_with_areas<CarSharingTest, RLC::LandmarkSet>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, 
+                                                     dfa_passenger, dfa_car, area_start, area_dest, 
+                                                     true, lmset, lmset );
+
+        STOP_TICKING;
+        out->add("init-time", RUNTIME);
+        START_TICKING;
+        cs.run();
+        STOP_TICKING;
+        
+        out->add("runtime", RUNTIME);
+        out->add("visited-nodes", cs.count);
+        
+        std::vector<int> per_layer;
+        for(int i=0 ; i<cs.num_layers ; ++i) {
+            per_layer.push_back( cs.dij[i]->count );
+        }
+        out->add("visited-per-layer", per_layer);
+        
+        out->add("solution-cost", cs.solution_cost());
+        
+        out->step_in("node-details");
+        {
+            out->step_in("pass-arr");
+            out->add("node", passenger_arrival_node);
+            out->step_in("5");
+            out->add("cost", cs.get_cost(4, passenger_arrival_node));
+            out->add("arrival", cs.arrival(4, passenger_arrival_node));
+            
+            out->step_out(); out->step_out();
+        }
+        
+        int drop_off = cs.get_source(4, passenger_arrival_node);
+        {
+            out->step_in("drop_off");
+            out->add("node", drop_off);
+            
+            out->step_in("5");
+            out->add("cost", cs.get_cost(4, drop_off));
+            out->add("arrival", cs.arrival(4, drop_off));
+            out->step_out(); 
+            
+            out->step_in("4");
+            out->add("cost", cs.get_cost(3, drop_off));
+            out->add("arrival", cs.arrival(3, drop_off));
+            out->step_out(); 
+            
+            out->step_in("3");
+            out->add("cost", cs.get_cost(2, drop_off));
+            out->add("arrival", cs.arrival(2, drop_off));
+            out->step_out(); 
+            
+            out->step_out();
+        }
+        
+        int pick_up = cs.get_source(2, drop_off);
+        {
+            out->step_in("pick-up");
+            out->add("node", drop_off);
+            
+            out->step_in("3");
+            out->add("cost", cs.get_cost(2, pick_up));
+            out->add("arrival", cs.arrival(2, pick_up));
+            out->step_out(); 
+            
+            out->step_in("2");
+            out->add("cost", cs.get_cost(1, pick_up));
+            out->add("arrival", cs.arrival(1, pick_up));
+            out->step_out(); 
+            
+            out->step_in("1");
+            out->add("cost", cs.get_cost(0, pick_up));
+            out->add("arrival", cs.arrival(0, pick_up));
+            out->step_out(); 
+            
+            out->step_out();
+        }
+        out->step_out(); //node details
+        
+        {
+            out->add("1-length", cs.arrival(0, pick_up) - time);
+            out->add("2-length", cs.arrival(1, pick_up) - time);
+            out->add("3-length", cs.arrival(2, drop_off) - cs.arrival(2, pick_up));
+            out->add("4-length", cs.get_cost(3, drop_off));
+            out->add("5-length", cs.arrival(4, passenger_arrival_node) - cs.arrival(4, drop_off));
+            out->add("wait-time", abs(cs.arrival(0, pick_up) - cs.arrival(1, pick_up)) );
+            out->add("num-pick-up", cs.num_pick_up);
+            out->add("num-drop-off", cs.num_drop_off);
+            
+            out->add("nodes-set-in-MOM", cs.dij[4]->count_set);
+            out->add("avg-label-in-MOM", cs.dij[4]->average_label);
+        }
+        
         out->step_out();
     }
     
     out->step_out();
+    
+    delete area_dest;
+    delete area_start;
 }
 
-void hundred_inits(Transport::Graph * trans) {
-    AlgoMPR::CarSharing * mup;
-    for(int i=0 ; i<100 ; ++i) {
-        mup = car_sharing(trans, 0, 0, 0, 0, *dfas[1], *dfas[0]);
-        delete mup;
-    }
-}
 
-void new_test(const Transport::Graph * g)
+void new_test(const Transport::Graph * g, bool from_bordeaux)
 {
     int bordeaux1=-1, bordeaux2=-1, toulouse1=-1, toulouse2=-1;
     int albi = 209194;
@@ -480,11 +675,11 @@ void new_test(const Transport::Graph * g)
         Algo::PtToPt::ParamType p(
             RLC::DRegLCParams( &pt_car, 10 ), RLC::AspectTargetParams( bordeaux2 )    );
         Algo::PtToPt * dij = new Algo::PtToPt(p);
-        dij->insert_node(RLC::Vertice(bordeaux1, 0), 0, 0);
+        dij->add_source_node(RLC::Vertice(bordeaux1, 0), 0, 0);
         dij->run();
         if( !dij->success ) {
             delete dij;
-            return new_test(g);
+            return new_test(g, from_bordeaux);
         }
         delete dij;
     }
@@ -493,11 +688,11 @@ void new_test(const Transport::Graph * g)
         Algo::PtToPt::ParamType p(
             RLC::DRegLCParams( &pt_car, 10 ), RLC::AspectTargetParams( toulouse2 )    );
         Algo::PtToPt * dij = new Algo::PtToPt(p);
-        dij->insert_node(RLC::Vertice(toulouse1, 0), 0, 0);
+        dij->add_source_node(RLC::Vertice(toulouse1, 0), 0, 0);
         dij->run();
         if( !dij->success ) {
             delete dij;
-            return new_test(g);
+            return new_test(g, from_bordeaux);
         }
         delete dij;
     }
@@ -506,17 +701,17 @@ void new_test(const Transport::Graph * g)
         Algo::PtToPt::ParamType p(
             RLC::DRegLCParams( &pt_car, 10 ), RLC::AspectTargetParams( toulouse2 )    );
         Algo::PtToPt * dij = new Algo::PtToPt(p);
-        dij->insert_node(RLC::Vertice(bordeaux2, 0), 0, 0);
+        dij->add_source_node(RLC::Vertice(bordeaux2, 0), 0, 0);
         dij->run();
         if( !dij->success ) {
             delete dij;
-            return new_test(g);
+            return new_test(g, from_bordeaux);
         }
         delete dij;
     }
     
     
-    if( (rand()  % 2) == 0 )
+    if( from_bordeaux )
         cout << bordeaux1 <<" "<< bordeaux2 <<" "<< toulouse1 <<" "<< albi <<" 32140 10 1 0" <<endl;
     else
         cout << toulouse1 <<" "<< albi <<" "<< bordeaux1 <<" "<< bordeaux2 <<" 32140 10 1 0" <<endl;
@@ -525,13 +720,17 @@ void new_test(const Transport::Graph * g)
 
 int main(void)
 {
+    std::string test_conf_dir = "/home/arthur/LAAS/Data/TestConfs/";
+    
+    string config = test_conf_dir + "bordeaux-toulouse-albi.conf";
     bool small_areas = false;
-    string config;
-    if(small_areas) 
-        config = "/home/arthur/LAAS/mumoro/algorithms/tests/smaller_areas.conf";
-    else
-        config = "/home/arthur/LAAS/mumoro/algorithms/tests/basic_test.conf";
-     
+    
+//     string config;
+//     if(small_areas) 
+//         config = "/home/arthur/LAAS/mumoro/algorithms/tests/smaller_areas.conf";
+//     else
+//         config = "/home/arthur/LAAS/mumoro/algorithms/tests/basic_test.conf";
+//      
     srand (time(NULL));
     
     dfas[0] = new RLC::DFA(RLC::pt_foot_dfa());
@@ -591,7 +790,7 @@ int main(void)
     cout << endl << endl;
     
 //      for(int i=0 ; i<50 ; ++i)
-//          new_test(transport);
+//          new_test(transport, true);
     
     
 }

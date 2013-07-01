@@ -152,7 +152,7 @@ public:
                 BOOST_ASSERT( target_cost >= 0 );
                 BOOST_ASSERT( (edge_cost * cost_factor - (curr.cost + curr.h)  + (target_cost + label(target, target_arr, target_cost).h) >= 0) );
                 
-                insert_node_with_predecessor(target, target_arr, target_cost, e);
+                insert_node_with_predecessor(target, target_arr, target_cost, e, curr.source);
             }
         }
         return curr;
@@ -162,13 +162,13 @@ public:
      * Insert/update a node in the heap.
      * Return True if the node was updated, false otherwise.
      */
-    virtual bool insert_node_with_predecessor(const Vertice & vert, const int arrival, const int cost, const RLC::Edge & pred)
+    virtual bool insert_node_with_predecessor(const Vertice & vert, const int arrival, const int cost, const RLC::Edge & pred, const int source)
     {
-        return insert_node( vert, arrival, cost );
+        return insert_node( vert, arrival, cost, source );
     }
     
-    virtual bool insert_node(const Vertice & vert, const int arrival, const int vert_cost) override {
-        return insert_node_impl(label(vert, arrival, vert_cost));
+    virtual bool insert_node(const Vertice & vert, const int arrival, const int vert_cost, const int source) override {
+        return insert_node_impl(label(vert, arrival, vert_cost, source));
     }
     
     virtual bool insert_node_impl(const Label & lab)
