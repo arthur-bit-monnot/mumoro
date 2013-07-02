@@ -171,7 +171,7 @@ public:
      * Earliest arrival to an accepting state of this node.
      */
     int arrival(const int layer, const int vertex) const { 
-        BOOST_ASSERT(is_node_set(n));
+        BOOST_ASSERT(is_node_set( StateFreeNode(layer, vertex) ));
         return flags[layer][vertex].arrival;
     }
     int arrival(const StateFreeNode n) const { return arrival(n.layer, n.vertex); }
@@ -180,7 +180,7 @@ public:
      * Best known cost in this layer
      */
     int get_cost(const int layer, const int vertex) const { 
-        BOOST_ASSERT(is_node_set(n));
+        BOOST_ASSERT(is_node_set( StateFreeNode(layer, vertex) ));
         return flags[layer][vertex].cost;
     }
     int get_cost(const StateFreeNode n) const { return get_cost(n.layer, n.vertex); }
@@ -189,7 +189,7 @@ public:
      * Source (oldest predecessor) providing the best cost in this layer
      */
     int get_source(const int layer, const int vertex) const { 
-        BOOST_ASSERT(is_node_set(n));
+        BOOST_ASSERT(is_node_set( StateFreeNode(layer, vertex) ));
         return flags[layer][vertex].source;
     }
     int get_source(const StateFreeNode n) const { return get_source(n.layer, n.vertex); }
