@@ -718,79 +718,132 @@ void new_test(const Transport::Graph * g, bool from_bordeaux)
 }
 
 
-int main(void)
+int main(int argc, char ** argv)
 {
-    std::string test_conf_dir = "/home/arthur/LAAS/Data/TestConfs/";
-    
-    string config = test_conf_dir + "bordeaux-toulouse-albi.conf";
-    bool small_areas = false;
-    
-//     string config;
-//     if(small_areas) 
-//         config = "/home/arthur/LAAS/mumoro/algorithms/tests/smaller_areas.conf";
-//     else
-//         config = "/home/arthur/LAAS/mumoro/algorithms/tests/basic_test.conf";
-//      
-    srand (time(NULL));
-    
-    dfas[0] = new RLC::DFA(RLC::pt_foot_dfa());
-    dfas[1] = new RLC::DFA(RLC::car_dfa());
-    
-    std::string name, dump_file;
-    
-    char buff[255];
-    int car_start_node, passenger_start_node, car_arrival_node, passenger_arrival_node, time, day, dfa_car, dfa_passenger;
-    
-    ifstream indata; // indata is like cin
-    
-    indata.open(config); // opens the file
-    if(!indata) { // file couldn't be opened
+  if(argc == 2)
+    {
+      std::string conf_dir_environment_variable = "MUMORO_TESTS_CONF";
+      std::string results_dir_environment_variable = "MUMORO_TESTS_RESULTS";
+      std::string dumps_dir_environment_variable = "MUMORO_DUMPS";
+      
+      std::string undefined_environment_variable_msg = "Undefined environment variable";
+      std::string loaded_environment_variable_msg = "Loaded environment variable";
+      
+      std::string test_conf_dir;
+      std::string test_results_dir;
+      std::string test_dumps_dir;
+      
+      char * test_conf_dir_char = ::getenv(conf_dir_environment_variable.c_str());//"/home/arthur/LAAS/Data/TestConfs/"
+      
+      if(test_conf_dir_char == NULL)
+	{
+	  std::cerr << undefined_environment_variable_msg << " '" << conf_dir_environment_variable << "'." << std::endl;
+	  
+	  return EXIT_FAILURE;
+	}
+      else
+	{
+	  std::cout << loaded_environment_variable_msg << " '" << conf_dir_environment_variable << "'." << std::endl;
+	  test_conf_dir = std::string(test_conf_dir_char);
+	}
+      
+      char * test_results_dir_char = ::getenv(results_dir_environment_variable.c_str());
+      
+      if(test_results_dir_char == NULL)
+	{
+	  std::cerr << undefined_environment_variable_msg << " '" << results_dir_environment_variable << "'." << std::endl;
+	  
+	  return EXIT_FAILURE;
+	}
+      else
+	{
+	  std::cout << loaded_environment_variable_msg << " '" << results_dir_environment_variable << "'." << std::endl;
+	  test_results_dir = std::string(test_results_dir_char);
+	}
+      
+      char * test_dumps_dir_char = ::getenv(dumps_dir_environment_variable.c_str());
+      
+      if(test_dumps_dir_char == NULL)
+	{
+	  std::cerr << undefined_environment_variable_msg << " '" << dumps_dir_environment_variable << "'." << std::endl;
+	  
+	  return EXIT_FAILURE;
+	}
+      else
+	{
+	  std::cout << loaded_environment_variable_msg << " '" << dumps_dir_environment_variable << "'." << std::endl;
+	  test_dumps_dir = std::string(test_dumps_dir_char);
+	}
+      
+      std::string config_file_name = std::string(argv[1]);
+      
+      string config = test_conf_dir + config_file_name;//"bordeaux-toulouse-albi.conf";
+      bool small_areas = false;
+      
+      srand (time(NULL));
+      
+      dfas[0] = new RLC::DFA(RLC::pt_foot_dfa());
+      dfas[1] = new RLC::DFA(RLC::car_dfa());
+      
+      std::string name, dump_file;
+      
+      char buff[255];
+      int car_start_node, passenger_start_node, car_arrival_node, passenger_arrival_node, time, day, dfa_car, dfa_passenger;
+      
+      ifstream indata; // indata is like cin
+      
+      indata.open(config); // opens the file
+      if(!indata) { // file couldn't be opened
         cerr << "Error: file could not be opened" << endl;
         exit(1);
-    }
-    
-    while( indata.peek() == '#' ) {
+      }
+      
+      while( indata.peek() == '#' ) {
         indata.getline(buff, 255);
-    }
-    
-    indata >> name;
-    indata >> dump_file;
-    JsonWriter writer("/home/arthur/LAAS/Data/Results/" + name + ".txt");
-    out = &writer;
-    Transport::GraphFactory gf("/home/arthur/LAAS/Data/Graphs/" + dump_file);
-    const Transport::Graph * transport = gf.get();
-    
-    if(small_areas) {
+      }
+      
+      indata >> name;
+      indata >> dump_file;
+      JsonWriter writer(/*"/home/arthur/LAAS/Data/Results/"*/ test_conf_dir + name + ".txt");
+      out = &writer;
+      Transport::GraphFactory gf(/*"/home/arthur/LAAS/Data/Graphs/"*/ test_dumps_dir + dump_file);
+      const Transport::Graph * transport = gf.get();
+      
+      if(small_areas) {
         toulouse = toulouse_area_small(transport);
         bordeaux = bordeaux_area_small(transport);
-    } else {
+      } else {
         toulouse = toulouse_area(transport);
         bordeaux = bordeaux_area(transport);
-    }
-    toulouse_lm = RLC::create_car_landmark(transport, toulouse->center);
-    bordeaux_lm = RLC::create_car_landmark(transport, bordeaux->center);
-    
-    //                          tlse, bordeaux, albi
-    int landmarks_nodes[3] = { 269647, 546063, 294951 };
-    std::vector<const Landmark *> lms;
-    BOOST_FOREACH( int n, landmarks_nodes ) {
+      }
+      toulouse_lm = RLC::create_car_landmark(transport, toulouse->center);
+      bordeaux_lm = RLC::create_car_landmark(transport, bordeaux->center);
+      
+      //                          tlse, bordeaux, albi
+      int landmarks_nodes[3] = { 269647, 546063, 294951 };
+      std::vector<const Landmark *> lms;
+      BOOST_FOREACH( int n, landmarks_nodes ) {
         lms.push_back( RLC::create_car_landmark(transport, n) );
-    }
-    lmset = new RLC::LandmarkSet( lms, transport );
-    
-    cout << "R(Toulouse) : " << toulouse->radius << " ; R(Bordeaux) : " << bordeaux->radius <<endl;
-
+      }
+      lmset = new RLC::LandmarkSet( lms, transport );
+      
+      cout << "R(Toulouse) : " << toulouse->radius << " ; R(Bordeaux) : " << bordeaux->radius <<endl;
+      
     while ( !indata.eof() ) { // keep reading until end-of-file
-        indata >> passenger_start_node >> car_start_node >> passenger_arrival_node >> car_arrival_node
-               >> time >> day >> dfa_car >> dfa_passenger; 
-        run_test("1", transport, car_start_node, passenger_start_node, car_arrival_node, passenger_arrival_node, 
-                 time, day, *dfas[dfa_car], *dfas[dfa_passenger]);
+      indata >> passenger_start_node >> car_start_node >> passenger_arrival_node >> car_arrival_node
+	     >> time >> day >> dfa_car >> dfa_passenger; 
+      run_test("1", transport, car_start_node, passenger_start_node, car_arrival_node, passenger_arrival_node, 
+	       time, day, *dfas[dfa_car], *dfas[dfa_passenger]);
     }
     
     cout << endl << endl;
     
-//      for(int i=0 ; i<50 ; ++i)
+    //      for(int i=0 ; i<50 ; ++i)
 //          new_test(transport, true);
     
-    
+    }
+  else
+    {
+      std::cerr << "Please provide a configuration file." << std::endl;
+    }
 }
