@@ -1,34 +1,36 @@
 Mumoro: MUltiModal MUltiObjective ROuting
 
-This library aims to provide multimodal routing: combining subway, walking and bike.
 
-It is also multiobjective: it finds the best route optimizing according to time taken,
-mode changes, CO2 emissions etc.
-If there are two routes, the first being faster but emits more CO2 (100% by car) than
-an other route (100% cycling), it will return both routes as none is strictly better than
-an other.
-
-The lib folder provides the algorithms
-The web folder is an example of web application (can be run as standalone web server)
 
 
 == Requirements ==
 On ubuntu or debian, please install the developpment versions
-* GCC: C++ complier (other aren't testetd)
-* Boost: (used for graph the graph structures and serialization) 
-* Python
-* Swig: for interfacing python
+* GCC: C++ compiler (others aren't tested)
+* Boost: used for the graph structures, serialization and heaps
+* Python2
+* Swig: for interfacing python with C++
 
-=== Optional Dependencies ===
-For Debug output, you need the following the developpment version of :
-* cwd (libcwd-dev on Debian-based distributions)
-For Unit-testing :
-* Boost Testing (libboost-test-dev on Debian-based distributions)
 
 === Installing Python Dependencies ===
 
 Python dependencies can be install by running `sudo python setup.py install`
 
+
+
+=== osm4routing ===
+
+For importing data from OSM files, this project uses osm4routing.
+Some modifications were brought to osm4routing to support:
+ 
+ * Importing data from multiple OSM files
+ * Use of the `maxspeed` key when defining  the maximum speed on a road segment
+
+Make sure you have an osm4routing coming from our repository ( https://github.com/athy/osm4routing ) installed.
+You can fetch it with git, explanations on how to install it are provided in the README.
+ 
+```
+git clone https://github.com/athy/osm4routing.git
+```
 
 
 
@@ -53,13 +55,13 @@ make
 ```
 
 The default target is an executable based on algorithms/main.cpp. To build the swig interface, run `make swig`. 
-This will generate a shared library (_mumoro.so) and a python interface (mumoro.py) that will automatically copied in lib/core/
+This will generate a shared library (_mumoro.so) and a python interface (mumoro.py) that will be automatically copied in lib/core/
 
 
 == Running ==
 
 Running MuMoro requires a configuration (aka scenario). Some example are present in the `scenarios/` folder. 
-Before running make sure you already built the SWIG interface.
+Those allow to define which data (OSM or GTFS) will be used for building the multi-modal graph.
 
 === Importing data ===
 
