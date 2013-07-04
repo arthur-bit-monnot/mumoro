@@ -19,9 +19,6 @@ public:
     NodeSet ns;
     BBNodeFilter * bb = NULL;
     const Transport::Graph * g;
-    int center;
-    int diameter;
-    int radius;
     int num_car_accessible;
     
     int id;
@@ -71,7 +68,7 @@ Area * toulouse_area ( const Transport::Graph * g );
 Area * toulouse_area_small ( const Transport::Graph * g );
 Area * bordeaux_area ( const Transport::Graph * g );
 Area * bordeaux_area_small ( const Transport::Graph * g );
-Area * small_area ( const Transport::Graph * g );
+
 
 
 

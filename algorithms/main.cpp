@@ -33,12 +33,6 @@ int main()
     
 //     Area * toulouse = toulouse_area(g);
 //     Area * bordeaux = bordeaux_area(g);
-//     Area * small = small_area(g);
-
-    int source = 218238; //580025;
-    int target = 329194;
-    int landmark = source;
-    int landmark2 = 302296; //target;
     
     int src1 = 10;
     int src2 = 644;

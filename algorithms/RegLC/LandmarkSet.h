@@ -26,10 +26,6 @@ class LandmarkSet
     }
     
 public:
-    /**
-     * Boolean to choose which evaluation method to use.
-     */
-    bool use_maxmin = true;
     
     LandmarkSet(std::vector<const Landmark*> landmarks, const Transport::Graph * g) : g(g) {
         uint num_vertices = landmarks[0]->hplus.size();
@@ -93,18 +89,12 @@ public:
         }
     }
     
-    // TODO: choice of the distance evaluation method should be done at compilation time
-    int dist_lb( const int source, const Area & area, const bool is_forward ) { 
-        if( use_maxmin )
-            return dist_lb_maxmin( source, area, is_forward );
-        else
-            return dist_lb_rad( source, area, is_forward );
-    }
-    
     /**
      * Uses maximal (resp. minimal) distance of all nodes in the area for h+(area) (resp. h-(area))
+     * 
+     * If not already available potential from/to an area is computed and and stores in `area_potentials`
      */
-    int dist_lb_maxmin( const int source, const Area & area, const bool is_forward ) {   
+    int dist_lb( const int source, const Area & area, const bool is_forward ) {   
         if( area_potentials.size() <= area.id * size_per_node() ) {
             area_potentials.resize((area.id + 1) * size_per_node(), -1);
         }
@@ -145,81 +135,9 @@ public:
         return best;
     }
     
-    
-    /**
-     * Uses the distance to area's center minus the area's radius as distance estimation
-     */
-    int dist_lb_rad( const int source, const Area & area, const bool is_forward ) const {   
-        
-        int target = area.center;
-        int radius = area.radius;
-        int best = radius;
-        
-        int * p_pot_src = potentials + potential_index(source, 0);
-        int * p_pot_target = potentials + potential_index(target, 0);
-        
-        if(is_forward) {
-            for(uint l=0 ; l<num_landmarks ; ++l) {
-                if( *p_pot_src - *p_pot_target > best )
-                    best = *p_pot_src - *p_pot_target;
-                ++p_pot_src; ++p_pot_target;
-                
-                if( *p_pot_target - *p_pot_src > best )
-                    best = *p_pot_target - *p_pot_src;
-                ++p_pot_src; ++p_pot_target;
-            }
-        } else {
-            for(uint l=0 ; l<num_landmarks ; ++l) {
-                if( *p_pot_target - *p_pot_src > best )
-                    best = *p_pot_target - *p_pot_src;
-                ++p_pot_src; ++p_pot_target;
-                
-                if( *p_pot_src - *p_pot_target > best )
-                    best = *p_pot_src - *p_pot_target;
-                ++p_pot_src; ++p_pot_target;
-            }
-        }
-        
-        best -= radius;
-        
-        return best;
-    }
-    
 };
 
 
-class LandmarkSetNaive
-{
-    std::list<const Landmark*> landmarks;
-    
-public:
-    LandmarkSetNaive(std::list<const Landmark*> landmarks) : landmarks(landmarks) {
-        
-    }
-    
-    int dist_lb( const int source, const int target, const bool is_forward ) const {
-        int best = 0;
-        BOOST_FOREACH( const Landmark * l, landmarks ) {
-            int curr = l->dist_lb( source, target, is_forward );
-            if( curr > best )
-                best = curr;
-        }
-        
-        return best;
-    }
-    
-    int dist_lb( const int source, const Area & area, const bool is_forward ) const {   
-        int best = 0;
-        BOOST_FOREACH( const Landmark * l, landmarks ) {
-            int curr = l->dist_lb( source, area, is_forward );
-            if( curr > best )
-                best = curr;
-        }
-        
-        return best;
-    }
-    
-};
 
 } // end namespace RLC
 
