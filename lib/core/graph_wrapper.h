@@ -20,6 +20,8 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 #include <boost/dynamic_bitset.hpp>
 
 #include <bitset>
@@ -164,7 +166,7 @@ private:
     /**
      * Loads the graph from the archive
      */
-    Graph(const std::string & filename);
+    Graph(const std::string & filename, bool from_bin);
     
     /**
      * Insert an edge from *source* to *target* in the graph
@@ -189,12 +191,14 @@ private:
     /**
      * Saves the whole graph to a file
      */
-    void save(const std::string & filename) const;
+    void save_to_bin(const std::string & filename/*, bool bin_archive*/) const;
+    void save_to_txt(const std::string & filename/*, bool bin_archive*/) const;
     
     /**
      * Loads graph from a file
      */
-    void load(const std::string & filename);
+    void load_from_bin(const std::string & filename);
+    void load_from_txt(const std::string & filename);
 
     
     /**

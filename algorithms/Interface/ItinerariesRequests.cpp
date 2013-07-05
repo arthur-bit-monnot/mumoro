@@ -6,9 +6,8 @@
 
 
 
-Path point_to_point( const Transport::Graph * trans, const int source, const int dest, const int departure_time, RLC::DFA dfa )
+Path point_to_point( const Transport::Graph * trans, const int source, const int dest, const int departure_time, const int day, RLC::DFA dfa )
 {
-    int day = 10;
     typedef RLC::AspectStorePreds<RLC::AspectTarget<RLC::DRegLC>> Algo;
     
     RLC::Graph g(trans, dfa);

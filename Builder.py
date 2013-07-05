@@ -250,17 +250,22 @@ class Builder:
         self.metadata.create_all()
         
         bin_dump_file = data_dir + 'graph.bin-dump'
+        txt_dump_file = data_dir + 'graph.txt-dump'
         
         if source == 'bin-dump':
             if not os.path.exists( bin_dump_file ):
                 print "Unable to find binary graph " + bin_dump_file
             else:
                 print "Loading from binary file " + bin_dump_file
-                self.g = layer.MultimodalGraph(layers, 'id', bin_dump_file)
+                self.g = layer.MultimodalGraph(layers, 'id', bin_dump_file, True)
+        elif source == 'txt-dump':
+            if not os.path.exists( txt_dump_file ):
+                print "Unable to find text-archive graph " + txt_dump_file
+            else:
+                print "Loading from text-archive file " + txt_dump_file
+                self.g = layer.MultimodalGraph(layers, 'id', txt_dump_file, False)
+                print "Coucou"
         elif source == 'db':
-            if not os.path.exists( bin_dump_file ):
-                print 'Warning: the previous graph will be overwriten'
-            
             self.config_table.delete().execute()
             self.session.commit()
             
@@ -285,10 +290,11 @@ class Builder:
                    except KeyError:
                        raise NameError('Can not connect layers from the node list')
 
-            if target == 'bin-dump' or source == 'db' and target == None:
-                self.g.save( bin_dump_file )
-                print 'Wrote binary graph dump to ' + bin_dump_file
-
-
-    
+        if target == 'bin-dump' or source == 'db' and target == None:
+            self.g.save_to_bin( bin_dump_file )
+            print 'Wrote binary graph dump to ' + bin_dump_file
+        
+        if target == 'txt-dump' or source == 'db' and target == None:
+            self.g.save_to_txt( txt_dump_file )
+            print 'Wrote binary graph dump to ' + txt_dump_file
 

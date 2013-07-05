@@ -14,10 +14,10 @@ GraphFactory::GraphFactory ( const int nb_nodes )
     this->graph = new Graph( nb_nodes );
 }
 
-GraphFactory::GraphFactory ( const std::string& filename )
+GraphFactory::GraphFactory ( const std::string& filename, bool from_bin )
 {
     initialized = true;
-    this->graph = new Graph( filename );
+    this->graph = new Graph( filename, from_bin );
 }
 
 void GraphFactory::add_road_edge ( const int source, const int target, const EdgeMode type, const int duration )
@@ -61,9 +61,14 @@ const Graph * GraphFactory::get()
     return graph;
 }
 
-void GraphFactory::save ( const std::string& filename ) const
+void GraphFactory::save_to_bin ( const std::string& filename ) const
 {
-    graph->save( filename );
+    graph->save_to_bin( filename );
+}
+
+void GraphFactory::save_to_txt ( const std::string& filename ) const
+{
+    graph->save_to_txt( filename );
 }
 
 void GraphFactory::init()

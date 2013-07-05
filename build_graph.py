@@ -21,4 +21,4 @@ if __name__ == "__main__":
     exec( file( data_dir + 'conf.py' ) )
     db_string = db_type + ":///" + db_params
 
-    Builder( os.getcwd() + "/" + sys.argv[1], source='db', target='bin-dump' ) 
+    Builder( os.getcwd() + "/" + sys.argv[1], source='db', target=None ) 

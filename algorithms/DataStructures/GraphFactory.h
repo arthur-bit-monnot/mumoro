@@ -20,7 +20,7 @@ public:
     /**
      * Loads the graph from an archive
      */
-    GraphFactory(const std::string & filename);
+    GraphFactory(const std::string & filename, bool from_bin);
     
     /**
      * Insert an edge from *source* to *target* in the graph
@@ -43,7 +43,8 @@ public:
 
     const Graph * get();
     
-    void save(const std::string & filename) const;
+    void save_to_bin(const std::string & filename) const;
+    void save_to_txt(const std::string & filename) const;
     
 private:
     void init();

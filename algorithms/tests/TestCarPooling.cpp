@@ -792,7 +792,7 @@ int main(int argc, char ** argv)
       indata >> dump_file;
       JsonWriter writer(/*"/home/arthur/LAAS/Data/Results/"*/ test_conf_dir + name + ".txt");
       out = &writer;
-      Transport::GraphFactory gf(/*"/home/arthur/LAAS/Data/Graphs/"*/ test_dumps_dir + dump_file);
+      Transport::GraphFactory gf(/*"/home/arthur/LAAS/Data/Graphs/"*/ test_dumps_dir + dump_file, true);
       const Transport::Graph * transport = gf.get();
       
       if(small_areas) {

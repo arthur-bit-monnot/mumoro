@@ -131,9 +131,13 @@ Edge::Edge(const bool road_edge, const int index, const EdgeMode type) : road_ed
 
 namespace Transport {
 
-Graph::Graph(const std::string & filename)
+Graph::Graph(const std::string & filename, bool from_bin)
 {
-    load(filename);
+    if(from_bin)
+        load_from_bin(filename);
+    else
+        load_from_txt(filename);
+    
 }
 
 Graph::Graph(int nb_nodes) : g(nb_nodes), car_accessibility(nb_nodes)
@@ -224,8 +228,7 @@ void Graph::init_edge_indexes()
     }
 }
 
-
-void Graph::load(const std::string & filename)
+void Graph::load_from_bin(const std::string & filename)
 {
     std::cout << "Loading graph from file " << filename << std::endl;
     std::ifstream ifile(filename.c_str());
@@ -242,10 +245,40 @@ void Graph::load(const std::string & filename)
     init_edge_indexes();
 }
 
-void Graph::save(const std::string & filename) const
+void Graph::save_to_bin(const std::string & filename) const
 {
     std::ofstream ofile(filename.c_str());
     boost::archive::binary_oarchive oArchive(ofile);
+    oArchive << id;
+    oArchive << num_road_edges;
+    oArchive << num_pt_edges;
+    oArchive << road_durations;
+    oArchive << pt_durations;
+    oArchive << car_accessibility;
+    oArchive << g; //graph; 
+}
+
+void Graph::load_from_txt(const std::string & filename)
+{
+    std::cout << "Loading graph from file " << filename << std::endl;
+    std::ifstream ifile(filename.c_str());
+    boost::archive::text_iarchive iArchive(ifile);
+    iArchive >> id;
+    iArchive >> num_road_edges;
+    iArchive >> num_pt_edges;
+    iArchive >> road_durations;
+    iArchive >> pt_durations;
+    iArchive >> car_accessibility;
+    iArchive >> g; //graph;   
+    std::cout << "   " << boost::num_vertices(g) << " nodes" << std::endl;
+    std::cout << "   " << boost::num_edges(g) << " edges" << std::endl;
+    init_edge_indexes();
+}
+
+void Graph::save_to_txt(const std::string & filename) const
+{
+    std::ofstream ofile(filename.c_str());
+    boost::archive::text_oarchive oArchive(ofile);
     oArchive << id;
     oArchive << num_road_edges;
     oArchive << num_pt_edges;

@@ -24,7 +24,7 @@ int main()
 {
 //     std::string file( "/home/arthur/LAAS/Data/Graphs/sud-ouest.dump" );
     std::string file( "/home/arthur/LAAS/Data/Graphs/toulouse.dump" );
-    Transport::GraphFactory gf( file );
+    Transport::GraphFactory gf( file, true );
     
     const Transport::Graph * g = gf.get();
     
