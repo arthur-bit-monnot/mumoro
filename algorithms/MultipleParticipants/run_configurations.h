@@ -42,7 +42,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 using RLC::DRegLC;
 using RLC::AspectCount;
-using RLC::Landmark;
+using RLC::LandmarkSet;
 
 
 namespace MuPaRo {
@@ -146,13 +146,13 @@ void init_car_sharing_filtered(T * cs, const Transport::Graph* trans, int src_pe
     cs->insert( StateFreeNode(3, dest_car), 0, 0);
 }
 
-template<typename T, typename H>
+template<typename T>
 void init_car_sharing_with_areas(T * cs, const Transport::Graph* trans, int src_ped, int src_car, int dest_ped, 
                  int dest_car, RLC::DFA dfa_ped, RLC::DFA dfa_car, Area * area_start, Area * area_dest, 
-                 bool use_landmarks = false, H * h_start = NULL, H * h_dest = NULL )
+                 bool use_landmarks = false, LandmarkSet * h_start = NULL, LandmarkSet * h_dest = NULL )
 {
     typedef RLC::AspectTargetAreaStop<RLC::AspectCount<RLC::DRegLC>> CarAlgo;
-    typedef typename RLC::AspectTargetAreaStop<RLC::AspectTargetAreaLandmark<RLC::AspectCount<RLC::DRegLC>, H>> CarAlgoLM;
+    typedef typename RLC::AspectTargetAreaStop<RLC::AspectTargetAreaLandmark<RLC::AspectCount<RLC::DRegLC>>> CarAlgoLM;
     typedef RLC::AspectNodePruning<RLC::AspectCount<RLC::DRegLC>> PassAlgo;
     
     cs->vres.a_nodes.push_back(src_ped);
@@ -195,17 +195,17 @@ void init_car_sharing_with_areas(T * cs, const Transport::Graph* trans, int src_
         cs->dij.push_back( new CarAlgoLM( 
             typename CarAlgoLM::ParamType(
                 RLC::DRegLCParams(g2, day, 1),
-                RLC::AspectTargetAreaLandmarkParams<H>(area_start, h_start),
+                RLC::AspectTargetAreaLandmarkParams<>(area_start, h_start),
                 RLC::AspectTargetAreaStopParams(area_start) ) ) );
         cs->dij.push_back( new CarAlgoLM( 
             typename CarAlgoLM::ParamType(
                 RLC::DRegLCParams(g3, day, 2),
-                RLC::AspectTargetAreaLandmarkParams<H>(area_dest, h_dest),
+                RLC::AspectTargetAreaLandmarkParams<>(area_dest, h_dest),
                 RLC::AspectTargetAreaStopParams(area_dest) ) ) );
         cs->dij.push_back( new CarAlgoLM( 
             typename CarAlgoLM::ParamType(
                 RLC::DRegLCParams(g4, day, 1),
-                RLC::AspectTargetAreaLandmarkParams<H>(area_dest, h_dest),
+                RLC::AspectTargetAreaLandmarkParams<>(area_dest, h_dest),
                 RLC::AspectTargetAreaStopParams(area_dest) ) ) );
     }
     cs->dij.push_back( new PassAlgo( 
@@ -218,13 +218,13 @@ void init_car_sharing_with_areas(T * cs, const Transport::Graph* trans, int src_
     cs->insert( StateFreeNode(3, dest_car), 0, 0);
 }
 
-template<typename T, typename H>
+template<typename T>
 void init_multi_car_sharing_with_areas(T * cs, const Transport::Graph* trans, int src_ped, int src_car, int dest_ped, 
                  int dest_car, RLC::DFA dfa_ped, RLC::DFA dfa_car, Area * area_start, Area * area_dest, 
-                 bool use_landmarks = false, H * h_start = NULL, H * h_dest = NULL )
+                 bool use_landmarks = false, LandmarkSet * h_start = NULL, LandmarkSet * h_dest = NULL )
 {
     typedef RLC::AspectTargetAreaStop<RLC::AspectCount<RLC::DRegLC>> CarAlgo;
-    typedef typename RLC::AspectTargetAreaStop<RLC::AspectTargetAreaLandmark<RLC::AspectCount<RLC::DRegLC>, H>> CarAlgoLM;
+    typedef typename RLC::AspectTargetAreaStop<RLC::AspectTargetAreaLandmark<RLC::AspectCount<RLC::DRegLC>>> CarAlgoLM;
     typedef RLC::AspectNodePruning<RLC::AspectCount<RLC::DRegLC>> PassAlgo;
     
     cs->vres.a_nodes.push_back(src_ped);
@@ -267,17 +267,17 @@ void init_multi_car_sharing_with_areas(T * cs, const Transport::Graph* trans, in
         cs->dij.push_back( new CarAlgoLM( 
             typename CarAlgoLM::ParamType(
                 RLC::DRegLCParams(g2, day, 1),
-                RLC::AspectTargetAreaLandmarkParams<H>(area_start, h_start),
+                RLC::AspectTargetAreaLandmarkParams<>(area_start, h_start),
                 RLC::AspectTargetAreaStopParams(area_start) ) ) );
         cs->dij.push_back( new CarAlgoLM( 
             typename CarAlgoLM::ParamType(
                 RLC::DRegLCParams(g3, day, 2),
-                RLC::AspectTargetAreaLandmarkParams<H>(area_dest, h_dest),
+                RLC::AspectTargetAreaLandmarkParams<>(area_dest, h_dest),
                 RLC::AspectTargetAreaStopParams(area_dest) ) ) );
         cs->dij.push_back( new CarAlgoLM( 
             typename CarAlgoLM::ParamType(
                 RLC::DRegLCParams(g4, day, 1),
-                RLC::AspectTargetAreaLandmarkParams<H>(area_dest, h_dest),
+                RLC::AspectTargetAreaLandmarkParams<>(area_dest, h_dest),
                 RLC::AspectTargetAreaStopParams(area_dest) ) ) );
     }
     /*

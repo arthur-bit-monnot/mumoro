@@ -106,10 +106,13 @@ Area * build_area_around_with_start_time ( const Transport::Graph* trans, int st
     return area;
 }
 
+/*** NOTE : the areas defined here after are dependent on the graph 
+ * They are used for the `sud-ouest` configuration
+ */
+
 Area * toulouse_area ( const Transport::Graph* g )
 {
     Area * area = build_area_around( g, 608327, 618191, 600);
-    area->center = 329194;
     area->init();
     return area;
 }
@@ -117,7 +120,6 @@ Area * toulouse_area ( const Transport::Graph* g )
 Area * toulouse_area_small ( const Transport::Graph* g )
 {
     Area * area = build_area_around( g, 608327, 618191, 600);
-    area->center = 329194;
     area->init();
     return area;
 }
@@ -125,7 +127,6 @@ Area * toulouse_area_small ( const Transport::Graph* g )
 Area * bordeaux_area ( const Transport::Graph* g )
 {
     Area * area = build_area_around( g, 618192, 629765, 600);
-    area->center = 580025;
     area->init();
     return area;
 }
@@ -133,16 +134,6 @@ Area * bordeaux_area ( const Transport::Graph* g )
 Area * bordeaux_area_small ( const Transport::Graph* g )
 {
     Area * area = build_area_around( g, 629421, 629765, 600);
-    area->center = 379083;
     area->init();
-    return area;
-}
-
-Area* small_area ( const Transport::Graph* g )
-{
-    Area * area = build_area_around( g, 251665, 251665, 120 );
-    area->center = 251665;
-    area->init();
-    cout << "Radius : " << area->radius << "  count : " << area->size() <<endl;;
     return area;
 }

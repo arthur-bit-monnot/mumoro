@@ -50,6 +50,8 @@ using std::ifstream;
 
 #include "JsonWriter.h"
 
+using RLC::Landmark;
+using RLC::LandmarkSet;
 
 using namespace MuPaRo;
 using namespace AlgoMPR;
@@ -58,8 +60,6 @@ RLC::DFA * dfas[2];
 JsonWriter * out;
 Area * toulouse;
 Area * bordeaux;
-Landmark * toulouse_lm;
-Landmark * bordeaux_lm;
 RLC::LandmarkSet * lmset;
 
 void run_test(std::string directory, const Transport::Graph * trans, int car_start_node, int passenger_start_node, int car_arrival_node,
@@ -86,14 +86,6 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
         area_dest = bordeaux;
     else
         return ;
-    
-// //      For very small areas around the passenger
-//     area_start = build_area_around(trans, passenger_start_node, passenger_start_node, 10 * 60);
-//     area_start->center = passenger_start_node;
-//     area_start->init();
-//     area_dest =  build_area_around(trans, passenger_arrival_node, passenger_arrival_node, 10 * 60);
-//     area_dest->center = passenger_arrival_node;
-//     area_dest->init();
     
     
     out->step_in();
@@ -240,7 +232,7 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
 
         CarSharingTest cs( p );
         
-        init_multi_car_sharing_with_areas<CarSharingTest, Landmark>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, dfa_passenger, dfa_car, area_start, area_dest );
+        init_multi_car_sharing_with_areas<CarSharingTest>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, dfa_passenger, dfa_car, area_start, area_dest );
 
         STOP_TICKING;
         out->add("init-time", RUNTIME);
@@ -335,8 +327,6 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
     
     {
         out->step_in("cities-stop-conditions-landmarks");
-        
-        lmset->use_maxmin = true;
 
         START_TICKING;
         CarSharingTest::ParamType p(
@@ -353,7 +343,7 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
         
         CarSharingTest cs( p );
         
-        init_multi_car_sharing_with_areas<CarSharingTest, RLC::LandmarkSet>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, 
+        init_multi_car_sharing_with_areas<CarSharingTest>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, 
                                                      dfa_passenger, dfa_car, area_start, area_dest, 
                                                      true, lmset, lmset );
 
@@ -451,10 +441,8 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
     
     //      For very small areas around the passenger
     area_start = build_area_around_with_start_time(trans, passenger_start_node, passenger_start_node, time, 10 * 60);
-    area_start->center = passenger_start_node;
     area_start->init();
     area_dest =  build_area_around(trans, passenger_arrival_node, passenger_arrival_node, 10 * 60);
-    area_dest->center = passenger_arrival_node;
     area_dest->init();
     
     {
@@ -474,7 +462,7 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
 
         CarSharingTest cs( p );
         
-        init_multi_car_sharing_with_areas<CarSharingTest, Landmark>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, dfa_passenger, dfa_car, area_start, area_dest );
+        init_multi_car_sharing_with_areas<CarSharingTest>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, dfa_passenger, dfa_car, area_start, area_dest );
 
         STOP_TICKING;
         out->add("init-time", RUNTIME);
@@ -570,8 +558,6 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
     
     {
         out->step_in("10min-stop-conditions-landmarks");
-        
-        lmset->use_maxmin = true;
 
         START_TICKING;
         CarSharingTest::ParamType p(
@@ -588,7 +574,7 @@ void run_test(std::string directory, const Transport::Graph * trans, int car_sta
         
         CarSharingTest cs( p );
         
-        init_multi_car_sharing_with_areas<CarSharingTest, RLC::LandmarkSet>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, 
+        init_multi_car_sharing_with_areas<CarSharingTest>( &cs, trans, passenger_start_node, car_start_node, passenger_arrival_node, car_arrival_node, 
                                                      dfa_passenger, dfa_car, area_start, area_dest, 
                                                      true, lmset, lmset );
 
@@ -826,7 +812,7 @@ int main(int argc, char ** argv)
       
       indata.open(config); // opens the file
       if(!indata) { // file couldn't be opened
-        cerr << "Error: file could not be opened" << endl;
+        cerr << "Error: file could not be opened: "<< config << endl;
         exit(1);
       }
       
@@ -838,7 +824,7 @@ int main(int argc, char ** argv)
       indata >> dump_file;
       JsonWriter writer(/*"/home/arthur/LAAS/Data/Results/"*/ test_conf_dir + name + ".txt");
       out = &writer;
-      Transport::GraphFactory gf(/*"/home/arthur/LAAS/Data/Graphs/"*/ test_dumps_dir + dump_file);
+      Transport::GraphFactory gf(/*"/home/arthur/LAAS/Data/Graphs/"*/ test_dumps_dir + dump_file, true);
       const Transport::Graph * transport = gf.get();
       
       if(small_areas) {
@@ -848,8 +834,6 @@ int main(int argc, char ** argv)
         toulouse = toulouse_area(transport);
         bordeaux = bordeaux_area(transport);
       }
-      toulouse_lm = RLC::create_car_landmark(transport, toulouse->center);
-      bordeaux_lm = RLC::create_car_landmark(transport, bordeaux->center);
       
       //                          tlse, bordeaux, albi
       int landmarks_nodes[3] = { 269647, 546063, 294951 };
@@ -858,8 +842,6 @@ int main(int argc, char ** argv)
         lms.push_back( RLC::create_car_landmark(transport, n) );
       }
       lmset = new RLC::LandmarkSet( lms, transport );
-      
-      cout << "R(Toulouse) : " << toulouse->radius << " ; R(Bordeaux) : " << bordeaux->radius <<endl;
       
     while ( !indata.eof() ) { // keep reading until end-of-file
       indata >> passenger_start_node >> car_start_node >> passenger_arrival_node >> car_arrival_node

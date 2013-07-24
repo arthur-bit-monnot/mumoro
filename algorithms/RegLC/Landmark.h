@@ -101,23 +101,6 @@ public:
             return dplus > dminus ? dplus : dminus;
         }
     }
-    
-    /**
-     * Returns a lower bound of the distance between source and target
-     */
-    int dist_lb( const int source, const Area & area, const bool is_forward ) const {
-        if( is_forward ) {
-            const int dplus = potential_plus_forward( source, area.center ) - area.radius;
-            const int dminus = potential_minus_forward( source, area.center ) - area.radius;
-            const int ret = dplus > dminus ? dplus : dminus;
-            return ret > 0 ? ret : 0;
-        } else {
-            const int dplus = potential_plus_backward( source, area.center ) - area.radius;
-            const int dminus = potential_minus_backward( source, area.center ) - area.radius;
-            const int ret = dplus > dminus ? dplus : dminus;
-            return ret > 0 ? ret : 0;
-        }
-    }
 
 private:
     /**

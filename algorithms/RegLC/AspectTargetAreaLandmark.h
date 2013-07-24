@@ -35,12 +35,12 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 #include "DRegLC.h"
 #include "AspectTarget.h"
-#include "Landmark.h"
+#include "LandmarkSet.h"
 #include "../utils/Area.h"
 
 namespace RLC {
     
-template<typename H = Landmark>
+template<typename H = LandmarkSet>
 struct AspectTargetAreaLandmarkParams {
     AspectTargetAreaLandmarkParams( const Area * area, H * h ) : area(area), h(h) {}
     const Area * area;
@@ -48,7 +48,7 @@ struct AspectTargetAreaLandmarkParams {
 };
 
 
-template<typename Base = DRegLC, typename H = Landmark>
+template<typename Base = DRegLC, typename H = LandmarkSet>
 class AspectTargetAreaLandmark : public Base
 {
     /**

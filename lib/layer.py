@@ -325,7 +325,7 @@ class GTFSLayer(BaseLayer):
  
 
 class MultimodalGraph(object):
-    def __init__(self, layers, id, filename = None):
+    def __init__(self, layers, id, filename = None, binary_archive = True):
         nb_nodes = 0
         self.node_to_layer = []
         self.layers = layers
@@ -336,7 +336,7 @@ class MultimodalGraph(object):
             print "Layer " + l.name + " for nodes from " + str(l.offset) +" to "+ str(nb_nodes - 1)
  
         if filename:
-            self.graph_facto = mumoro.GraphFactory(filename)
+            self.graph_facto = mumoro.GraphFactory(filename, binary_archive)
         else:
             self.graph_facto = mumoro.GraphFactory(nb_nodes)
             self.graph_facto.set_id(id)
@@ -364,9 +364,12 @@ class MultimodalGraph(object):
     def graph(self):
         return self.graph_facto.get()
  
-    def save(self, filename):
-        self.graph_facto.save(filename)
+    def save_to_bin(self, filename):
+        self.graph_facto.save_to_bin(filename)
 
+    def save_to_txt(self, filename):
+        self.graph_facto.save_to_txt(filename)
+        
     #def load(self, filename):
         #self.graph_facto.load(filename)
  
