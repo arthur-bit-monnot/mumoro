@@ -32,9 +32,6 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 #include <boost/foreach.hpp>
 
-#include "debug/cwd_sys.h"
-#include "debug/cwd_debug.h"
-
 #include "MultipleParticipants/muparo.h"
 #include "MultipleParticipants/run_configurations.h"
 #include "utils/node_filter_utils.h"
